@@ -3,5 +3,6 @@
   "instructions": [".opencode/instructions/AGENTS.md"],
   "skills": {
     "paths": [".opencode/skills"]
-  }
+  },
+  "plugin": [".opencode/plugins/auto-commit.ts"]
 }

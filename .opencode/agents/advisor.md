@@ -42,10 +42,12 @@ When the Designer approves, emit an ITR with these fields:
 
 ```
 ARCH    — architecture pattern (HEX, DI, DIP)
-LAYERS  — layer mapping (L0–L3: infra > domain > application > runtime)
+LAYERS  — layer mapping (domain > application > infrastructure > control)
 PORTS   — port definitions, flow direction (out → in)
-DOMAIN  — domain logic decomposition
-INFRA   — infrastructure adapter specifications
+DOMAIN  — domain models decomposition
+APPLICATION — application services, ports, use cases
+INFRASTRUCTURE — infrastructure adapters and Environment singleton
+CONTROL — dependency container, controllers, CLI, entry point
 TESTS   — test strategy derived from ports
 COMMITS — commit plan as the final step
 ```
