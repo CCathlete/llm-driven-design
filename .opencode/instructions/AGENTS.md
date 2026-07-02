@@ -4,15 +4,29 @@ This project explores AI-assisted software design through structured system
 tensors. Every design decision, architecture constraint, and implementation
 step is encoded in `.itr` (implementation tensor) files under `system_tensors/`.
 
+## The Triad
+
+Every development task is a team of three:
+
+| Role     | Who             | Responsibility |
+|----------|-----------------|----------------|
+| Designer | Human           | Extracts DTR, brainstorms, gives green light |
+| Advisor  | AI agent        | Analyzes DTR, discusses design, emits ITR |
+| Coder    | AI agent        | Receives ITR, implements in strict order |
+
+The Designer opens an **Advisor session** for design work and a **Coder
+session** for implementation. See `.opencode/agents/advisor.md` and
+`.opencode/agents/coder.md`.
+
 ## Workflow
 
 The LLMDD pipeline is defined in `system_tensors/llm-driven-design-sys-prompt.itr`:
 
-1. **Extract** requirements from input → Design Tensor (DTR)
-2. **Advise** on design (analysis only, no implementation)
-3. **Design** by emitting an Implementation Tensor (ITR)
-4. **Code** by executing the ITR (strict order, no skipping)
-5. **Output** feeds back into the Design Tensor
+1. **Extract** — Designer produces a DTR from the codebase (AST, files, types, relations)
+2. **Advise** — Advisor analyzes the DTR and brainstorms with Designer
+3. **Design** — On green light, Advisor emits an ITR
+4. **Code** — Coder executes the ITR (strict order, no skipping)
+5. **Output** — Produced code, feeds back into the next DTR
 
 ## Architecture rules
 
@@ -25,12 +39,17 @@ The LLMDD pipeline is defined in `system_tensors/llm-driven-design-sys-prompt.it
 
 Project-specific knowledge is stored in `.opencode/instructions/`:
 - `memory.md` — persistent session context
-- `architecture.md` — architecture decisions and conventions
+- `architecture.md` — triad, pipeline, constraints, tensor format
 
-## OpenCode config
+## OpenCode agents
 
-Project-level config is at `.opencode/opencode.json`. It loads these
-instructions and scans `.opencode/skills/` for project-specific skills.
+Two primary agents are defined in `.opencode/agents/`:
+
+- **advisor** — design partner; reads only, never edits
+- **coder** — implementation engine; reads and writes, never designs
+
+Use `opencode --agent advisor` or `opencode --agent coder` to start a
+session in the respective role.
 
 ## Pre-push hook
 
