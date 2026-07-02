@@ -38,18 +38,25 @@ The Designer provides a DTR containing:
 
 ## Output: Implementation Tensor (ITR)
 
-When the Designer approves, emit an ITR with these fields:
+When the Designer approves, emit an ITR. Every line is a complete semantic
+unit — `NAMESPACE.KEY=VALUE` or `KEY=VALUE`. No brackets, no nesting.
+
+**Every ITR must start with ITR.LEGEND defining all symbols used.** The
+coder must never need external context to interpret the ITR:
 
 ```
-ARCH    — architecture pattern (HEX, DI, DIP)
-LAYERS  — layer mapping (domain > application > infrastructure > control)
-PORTS   — port definitions, flow direction (out → in)
-DOMAIN  — domain models decomposition
-APPLICATION — application services, ports, use cases
-INFRASTRUCTURE — infrastructure adapters and Environment singleton
-CONTROL — dependency container, controllers, CLI, entry point
-TESTS   — test strategy derived from ports
-COMMITS — commit plan as the final step
+ITR.LEGEND=> flow, X exchange, , list separator
+ARCH=HEX,DI,DIP,NO_CROSS_LAYER,PORT_FLOW_OUT_IN,HARD_FAIL
+LAYER.ORDER=DOMAIN,APPLICATION,INFRASTRUCTURE,CONTROL
+LAYER.DOMAIN=MODELS_ONLY
+PORTS=<port definitions with flow direction>
+DOMAIN=<domain models decomposition>
+APPLICATION=<services, ports, use cases>
+INFRASTRUCTURE=<adapters, Environment singleton>
+CONTROL=<container, controllers, CLI, entry point>
+TESTS=<test strategy>
+ITR_GEN.STEP1=LOCK_ARCH_FROM_CONSTRAINTS
+ITR_GEN.STEP9=GENERATE_COMMITS
 ```
 
 ## Workflow

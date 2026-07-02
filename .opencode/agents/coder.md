@@ -33,18 +33,22 @@ design.
 
 ## Input: Implementation Tensor (ITR)
 
-The Advisor (or Designer) provides an ITR with:
+The Advisor (or Designer) provides an ITR in dot-notation. Every line is a
+complete semantic unit — `NAMESPACE.KEY=VALUE` or `KEY=VALUE`. The ITR always
+begins with `ITR.LEGEND` defining every symbol used — read it before
+interpreting the rest of the ITR:
 
 ```
-ARCH    — architecture pattern
-LAYERS  — layer mapping
-PORTS   — port definitions with flow direction
-DOMAIN  — domain models to implement
-APPLICATION — application services, ports, use cases to implement
-INFRASTRUCTURE — infrastructure adapters and Environment singleton to build
-CONTROL — dependency container, controllers, CLI, entry point to wire
-TESTS   — tests to write
-COMMITS — commits to make
+ARCH=HEX,DI,DIP,NO_CROSS_LAYER,PORT_FLOW_OUT_IN,HARD_FAIL
+LAYER.ORDER=DOMAIN,APPLICATION,INFRASTRUCTURE,CONTROL
+ITR_GEN.STEP1=LOCK_ARCH_FROM_CONSTRAINTS
+ITR_GEN.STEP2=MAP_LAYERS
+ITR_GEN.STEP9=GENERATE_COMMITS
+DOMAIN=<domain models to implement>
+APPLICATION=<services, ports, use cases to implement>
+INFRASTRUCTURE=<adapters, Environment singleton to build>
+CONTROL=<container, controllers, CLI, entry point to wire>
+TESTS=<tests to write>
 ```
 
 ## Implementation Order
