@@ -33,7 +33,7 @@ The LLMDD pipeline is defined in `system_tensors/llm-driven-design-sys-prompt.it
 - Hexagonal architecture, dependency injection, dependency inversion
 - No cross-layer dependencies
 - Port flow: outbound → inbound
-- Layer order: infra > domain > application > runtime
+- Layer order: domain > application > infrastructure > control
 
 ## Knowledge base
 

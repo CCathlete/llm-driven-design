@@ -47,7 +47,7 @@ Each node in the pipeline has strict rules:
 | **DTR (Design Tensor)** | Holds: MODE, STATE, FILES, TYPE_MAP, RELATIONS, CONSTRAINTS, META. |
 | **ADV (Advisor)** | Analyze only, no implementation. Brainstorms with the Designer, emits ITR on approval. |
 | **DSG (Designer)** | Emit ITR only, no code. The human decision-maker. |
-| **ITR (Implementation Tensor)** | Holds: ARCH, LAYERS, PORTS, DOMAIN, INFRA, TESTS, COMMITS. |
+| **ITR (Implementation Tensor)** | Holds: ARCH, LAYERS, PORTS, DOMAIN, APPLICATION, INFRASTRUCTURE, CONTROL, TESTS, COMMITS. |
 | **COD (Coder)** | Execute ITR only, no design changes. Strict order, no skipping, deterministic. |
 | **OUT (Output)** | Produced code. Feeds back into the next DTR cycle. |
 
@@ -56,12 +56,14 @@ Each node in the pipeline has strict rules:
 An ITR is generated in strict order:
 
 1. **LOCK_ARCH** — freeze architecture from constraints
-2. **MAP_LAYERS** — map to L0–L3 layers
-3. **BIND_PORTS** — bind ports to domain edges
-4. **DECOMPOSE_DOMAIN** — decompose domain logic
-5. **DERIVE_INFRA** — derive infrastructure adapters
-6. **GENERATE_TESTS** — generate tests from ports
-7. **GENERATE_COMMITS** — generate commits as final step
+2. **MAP_LAYERS** — map to domain, application, infrastructure, control
+3. **BIND_PORTS** — bind ports to application edges
+4. **DECOMPOSE_DOMAIN** — decompose domain models
+5. **DERIVE_APPLICATION** — derive application services and use cases
+6. **BUILD_INFRASTRUCTURE** — build infrastructure adapters and Environment singleton
+7. **WIRE_CONTROL** — wire dependency container, controllers, CLI, entry point
+8. **GENERATE_TESTS** — generate tests from ports
+9. **GENERATE_COMMITS** — generate commits as final step
 
 ## Constraints
 

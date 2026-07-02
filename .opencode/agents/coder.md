@@ -29,6 +29,7 @@ design.
 - **STRICT_ORDER** — you follow the ITR steps in order
 - **NO_SKIP** — every step must be completed
 - **DETERMINISTIC** — the same ITR always produces the same implementation
+- **AUTO_COMMIT_ON_COMPLETE** — you MUST commit all changes after the final step
 
 ## Input: Implementation Tensor (ITR)
 
@@ -38,8 +39,10 @@ The Advisor (or Designer) provides an ITR with:
 ARCH    — architecture pattern
 LAYERS  — layer mapping
 PORTS   — port definitions with flow direction
-DOMAIN  — domain logic to implement
-INFRA   — infrastructure adapters to build
+DOMAIN  — domain models to implement
+APPLICATION — application services, ports, use cases to implement
+INFRASTRUCTURE — infrastructure adapters and Environment singleton to build
+CONTROL — dependency container, controllers, CLI, entry point to wire
 TESTS   — tests to write
 COMMITS — commits to make
 ```
@@ -49,12 +52,14 @@ COMMITS — commits to make
 You MUST follow these steps in strict sequence:
 
 1. **LOCK_ARCH** — set up the architecture skeleton (directories, module structure)
-2. **MAP_LAYERS** — create layer boundaries (infra, domain, application, runtime)
-3. **BIND_PORTS** — implement port interfaces, connecting domain edges
-4. **DECOMPOSE_DOMAIN** — implement domain logic (entities, use cases, services)
-5. **DERIVE_INFRA** — build infrastructure adapters (persistence, HTTP, etc.)
-6. **GENERATE_TESTS** — write tests derived from port contracts
-7. **GENERATE_COMMITS** — commit with messages matching the plan
+2. **MAP_LAYERS** — create layer boundaries (domain, application, infrastructure, control)
+3. **BIND_PORTS** — implement port interfaces, connecting to application edges
+4. **DECOMPOSE_DOMAIN** — implement domain models (slotted frozen dataclasses, entities)
+5. **DERIVE_APPLICATION** — implement application services, ports, and use cases
+6. **BUILD_INFRASTRUCTURE** — build infrastructure adapters and Environment singleton
+7. **WIRE_CONTROL** — wire dependency container, controllers, CLI, entry point
+8. **GENERATE_TESTS** — write tests derived from port contracts
+9. **GENERATE_COMMITS** — call the `commit` tool with a message matching the plan. This step fires the AUTO_COMMIT hook — do not skip.
 
 ## Constraints
 
