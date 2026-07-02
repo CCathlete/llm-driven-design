@@ -44,12 +44,24 @@ Each node in the pipeline has strict rules:
 | Node | Rules |
 |------|-------|
 | **X (Extractor)** | Builds the DTR from the working tree. Positional, flat, no tree — explicit relations only. |
-| **DTR (Design Tensor)** | Holds: MODE, STATE, FILES, TYPE_MAP, RELATIONS, CONSTRAINTS, META. |
+| **DTR (Design Tensor)** | One line per field: `DTR=MODE,STATE,FILES,TYPE_MAP,RELATIONS,CONSTRAINTS,META` |
 | **ADV (Advisor)** | Analyze only, no implementation. Brainstorms with the Designer, emits ITR on approval. |
 | **DSG (Designer)** | Emit ITR only, no code. The human decision-maker. |
-| **ITR (Implementation Tensor)** | Holds: ARCH, LAYERS, PORTS, DOMAIN, APPLICATION, INFRASTRUCTURE, CONTROL, TESTS, COMMITS. |
+| **ITR (Implementation Tensor)** | One line per field: `ITR=ARCH,LAYERS,PORTS,DOMAIN,APPLICATION,INFRASTRUCTURE,CONTROL,TESTS,COMMITS` |
 | **COD (Coder)** | Execute ITR only, no design changes. Strict order, no skipping, deterministic. |
 | **OUT (Output)** | Produced code. Feeds back into the next DTR cycle. |
+
+## Tensor format
+
+Every line is a complete semantic unit: `NAMESPACE.KEY=VALUE` or `KEY=VALUE`.
+No brackets, no nesting. A misgenerated line kills only itself — no cascade.
+
+```
+ARCH=HEX,DI,DIP,NO_CROSS_LAYER,PORT_FLOW_OUT_IN,HARD_FAIL
+ITR_GEN.STEP1=LOCK_ARCH_FROM_CONSTRAINTS
+ITR_GEN.STEP9=GENERATE_COMMITS
+PYTHON.MONADS=RETURNS_SAFE_AND_FUTURE_SAFE
+```
 
 ## Implementation Tensor (ITR) structure
 
