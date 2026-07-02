@@ -1,6 +1,16 @@
 import { tool } from "@opencode-ai/plugin/tool";
 
 export default async ({ $ }) => {
+  const writeTools = new Set(["edit", "write", "bash"]);
+
+  async function tryCommit(scope: string) {
+    const status = await $`git status --porcelain`.nothrow().quiet();
+    const out = status.stdout?.toString().trim() || "";
+    if (!out) return;
+    const msg = `auto(${scope}): progress`;
+    await $`git add -A && git commit -m ${msg}`.nothrow().quiet();
+  }
+
   return {
     tool: {
       commit: tool({
@@ -26,6 +36,10 @@ export default async ({ $ }) => {
           };
         },
       }),
+    },
+    "tool.execute.after": async (input, _output) => {
+      if (!writeTools.has(input.tool)) return;
+      await tryCommit(input.tool);
     },
   };
 };
