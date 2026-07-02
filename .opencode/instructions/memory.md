@@ -10,7 +10,7 @@ development. Uses system tensors (`.itr` files) to encode design workflows.
 | File | Purpose |
 |------|---------|
 | `system_tensors/llm-driven-design-sys-prompt.itr` | Master system prompt defining the LLMDDv3 pipeline |
-| `AGENTS.md` | Project instructions loaded by opencode |
+| `.opencode/instructions/AGENTS.md` | Project instructions loaded by opencode |
 | `.opencode/opencode.json` | Project-level opencode config |
 | `.opencode/instructions/` | Knowledge base (architecture, memory, etc.) |
 | `.opencode/skills/` | Project-specific skills |

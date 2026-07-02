@@ -27,6 +27,11 @@ Project-specific knowledge is stored in `.opencode/instructions/`:
 - `memory.md` — persistent session context
 - `architecture.md` — architecture decisions and conventions
 
+## OpenCode config
+
+Project-level config is at `.opencode/opencode.json`. It loads these
+instructions and scans `.opencode/skills/` for project-specific skills.
+
 ## Pre-push hook
 
 A global pre-push hook blocks AI assistants from pushing to remote (installed
