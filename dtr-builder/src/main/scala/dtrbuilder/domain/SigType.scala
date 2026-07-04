@@ -29,6 +29,8 @@ object SigType {
   case object KEY       extends SigType { val name = "KEY" }
   case object PROPERTY  extends SigType { val name = "PROPERTY" }
   case object CONST     extends SigType { val name = "CONST" }
+  case object EXTENDS    extends SigType { val name = "EXTENDS" }
+  case object IMPLEMENTS extends SigType { val name = "IMPLEMENTS" }
   case object FROM_IMPORT   extends SigType { val name = "FROM_IMPORT" }
   case object VARIABLE  extends SigType { val name = "VARIABLE" }
   case object ARROW_FN  extends SigType { val name = "ARROW_FN" }
@@ -57,6 +59,7 @@ object SigType {
     PACKAGE, IMPORT, CLASS, TRAIT, OBJECT, CASE_CLASS, CASE_OBJECT,
     INTERFACE, ENUM, ANNOTATION, CTOR, DEF, VAL, VAR, TYPE,
     FUNCTION, EXPORT, DECORATOR, HEADING, KEY, PROPERTY, CONST,
+    EXTENDS, IMPLEMENTS,
     FROM_IMPORT, VARIABLE, ARROW_FN, INCLUDE, STRUCT, TYPEDEF,
     MACRO, TEMPLATE, NAMESPACE, FUNC, USE, CRATE, MOD, FN,
     IMPL, REQUIRE, MODULE, ATTR, COMMAND, CODE_BLOCK, TOP_KEY,

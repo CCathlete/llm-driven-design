@@ -102,7 +102,10 @@ class DtrBuilderService(
     val allRawEntries = withLang.flatMap { fe =>
       val fileCodex = allCodexEntries.filter(_.relPath == fe.relPath)
       val fileTypes = typeDefs.filter(_.sourceFile == fe.relPath)
-      val fileRels  = relations.filter(r => r.fromFqn.contains(fe.relPath.replace('/', '.')) || r.toFqn.contains(fe.relPath.replace('/', '.')))
+      val fileFqn  = fe.relPath.replace('/', '.')
+      val fileRels = relations.filter(r =>
+        r.fromFqn == fileFqn || r.fromFqn.startsWith(fileFqn + ".") || r.toFqn.contains(fileFqn)
+      )
       dtrFormatter.format(fe, fileCodex, fileTypes, fileRels, config)
     }
 

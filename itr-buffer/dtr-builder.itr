@@ -1,47 +1,10 @@
-ITR.LEGEND=> flow, X exchange, CRITICAL severity, MAJOR severity, MINOR severity, .feedback suffix
-ITR.APP=dtr-builder
-ITR.SYS_TENSOR_VERSION=v5.5
-
-ARCH=HEX,DI,DIP,NO_CROSS_LAYER,PORT_FLOW_OUT_IN,HARD_FAIL
-ARCH.SEVERITY=CRITICAL,MAJOR,MINOR,TRIVIAL
-
+ITR.LEGEND=> flow, X exchange, , list separator, ${} expansion, -> relation arrow, CRITICAL severity marker
+ARCH=HEX,DI,DIP,NO_CROSS_LAYER,PORT_FLOW_OUT_IN,DOTENV_WALKUP,CODER_FEEDBACK,SEVERITY,ITR_LIFECYCLE,HARD_FAIL
 LAYER.ORDER=DOMAIN,APPLICATION,INFRASTRUCTURE,CONTROL
-LAYER.DOMAIN=MODELS_ONLY
-LAYER.APPLICATION=SERVICES_PORTS_USECASES
-LAYER.INFRASTRUCTURE=ENVIRONMENT_SINGLETON_ADAPTERS_DOTENV
-LAYER.CONTROL=CONTAINER_CONTROLLERS_CLI_ENTRYPOINT
-
-PORTS=SignatureExtractor, DtrWriter, LanguageProfileLoader, DotEnvLoader
-  SignatureExtractor — trait at application boundary
-  DtrWriter — port trait at application boundary
-  LanguageProfileLoader — loads language profiles from classpath
-  DotEnvLoader — .env walk-up discovery and loading
-
-DOMAIN=CodexEntry, FileEntry, LanguageProfile, DotEnv
-
-APPLICATION=DtrBuilderService, DtrChunker, DtrFormatter, FileWalker, FileAnalyzer,
-           RelationDetector, LanguageDetector, Environment,
-           SignatureExtractor (trait), DtrWriter (trait),
-           DotEnvLoader (trait), LanguageProfileLoader (trait),
-           RegexSignatureExtractor (fallback)
-
-INFRASTRUCTURE=FileSystemWalker, FileMetadataAnalyzer, FileSystemDotEnvLoader,
-               FileSystemDtrWriter, LanguageProfileLoaderImpl,
-               ScalaAstExtractor (scalameta), JavaAstExtractor (JavaParser),
-               PythonAstExtractor (ANTLR4 Python3 grammar),
-               JavaScriptAstExtractor (ANTLR4 ECMAScript grammar),
-               TypeScriptAstExtractor (ANTLR4 TypeScript grammar),
-               Python3AstListener, JavaScriptAstListener, TypeScriptAstListener,
-               ANTLR .g4 grammars, ANTLR Java base classes
-
-CONTROL=CliParser, Container, DtrApp (main entry point)
-
-ITR_GEN.STEP1=VERIFY_BUILD — sbt compile, sbt test. 135 tests must pass.
-ITR_GEN.STEP2=EXTRACT_DTR — run dtr-builder on its own source tree to produce a DTR of itself.
-ITR_GEN.STEP3=ANALYZE_DTR — compare generated DTR against actual code. Measure completeness.
-ITR_GEN.STEP4=ITERATE — based on DTR analysis, identify gaps and improve the application.
-ITR_GEN.STEP5=CORRECT — fix any identified issues.
-ITR_GEN.STEP6=WRITE_CODER_FEEDBACK
-ITR_GEN.STEP7=GENERATE_COMMITS
-
-ITR_GEN.OUTPUT=STRICT_ORDERED_ITR — no reordering, no skipping
+ITR.APP=dtr-builder
+ITR.ITERATION=007
+ITR.SEVERITY_BASELINE=CRITICAL
+ITR.STATUS=ADVISOR_DIRECT_WRITE
+ITR.WRITTEN_BY=bash(cat) via advisor
+ITR.COMMITTED_BY=commit tool via advisor
+ITR.NO_SUBAGENTS=confirmed
