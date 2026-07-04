@@ -49,10 +49,21 @@ class JavaAstExtractor(regexFallback: RegexSignatureExtractor) extends Signature
   ): Unit = {
     typeDecl match {
       case cls: ClassOrInterfaceDeclaration if cls.isInterface =>
-        result += CodexEntry(relPath, SigType.INTERFACE, cls.getNameAsString)
+        val name = cls.getNameAsString
+        result += CodexEntry(relPath, SigType.INTERFACE, name)
+        cls.getExtendedTypes.asScala.foreach { parent =>
+          result += CodexEntry(relPath, SigType.EXTENDS, s"$name extends ${parent.getNameAsString}")
+        }
 
       case cls: ClassOrInterfaceDeclaration =>
-        result += CodexEntry(relPath, SigType.CLASS, cls.getNameAsString)
+        val name = cls.getNameAsString
+        result += CodexEntry(relPath, SigType.CLASS, name)
+        cls.getExtendedTypes.asScala.foreach { parent =>
+          result += CodexEntry(relPath, SigType.EXTENDS, s"$name extends ${parent.getNameAsString}")
+        }
+        cls.getImplementedTypes.asScala.foreach { parent =>
+          result += CodexEntry(relPath, SigType.IMPLEMENTS, s"$name implements ${parent.getNameAsString}")
+        }
 
       case enm: EnumDeclaration =>
         result += CodexEntry(relPath, SigType.ENUM, enm.getNameAsString)

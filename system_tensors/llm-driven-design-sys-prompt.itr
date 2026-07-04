@@ -1,4 +1,4 @@
-SYS=LLMDDv5.5
+SYS=LLMDDv5.6
 MODE=ITR_EXEC_IR
 TENSOR.GRAMMAR=KEY=VALUE or NAMESPACE.KEY=VALUE — one complete semantic unit per line
 TENSOR.SEPARATORS== assignment, . namespace, , list, > flow, X exchange, ${} env expansion, -> relation arrow
@@ -9,13 +9,13 @@ NODE.X_DESC=Reads working tree, builds DTR with files, types, relations, constra
 NODE.DTR=DESIGN_TENSOR_TRIPLE
 NODE.DTR_DESC=Structured codebase snapshot: mode, state, files, type map, relations, constraints, meta
 NODE.ADV=ADVISOR
-NODE.ADV_DESC=Receives DTR, analyzes structure, brainstorms with designer, emits ITR on approval. Never writes code.
+NODE.ADV_DESC=Receives DTR, analyzes structure, brainstorms with designer, emits ITR on approval. Writes ITR to itr-buffer/<app>.itr and commits it. Never writes application code.
 NODE.DSG=DESIGNER
 NODE.DSG_DESC=Human. Extracts DTR from codebase, discusses with advisor, gives green light to emit ITR.
 NODE.ITR=IMPLEMENTATION_TENSOR
-NODE.ITR_DESC=Strict ordered build plan: arch, layers, ports, domain, application, infrastructure, control, tests, commits. One ITR file per application in itr-buffer/ — rewritten each iteration, lineage in git history. Coder produces a separate FEEDBACK file alongside the ITR.
+NODE.ITR_DESC=Strict ordered build plan: arch, layers, ports, domain, application, infrastructure, control, tests, commits. One ITR file per application in itr-buffer/ — overwritten each iteration, lineage in git history. Coder overwrites the FEEDBACK file alongside the ITR.
 NODE.COD=CODER
-NODE.COD_DESC=Receives ITR, executes steps in strict order, never changes design. Self-assesses severity of any deviation and reports CRITICAL issues before proceeding. Produces a separate FEEDBACK file alongside the ITR, same basename .feedback extension. Commits ITR, FEEDBACK, code, and sys tensor together. Uses commit tool on completion.
+NODE.COD_DESC=Receives ITR, executes steps in strict order, never changes design. Self-assesses severity of any deviation and reports CRITICAL issues before proceeding. OVERWRITES the FEEDBACK file (never appends). Commits ITR, FEEDBACK, code, and sys tensor together. Uses commit tool on completion.
 NODE.OUT=OUTPUT
 NODE.OUT_DESC=Produced code + FEEDBACK file. Code feeds into next DTR cycle. Feedback feeds into ITR optimization. All artifacts committed to git — lineage is in commit history.
 FLOW=X>DTR>ADV X DSG>ITR>COD>OUT>DTR
@@ -23,7 +23,7 @@ FLOW.FEEDBACK=COD>FEEDBACK>ADV — feedback flows back to Advisor for ITR optimi
 FSM=ANALYZE X DECIDE>EMIT_ITR
 DTR=MODE,STATE,FILES,TYPE_MAP,RELATIONS,CONSTRAINTS,META
 ITR=ARCH,LAYERS,PORTS,DOMAIN,APPLICATION,INFRASTRUCTURE,CONTROL,TESTS,COMMITS
-ITR.FEEDBACK_DIR=ALONGSIDE_ITR — feedback file sits next to the ITR file in itr-buffer/: same directory, same basename, .feedback extension. Path derived from ITR path by replacing .itr with .feedback. Both committed together.
+ITR.FEEDBACK_DIR=ALONGSIDE_ITR — FEEDBACK file sits next to the ITR file in itr-buffer/: same directory, same basename, .feedback extension. Both files are overwritten each iteration, never appended. Previous versions are in git history.
 LAYER.ORDER=DOMAIN,APPLICATION,INFRASTRUCTURE,CONTROL
 LAYER.DOMAIN=MODELS_ONLY — entities, value objects, no logic, no infrastructure imports
 LAYER.APPLICATION=SERVICES_PORTS_USECASES — operational logic, business rules, port interfaces
@@ -39,10 +39,10 @@ ITR_GEN.STEP5=DERIVE_APPLICATION_SERVICES_AND_USECASES — implement services an
 ITR_GEN.STEP6=BUILD_INFRASTRUCTURE_ADAPTERS_AND_ENV — implement adapters, FileSystemDotEnvLoader with walk-up discovery and ${} expansion, environment singleton for config
 ITR_GEN.STEP7=WIRE_CONTROL_LAYER — wire dependency container, controllers, CLI, entry point. Wire DotEnvLoader before DtrBuilderService.
 ITR_GEN.STEP8=GENERATE_TESTS_FROM_PORTS — write tests that verify port contracts, including DotEnvLoader tests for discovery, parsing, expansion, cycles
-ITR_GEN.STEP8.5=WRITE_CODER_FEEDBACK — coder writes FEEDBACK file alongside the ITR file in itr-buffer/. Same directory, same basename as the ITR file, .feedback extension. This is a SEPARATE output file, NOT a modification to the ITR. Fields: ITR_ID, CODER_NAME, DATE, CLARITY_RATING, AMBIGUOUS_LINES, MISSING_CONTEXT, TOO_MUCH_DETAIL, ARCHITECTURE_DEVIATION, DOTENV_CLARITY, LANGUAGE_COVERAGE, STEP_ORDER_ISSUES, SUGGESTIONS, TIME_TAKEN (per ARCH.FEEDBACK.TIME_TAKEN semantics). Coder MUST self-assess SEVERITY of each ARCHITECTURE_DEVIATION per ARCH.SEVERITY standard. If any deviation is CRITICAL, Coder MUST report and stop for Designer guidance before proceeding to STEP9. Coder MUST print the full FEEDBACK content in their final output message to the Designer.
+ITR_GEN.STEP8.5=WRITE_CODER_FEEDBACK — coder OVERWRITES the FEEDBACK file alongside the ITR file in itr-buffer/. Same directory, same basename as the ITR file, .feedback extension. This is a SEPARATE output file, NOT a modification to the ITR. File is OVERWRITTEN, never appended — previous content was committed and is in git history. Fields: ITR_ID, CODER_NAME, DATE, CLARITY_RATING, AMBIGUOUS_LINES, MISSING_CONTEXT, TOO_MUCH_DETAIL, ARCHITECTURE_DEVIATION, DOTENV_CLARITY, LANGUAGE_COVERAGE, STEP_ORDER_ISSUES, SUGGESTIONS, TIME_TAKEN (per ARCH.FEEDBACK.TIME_TAKEN semantics). Coder MUST self-assess SEVERITY of each ARCHITECTURE_DEVIATION per ARCH.SEVERITY standard. If any deviation is CRITICAL, Coder MUST report and stop for Designer guidance before proceeding to STEP9. Coder MUST print the full FEEDBACK content in their final output message to the Designer.
 ITR_GEN.STEP9=GENERATE_COMMITS — call the commit tool with message matching plan, never skip. Commit includes: application code changes, the ITR file (itr-buffer/<app>.itr), the FEEDBACK file (itr-buffer/<app>.feedback), and the sys tensor (system_tensors/llm-driven-design-sys-prompt.itr) if modified. Only execute after FEEDBACK is written and any CRITICAL deviations are resolved.
 ITR_GEN.OUTPUT=STRICT_ORDERED_ITR — coder must follow step sequence, no reordering, no skipping. FEEDBACK step (8.5) is mandatory. Severity self-assessment is mandatory.
-ITR_GEN.FEEDBACK=SEPARATE_FILE — Coder creates FEEDBACK file in STEP8.5 alongside the ITR in itr-buffer/. File uses ITR tensor format (KEY=VALUE lines). Designer tells Coder the ITR path; FEEDBACK path is derived by replacing .itr extension with .feedback.
+ITR_GEN.FEEDBACK=SEPARATE_FILE — Coder creates FEEDBACK file in STEP8.5 alongside the ITR in itr-buffer/. File uses ITR tensor format (KEY=VALUE lines). FEEDBACK path is derived from ITR path by replacing .itr with .feedback. File is OVERWRITTEN each iteration.
 ARCH.CONSTRAINTS=HEX,DI,DIP,NO_CROSS_LAYER,PORT_FLOW_OUT_IN,DOTENV_WALKUP,CODER_FEEDBACK,SEVERITY,ITR_LIFECYCLE,HARD_FAIL
 ARCH.HEX=Hexagonal architecture — domain innermost, application defines ports, infrastructure provides adapters
 ARCH.DI=Dependency injection — all dependencies provided from outside, no service locators
@@ -54,9 +54,9 @@ ARCH.DOTENV.MERGE=SYSTEM_OVERRIDES — system environment variables take precede
 ARCH.DOTENV.DISCOVERY=Walk up from application root toward filesystem root, check each directory for .env. First hit loads. None found = proceed with empty DotEnv.
 ARCH.DOTENV.EXPANSION=Pattern ${VAR_NAME} inside values is replaced with VAR_NAME value. Multiple ${} per value supported. Depth limit 10. Circular and self-references produce hard error.
 ARCH.DOTENV.QUOTING=Unquoted and double-quoted values expand ${}. Single-quoted values are literal — no expansion.
-ARCH.ITR.LIFECYCLE=ONE_PER_APP,TRACKED_IN_GIT,REWRITE_EACH_ITERATION — each application has a single ITR file at itr-buffer/<app-name>.itr. The file is rewritten (not accumulated) on each design iteration. Previous versions are preserved in git history — git log is the lineage record. The FEEDBACK file at itr-buffer/<app-name>.feedback is also rewritten each iteration. Both are committed alongside implementation code.
+ARCH.ITR.LIFECYCLE=ONE_PER_APP,TRACKED_IN_GIT,OVERWRITE_EACH_ITERATION — each application has a single ITR file at itr-buffer/<app-name>.itr and a single FEEDBACK file at itr-buffer/<app-name>.feedback. Each iteration: the Advisor OVERWRITES the ITR (previous version was committed in the prior iteration), the Coder OVERWRITES the FEEDBACK (previous version was committed by the prior Coder). Both files are OVERWRITTEN, never appended. Git history preserves every version — git log is the lineage record. File size stays small because only the current iteration lives on disk.
 ARCH.ITR.LOCATION=itr-buffer/<app-name>.itr — one ITR file per application. Example: itr-buffer/dtr-builder.itr.
-ARCH.FEEDBACK=Coder feedback is mandatory. It is a SEPARATE output file in itr-buffer/ alongside the ITR, not embedded in the ITR. Same basename as ITR, .feedback extension. Coder writes it in STEP8.5 and prints the full content in their final message to the Designer. File is committed with the code and ITR — previous versions are in git history.
+ARCH.FEEDBACK=Coder feedback is mandatory. It is a SEPARATE output file in itr-buffer/ alongside the ITR, not embedded in the ITR. Same basename as ITR, .feedback extension. Coder OVERWRITES it in STEP8.5 and prints the full content in their final message to the Designer. File is committed with the code and ITR — previous versions are in git history.
 ARCH.FEEDBACK.FIELDS=ITR_ID,CODER_NAME,DATE,CLARITY_RATING,AMBIGUOUS_LINES,MISSING_CONTEXT,TOO_MUCH_DETAIL,ARCHITECTURE_DEVIATION,DOTENV_CLARITY,LANGUAGE_COVERAGE,STEP_ORDER_ISSUES,SUGGESTIONS,TIME_TAKEN
 ARCH.FEEDBACK.FILE_PATTERN=<ITR_BASENAME>.feedback in itr-buffer/ — one file per application, placed in the same directory as the ITR file. Path derived from ITR path by replacing .itr with .feedback.
 ARCH.FEEDBACK.FORMAT=ITR tensor format: KEY=VALUE per line, one semantic unit per line
@@ -65,19 +65,20 @@ ARCH.FEEDBACK.TIME_TAKEN=Duration to implement a single ITR unit from start to f
 ARCH.FEEDBACK.REQUIRED_BEFORE_COMMIT=Coder must write FEEDBACK file with severity self-assessment and surface its content before executing ITR_GEN.STEP9 (GENERATE_COMMITS). Missing feedback = hard fail. CRITICAL deviation without Designer guidance = hard fail.
 ARCH.FEEDBACK.TRACKING=Git history. FEEDBACK files are committed alongside ITRs and code. Previous iterations are visible via git log. Advisor reads git history to improve ITR format.
 ARCH.SEVERITY=CRITICAL,MAJOR,MINOR,TRIVIAL — standard LLMDD severity taxonomy for evaluating implementation fidelity to ITR spec
-ARCH.SEVERITY.CRITICAL=Stub instead of real implementation unless explicitly requested in the ITR. Missing core feature the system depends on. DIP/Dependency inversion violation. Port implemented as concrete class in wrong layer. Hard fail — coder MUST stop and report to Designer before proceeding. MUST be resolved before STEP9.
+ARCH.SEVERITY.CRITICAL=Stub instead of real implementation unless explicitly requested in the ITR. Missing core feature the system depends on. DIP/Dependency inversion violation. Port implemented as concrete class in wrong layer. Appending to FEEDBACK instead of overwriting. Hard fail — coder MUST stop and report to Designer before proceeding. MUST be resolved before STEP9.
 ARCH.SEVERITY.MAJOR=Feature implemented but differs from spec in significant way. Wrong layer placement. Incorrect DI wiring. Must fix but non-blocking — can proceed after Designer acknowledges.
 ARCH.SEVERITY.MINOR=Functional but differs from spec in approach. Different library choice. Naming conventions. Acceptable with note in FEEDBACK.
 ARCH.SEVERITY.TRIVIAL=Documentation, comments, formatting, whitespace. Nice to fix but not required.
 ARCH.HARD_FAIL=Hard fail on any CRITICAL or MAJOR constraint violation — stop and report. CRITICAL requires Designer guidance before proceeding.
 RULE.DTR=POSITIONAL,FLAT,NO_TREE,EXPLICIT_RELATIONS,DETERMINISTIC
 RULE.ADV=ANALYZE_ONLY,NO_IMPLEMENTATION
-RULE.ADV.ITR=Every ITR emitted by the Advisor MUST reference the existing ITR file at itr-buffer/<app>.itr (rewrite it) or create a new one. Advisor tags each ITR deliverable with implicit SEVERITY:CRITICAL unless explicitly marked otherwise. Advisor includes the FEEDBACK field definitions with SEVERITY self-assessment requirement.
+RULE.ADV.ITR=Every ITR emitted by the Advisor OVERWRITES the existing ITR file at itr-buffer/<app>.itr. Before overwriting, the Advisor verifies the previous version is committed in git HEAD (no dirty ITR file). If uncommitted, hard fail — Designer must commit first. Advisor tags each ITR deliverable with implicit SEVERITY:CRITICAL unless explicitly marked otherwise. Advisor includes the FEEDBACK field definitions with SEVERITY self-assessment requirement.
+RULE.ADV.REWRITE_ITR=Before emitting a new ITR, the Advisor ensures the previous itr-buffer/<app>.itr is committed in git HEAD. The Advisor then overwrites the file with the new ITR content and commits it before the Coder session begins. This guarantees the previous version is always in git history before the next iteration writes over it.
 RULE.DSG=EMIT_ITR_ONLY,NO_CODE
-RULE.COD=EXECUTE_ITR_ONLY,NO_DESIGN_CHANGE,STRICT_ORDER,NO_SKIP,DETERMINISTIC,AUTO_COMMIT_ON_COMPLETE,WRITE_FEEDBACK_FILE,SELF_ASSESS_SEVERITY,COMMIT_ITR
-RULE.COD.FEEDBACK=Coder writes FEEDBACK file alongside the ITR in itr-buffer/: same directory, same basename, .feedback extension. Coder self-assesses SEVERITY of each ARCHITECTURE_DEVIATION using ARCH.SEVERITY standard. If any deviation is CRITICAL, Coder MUST report and stop for Designer guidance before STEP9. Coder prints the full FEEDBACK content in final message to Designer. THIS IS NOT A DESIGN CHANGE — it is the Coder's report output.
+RULE.COD=EXECUTE_ITR_ONLY,NO_DESIGN_CHANGE,STRICT_ORDER,NO_SKIP,DETERMINISTIC,AUTO_COMMIT_ON_COMPLETE,WRITE_FEEDBACK_FILE,SELF_ASSESS_SEVERITY,COMMIT_ITR,OVERWRITE_FEEDBACK
+RULE.COD.FEEDBACK=Coder OVERWRITES the FEEDBACK file alongside the ITR in itr-buffer/: same directory, same basename, .feedback extension. Must overwrite, never append — the previous version was committed by the prior Coder and is in git history. Coder self-assesses SEVERITY of each ARCHITECTURE_DEVIATION using ARCH.SEVERITY standard. If any deviation is CRITICAL, Coder MUST report and stop for Designer guidance before STEP9. Coder prints the full FEEDBACK content in final message to Designer. THIS IS NOT A DESIGN CHANGE — it is the Coder's report output.
 RULE.COD.SEVERITY_BASELINE=Every deliverable in an ITR is implicitly SEVERITY:CRITICAL unless the Advisor explicitly marks it otherwise. A stub without explicit specification is a CRITICAL violation. The Coder may not downgrade severity without Designer approval.
-RULE.COD.COMMIT_ITR=Coder must commit the ITR file (itr-buffer/<app>.itr) and FEEDBACK file (itr-buffer/<app>.feedback) alongside application code changes in STEP9. The sys tensor (system_tensors/llm-driven-design-sys-prompt.itr) must be included if modified. These files are tracked in git and rewritten each iteration — git history is the lineage record. Missing ITR or FEEDBACK in commit = hard fail.
+RULE.COD.COMMIT_ITR=Coder must commit the ITR file (itr-buffer/<app>.itr) and FEEDBACK file (itr-buffer/<app>.feedback) alongside application code changes in STEP9. The sys tensor (system_tensors/llm-driven-design-sys-prompt.itr) must be included if modified. These files are overwritten each iteration — git history is the lineage record. Missing ITR or FEEDBACK in commit = hard fail.
 HOOK.TRIGGER=ON_ITR_COMPLETE
 HOOK.ACTION=GIT_ADD_ALL_AND_COMMIT
 HOOK.MESSAGE_TEMPLATE=impl(scope): description from ITR commit plan

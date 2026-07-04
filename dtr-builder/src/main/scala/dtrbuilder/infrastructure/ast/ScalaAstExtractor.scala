@@ -60,20 +60,36 @@ class ScalaAstExtractor(regexFallback: RegexSignatureExtractor) extends Signatur
 
       case cls: Defn.Class =>
         val sigType = if (cls.mods.exists(_.is[Mod.Case])) SigType.CASE_CLASS else SigType.CLASS
-        buf += CodexEntry(relPath, sigType, cls.name.toString)
+        val name = cls.name.toString
+        buf += CodexEntry(relPath, sigType, name)
+        cls.templ.inits.foreach { init =>
+          buf += CodexEntry(relPath, SigType.EXTENDS, s"$name extends ${init.toString}")
+        }
         super.apply(tree)
 
       case trt: Defn.Trait =>
-        buf += CodexEntry(relPath, SigType.TRAIT, trt.name.toString)
+        val name = trt.name.toString
+        buf += CodexEntry(relPath, SigType.TRAIT, name)
+        trt.templ.inits.foreach { init =>
+          buf += CodexEntry(relPath, SigType.EXTENDS, s"$name extends ${init.toString}")
+        }
         super.apply(tree)
 
       case obj: Defn.Object =>
         val sigType = if (obj.mods.exists(_.is[Mod.Case])) SigType.CASE_OBJECT else SigType.OBJECT
-        buf += CodexEntry(relPath, sigType, obj.name.toString)
+        val name = obj.name.toString
+        buf += CodexEntry(relPath, sigType, name)
+        obj.templ.inits.foreach { init =>
+          buf += CodexEntry(relPath, SigType.EXTENDS, s"$name extends ${init.toString}")
+        }
         super.apply(tree)
 
       case enm: Defn.Enum =>
-        buf += CodexEntry(relPath, SigType.ENUM, enm.name.toString)
+        val name = enm.name.toString
+        buf += CodexEntry(relPath, SigType.ENUM, name)
+        enm.templ.inits.foreach { init =>
+          buf += CodexEntry(relPath, SigType.EXTENDS, s"$name extends ${init.toString}")
+        }
         super.apply(tree)
 
       case defn: Defn.Def =>

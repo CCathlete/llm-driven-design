@@ -109,3 +109,52 @@ CODER_FEEDBACK.STEP8=WRITE_CODER_FEEDBACK
 STEP8.VERDICT=PASS
 STEP8.DETAIL=This file updated with v2 corrections.
 
+## v3 Meta-ITR: dtr-builder Self-Analysis
+
+ARCH.FEEDBACK.VERSION=5.3
+ARCH.FEEDBACK.ITR_ID=dtr-builder-self-analysis
+ARCH.FEEDBACK.CODER_NAME=opencode-coder-01
+ARCH.FEEDBACK.DATE=2026-07-04
+ARCH.FEEDBACK.CLARITY_RATING=5
+ARCH.FEEDBACK.AMBIGUOUS_LINES=None — meta-ITR is generic but self-documenting via ITR.LEGEND.
+ARCH.FEEDBACK.MISSING_CONTEXT=None — meta-ITR explicitly references actual source tree.
+ARCH.FEEDBACK.TOO_MUCH_DETAIL=None
+ARCH.FEEDBACK.ARCHITECTURE_DEVIATION=None
+ARCH.FEEDBACK.DOTENV_CLARITY=N/A
+ARCH.FEEDBACK.LANGUAGE_COVERAGE=5 — All languages in the codebase (Scala, Java, Python/JS/TS fixtures) are extracted.
+ARCH.FEEDBACK.STEP_ORDER_ISSUES=None
+ARCH.FEEDBACK.SUGGESTIONS=(1) Add STEP_TYPE_DEFINITION step to ITR generator to distinguish TYPE extraction from RELATION detection. (2) Consider adding cross-file EXTENDS resolution (currently only matches simple parent name, not fully-qualified). (3) Add RelationDetector integration test that verifies relation counts/types against a known fixture.
+ARCH.FEEDBACK.TIME_TAKEN=1h
+
+CODER_FEEDBACK.OBSERVATIONS
+OBSERVATION.SEVERITY.0=CRITICAL — IMPORT_DEP relations silently dropped due to FQN format mismatch: detectImports stripped file extension (.scala) from fromFqn, but DtrBuilderService filter expected it. All 230 import relations were filtered out. Fixed by removing .replaceAll("\\.\\w+$", "") in fromFqn generation.
+OBSERVATION.SEVERITY.1=CRITICAL — EXTENDS/IMPLEMENTS relations never produced because all extractors emit only the type name (e.g. "FileSystemDtrWriter") in CLASS/TRAIT entries, not the full declaration. RelationDetector searched for "extends" in signature text but it was never there. Fixed by adding EXTENDS/IMPLEMENTS as new SigTypes emitted by ScalaAstExtractor and JavaAstExtractor when class/trait/object has parent types.
+OBSERVATION.SEVERITY.2=MAJOR — Companion object pairs (class Foo + object Foo) created false-positive HOLDS relations. detectHolds treated the first type sig as "container" and the rest as "contained". Fixed by skipping entries where container name == contained name.
+OBSERVATION.SEVERITY.3=MAJOR — DtrBuilderService relation filter was over-fitted to HOLDS FQN format. Filter used r.fromFqn.contains(fe.relPath.replace('/', '.')) but import/extend relations used shorter FQNs (without extension). Fixed by checking r.fromFqn == fileFqn || r.fromFqn.startsWith(fileFqn + ".").
+OBSERVATION.SEVERITY.4=MINOR — Python/JS/TS extractors still don't emit EXTENDS entries (they use ANTLR listeners which weren't updated in this iteration). Acceptable as these languages have no production code in the repo.
+OBSERVATION.SEVERITY.5=TRIVIAL — The toFqn in EXTENDS relations is a simple name (e.g. "DtrWriter") not a fully-qualified name. Cross-file resolution to FQN would require import analysis.
+
+CODER_FEEDBACK.STEP1=VERIFY_BUILD
+STEP1.VERDICT=PASS
+STEP1.DETAIL=sbt compile + sbt test passed: 135/135 tests green. DtrBuilderIntegrationSpec confirms pipeline produces valid DTR output.
+
+CODER_FEEDBACK.STEP2=EXTRACT_DTR
+STEP2.VERDICT=PASS
+STEP2.DETAIL=Generated /tmp/dtr-builder-self.itr with --root pointing to entire monorepo, blocklisting target/, project/target/, .git/. Result: 109 files, 1517 codex entries, 66 types (before fixes).
+
+CODER_FEEDBACK.STEP3=ANALYZE_DTR
+STEP3.VERDICT=PASS_WITH_FINDINGS
+STEP3.DETAIL=Analysis revealed: (1) 600 VAL entries (correct, from Scala val declarations), (2) Only 11 relations (all HOLDS, 6/11 false companions), (3) Zero IMPORT_DEP despite 212 IMPORT codex entries, (4) Zero EXTENDS despite 16+ extends clauses in source, (5) All source files present as FILE entries. Root cause: FQN format mismatch + extractors lacking extends extraction.
+
+CODER_FEEDBACK.STEP4=ITERATE
+STEP4.VERDICT=PASS
+STEP4.DETAIL=Identified 3 code bugs and 1 design fragility: (1) detectImports strips extension, (2) detectExtends uses sigType.entryName instead of class name for fromFqn, (3) detectHolds false-positive companions, (4) DtrBuilderService filter over-fitted.
+
+CODER_FEEDBACK.STEP5=CORRECT
+STEP5.VERDICT=PASS
+STEP5.DETAIL=4 fixes applied: (1) DetectImports: removed `.replaceAll("\\.\\w+$", "")` to keep file extension in fromFqn. (2) DetectExtends: now handles SigType.EXTENDS/IMPLEMENTS entries explicitly with structured parsing, plus keeps regex fallback for CLASS/TRAIT entries with full declarations. (3) DetectHolds: skips same-name companion pairs. (4) DtrBuilderService filter: checks r.fromFqn == fileFqn || r.fromFqn.startsWith(fileFqn + "."). Also added EXTENDS/IMPLEMENTS as new SigTypes and updated ScalaAstExtractor + JavaAstExtractor to emit EXTENDS entries for types with parent inits. Re-ran DTR extraction: relations went from 11 → 338 (230 IMPORT_DEP, 103 EXTENDS, 5 HOLDS). All 135 tests still pass.
+
+CODER_FEEDBACK.STEP6=WRITE_CODER_FEEDBACK
+STEP6.VERDICT=PASS
+STEP6.DETAIL=This file updated with v3 meta-ITR feedback.
+
