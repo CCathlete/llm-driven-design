@@ -1,0 +1,10 @@
+{
+  "name": "dtr-builder-test",
+  "version": "0.1.0",
+  "languages": ["Scala", "Python", "JavaScript", "TypeScript"],
+  "features": {
+    "extraction": true,
+    "chunking": true,
+    "dotenv": true
+  }
+}
