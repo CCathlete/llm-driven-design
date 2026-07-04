@@ -4,7 +4,7 @@
 # Usage: dtr-builder --out <path> [options]
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-JAR_PATH="$SCRIPT_DIR/../target/scala-2.13/dtr-builder-0.1.0.jar"
+JAR_PATH="$SCRIPT_DIR/../target/scala-2.13/dtr-builder-0.1.1.jar"
 MAIN_CLASS="dtrbuilder.control.DtrApp"
 
 if [ ! -f "$JAR_PATH" ]; then
