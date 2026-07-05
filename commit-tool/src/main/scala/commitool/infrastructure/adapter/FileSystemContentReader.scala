@@ -20,8 +20,8 @@ class FileSystemContentReader extends FileContentReader {
       }
     } catch {
       case _: FileNotFoundException => Left(FileNotFound(path))
-      case e: IOException => Left(CommitValidationError.GitError(s"Error reading file '$path': ${e.getMessage}"))
-      case NonFatal(e) => Left(CommitValidationError.GitError(s"An unexpected error occurred while reading file '$path': ${e.getMessage}"))
+      case e: IOException => Left(ReadError(path, e.getMessage))
+      case NonFatal(e) => Left(ReadError(path, e.getMessage))
     } finally {
       source.foreach(_.close())
     }
