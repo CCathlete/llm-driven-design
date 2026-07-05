@@ -16,3 +16,6 @@ hs_err_pid*
 
 **/output
 **/input
+
+# Build artifacts — assembled JARs in project roots
+dtr-builder/*.jar
