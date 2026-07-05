@@ -144,7 +144,7 @@ object CliParser {
   private def printErrorAndExit(msg: String): Nothing = {
     System.err.println(s"Error: $msg")
     System.err.println("Usage: dtr-builder --out <path> [--root <path>] [options]")
-    System.err.println("   or: dtr-builder --create-baseline-dtr --app-name <name> --package <pkg> [options]")
+    System.err.println("   or: dtr-builder --create-baseline-dtr --app-name <name> [--root <path>] [options]")
     sys.exit(1)
     throw new IllegalStateException("unreachable")
   }
