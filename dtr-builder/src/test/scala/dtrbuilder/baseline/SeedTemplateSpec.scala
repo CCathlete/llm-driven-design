@@ -9,7 +9,8 @@ import org.scalatest.matchers.should.Matchers
   * Verifies:
   * - seed-dtr.dtr exists on the classpath
   * - Contains expected keys (ARCH, LAYER, META, FILE, CODEX, TYPE, REL)
-  * - Contains placeholder tokens ({{APP_NAME}}, {{PACKAGE_NAME}}, etc.)
+  * - Contains placeholder tokens ({{APP_NAME}}, {{ROOT_PATH}}, etc.)
+  * - No package-specific tokens remain
   * - Can be loaded via ClasspathSeedTemplateLoader
   */
 class SeedTemplateSpec extends AnyFlatSpec with Matchers {
@@ -37,8 +38,12 @@ class SeedTemplateSpec extends AnyFlatSpec with Matchers {
     val content = loader.loadSeed()
     content should include("META.GENERATOR=")
     content should include("META.APP_NAME=")
-    content should include("META.PACKAGE_NAME=")
     content should include("META.ROOT_PATH=")
+  }
+
+  it should "not contain PACKAGE_NAME" in {
+    val content = loader.loadSeed()
+    content should not include "PACKAGE_NAME"
   }
 
   it should "contain FILE entries" in {
@@ -64,11 +69,15 @@ class SeedTemplateSpec extends AnyFlatSpec with Matchers {
   it should "contain placeholder tokens for substitution" in {
     val content = loader.loadSeed()
     content should include("{{APP_NAME}}")
-    content should include("{{PACKAGE_NAME}}")
-    content should include("{{PACKAGE_PATH}}")
     content should include("{{ROOT_PATH}}")
     content should include("{{LANGUAGE}}")
     content should include("{{TIMESTAMP}}")
+  }
+
+  it should "not contain PACKAGE_PATH or PACKAGE_NAME tokens" in {
+    val content = loader.loadSeed()
+    content should not include "{{PACKAGE_NAME}}"
+    content should not include "{{PACKAGE_PATH}}"
   }
 
   it should "contain domain layer files" in {
