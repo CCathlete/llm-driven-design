@@ -23,8 +23,12 @@ class CommitTypeSpec extends AnyFlatSpec with Matchers {
     val invalidType = "invalid"
     val validTypesString = CommitType.allTypes.map(_.label).mkString("|")
 
-    CommitType.fromString(invalidType) should matchPattern {
-      case Left(UnknownType(got, valid)) if got == invalidType && valid == validTypesString =>
+    val result = CommitType.fromString(invalidType)
+    result match {
+      case Left(UnknownType(got, valid)) =>
+        got shouldBe invalidType
+        valid shouldBe validTypesString
+      case other => fail(s"Expected Left(UnknownType(...)) but got $other")
     }
   }
 }
