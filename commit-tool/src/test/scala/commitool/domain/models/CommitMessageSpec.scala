@@ -7,12 +7,7 @@ import org.scalatest.matchers.should.Matchers
 class CommitMessageSpec extends AnyFlatSpec with Matchers {
 
   "CommitMessage.fromRaw" should "parse valid message correctly" in {
-    val rawMessage = """
-      feat(scope): description
-      
-      body content
-      more body content
-      """
+    val rawMessage = "feat(scope): description\n\nbody content\nmore body content"
 
     CommitMessage.fromRaw(rawMessage) should matchPattern {
       case Right(CommitMessage(CommitType.Feat, "scope", "description", body)) if body == "body content\nmore body content" =>
