@@ -10,5 +10,5 @@ DOTENV_CLARITY=5
 LANGUAGE_COVERAGE=100
 STEP_ORDER_ISSUES=NONE
 SUGGESTIONS=NONE
-TIME_TAKEN=20
-COMMIT_MESSAGE=Fixed DotEnvLoader implementation in commit-tool to properly handle ValueType and ensure compilation.
+TIME_TAKEN=45
+COMMIT_MESSAGE=Fixed DotEnvLoader implementation in commit-tool to properly handle ValueType, fixed compilation and test errors across all modules.
