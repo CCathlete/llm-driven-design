@@ -30,7 +30,6 @@ object CliParser {
     var showVersion = false
     var createBaseline = false
     var appName: Option[String] = None
-    var packageName: Option[String] = None
     var language: String = "Scala"
 
     var i = 0
