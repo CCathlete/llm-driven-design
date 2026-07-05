@@ -1,104 +1,80 @@
-ITR.LEGEND=> flow, X exchange, , list separator, ${} expansion, | item separator, CRITICAL severity marker, MAJOR severity marker, CU computational unit, -> relation arrow
+ITR.LEGEND=> flow, X exchange, , list separator, ${} expansion, | item separator, CRITICAL severity marker, CU computational unit, -> relation arrow
 ARCH=HEX,DI,DIP,NO_CROSS_LAYER,PORT_FLOW_OUT_IN,DOTENV_WALKUP,CODER_FEEDBACK,SEVERITY,ITR_LIFECYCLE,HARD_FAIL,DTR_DELTA_VERIFICATION
 LAYER.ORDER=DOMAIN,APPLICATION,INFRASTRUCTURE,CONTROL
 APP=commit-tool
-ITERATION=002
+ITERATION=003
 SEVERITY_BASELINE=CRITICAL
-SCOPE=Correct spec deviations from ITERATION=001: fix build.sbt assembly script (MAJOR), fix body truncation in CommitMessage.fromRaw (MINOR), fix single-quote ${} expansion in DotEnvLoader (MINOR), add ReadError type for IO errors, update tests
+SCOPE=SEVERITY:CRITICAL — Fix DotEnvLoader: v002 introduced a non-compilable broken partial implementation of the single-quote literal fix. Complete the ValueType integration properly.
 
 #
-# Baseline: previous implementation is at HEAD
-# This ITERATION targets only the listed fixes
+# Previous iteration (v002) results:
+#   - build.sbt assembly script: FIXED
+#   - CommitMessage body truncation: FIXED
+#   - ReadError type added: FIXED
+#   - FileSystemContentReader: FIXED
+#   - Multi-paragraph test: ADDED
+#   - DotEnvLoader single-quote fix: BROKEN — does not compile, ValueType not integrated into pipeline
+#
+# This iteration (v003) targets ONLY DotEnvLoader to fix it properly.
 #
 
-CU.1.ADDRESS=commit-tool/build.sbt
-CU.1.LABEL=SEVERITY:MAJOR — Fix assembly prepend script: replace defaultUniversalScript with explicit script per spec
-CU.1.INSTRUCT=Replace the assembly configuration block. Remove the assembly / assemblyOption line that uses defaultUniversalScript(shebang = false). Add these lines instead:
-  assembly / assemblyJarName := "commit-tool"
-  assembly / assemblyOutputPath := baseDirectory.value / "commit-tool"
-  assembly / assemblyPrependShellScript := Some(Seq(
-    "#!/usr/bin/env sh",
-    """exec java -jar "$0" "$@""""
-  ))
-Keep all other build.sbt content (name, organization, scalaVersion, mainClass, resolvers, scalacOptions, Test/fork, libraryDependencies) unchanged.
+CU.1.ADDRESS=commit-tool/src/main/scala/commitool/infrastructure/environment/DotEnvLoader.scala
+CU.1.LABEL=SEVERITY:CRITICAL — Complete the single-quote literal fix: integrate ValueType into the full load pipeline, fix syntax error, remove dead code
+CU.1.INSTRUCT=Rewrite DotEnvLoader to properly integrate the ValueType/Expandable/Literal tagging throughout the pipeline. The current v002 code has:
+  1. A stray unmatched closing brace on line 66 (syntax error)
+  2. envVars is still Map[String, String] — doesn't accept ValueType
+  3. resolveExpansions still takes Map[String, String] — never sees the ValueType
+  4. Dead code on lines 37-38 (sys.env.foreach discarding results)
+  
+Make these changes:
 
-CU.2.ADDRESS=commit-tool/src/main/scala/commitool/domain/models/CommitMessage.scala
-CU.2.LABEL=SEVERITY:MINOR — Fix body truncation: body must be ALL content after the header-blank-line separator, preserving internal blank lines
-CU.2.INSTRUCT=In the fromRaw companion object method, replace the body extraction logic (lines ~35-45 of current file) with:
-  val bodyStartIndex = raw.indexOf("\n\n")
-  val bodyContent = if (bodyStartIndex != -1) {
-    raw.substring(bodyStartIndex + 2).trim
-  } else ""
-  Then validate bodyContent.nonEmpty -> Left(EmptyBody), else use it as-is.
-  Remove the logic that searches for firstBlankLineIndex within bodyLines and truncates there. The body should preserve all content, including any blank lines within it, after the first \n\n separator.
-  Also verify the test at CommitMessageSpec handles multi-paragraph bodies (body with internal blank lines) correctly.
+  A. Keep the ValueType sealed trait structure (already added correctly in v002):
+    private sealed trait ValueType
+    private case class Literal(value: String) extends ValueType
+    private case class Expandable(value: String) extends ValueType
 
-CU.3.ADDRESS=commit-tool/src/main/scala/commitool/infrastructure/environment/DotEnvLoader.scala
-CU.3.LABEL=SEVERITY:MINOR — Fix single-quoted value expansion: literal values must NOT undergo ${} expansion
-CU.3.INSTRUCT=Modify the parsing pipeline to tag values by their quoting mode:
-  1. Define a private sealed trait ValueType with case classes Literal(value: String) and Expandable(value: String)
-  2. Change parseValue to return ValueType instead of String:
-     - Single-quoted ('...') -> Literal(content inside quotes, with quotes stripped)
-     - Double-quoted ("...") -> Expandable(content inside quotes, with quotes stripped)
-     - Unquoted -> Expandable(value.trim)
-  3. Update the keyValueRegex handler in load() to store ValueType instead of raw String.
-     Keep mutable Map[String, ValueType] for intermediate storage.
-  4. In resolveExpansions (or in a post-processing step after resolution), skip expansion for Literal values:
-     - Expandable values: apply varExpansionRegex replacement as before
-     - Literal values: return the value as-is, no expansion
-  5. Remove the dead-code sys.env.foreach block on the immutable map (currently lines 36-38) — system env vars are already loaded before .env processing.
-  Ensure the final return Map[String, String] contains only the resolved string values.
+  B. Fix parseValue — KEEP the existing v002 implementation (it's correct). Remove the stray extra closing brace that was introduced.
 
-CU.4.ADDRESS=commit-tool/src/main/scala/commitool/domain/models/CommitValidationError.scala
-CU.4.LABEL=SEVERITY:TRIVIAL — Add ReadError case for file IO errors (currently misusing GitError)
-CU.4.INSTRUCT=Add a new case class:
-  case class ReadError(path: String, detail: String) extends CommitValidationError {
-    override def message: String = s"Error reading file '$path': $detail"
-  }
-  Keep all existing error types unchanged.
+  C. Change envVars from Map[String, String] to Map[String, ValueType]:
+    val envVars = mutable.Map[String, ValueType]()
 
-CU.5.ADDRESS=commit-tool/src/main/scala/commitool/infrastructure/adapter/FileSystemContentReader.scala
-CU.5.LABEL=SEVERITY:TRIVIAL — Use ReadError instead of GitError for IOException
-CU.5.INSTRUCT=Replace the two catch blocks that use `CommitValidationError.GitError(...)` for file IO errors:
-  - `case e: IOException => Left(ReadError(path, e.getMessage))`
-  - `case NonFatal(e) => Left(ReadError(path, e.getMessage))`
-  Remove the GitError import if it's no longer needed (but keep it if still referenced elsewhere in the file).
-  Add import for ReadError if not already present.
+  D. Remove the dead sys.env.foreach block after resolveExpansions (currently lines 37-38). System env vars are already loaded before .env processing on line 18.
 
-CU.6.ADDRESS=commit-tool/src/test/scala/commitool/domain/models/CommitMessageSpec.scala
-CU.6.LABEL=Add test for multi-paragraph body (with internal blank lines) to verify body truncation fix
-CU.6.INSTRUCT=Add a test case:
-  it should "preserve multi-paragraph body with blank lines" in {
-    val raw = "feat(scope): description\n\nParagraph one.\n\nParagraph two.\n\nParagraph three."
-    CommitMessage.fromRaw(raw) should matchPattern {
-      case Right(CommitMessage(_, _, _, body)) if body == "Paragraph one.\n\nParagraph two.\n\nParagraph three." =>
-    }
-  }
-CU.6.DEPENDENCY=CU.2
+  E. Change resolveExpansions to accept Map[String, ValueType] and handle the Literal/Expandable distinction:
+    private def resolveExpansions(raw: Map[String, ValueType]): Map[String, String]
+    
+    For each key:
+    - If ValueType is Literal(value) -> return value as-is, no expansion
+    - If ValueType is Expandable(value) -> apply varExpansionRegex replacement (same logic as current expandVar)
+    
+    Implementation approach:
+    1. Separate into literalVars and expandableVars
+    2. Resolve expansions on expandableVars only (same recursive resolution with depth/cycle detection)
+    3. Merge literalVars with expanded expandableVars
+    4. Return Map[String, String]
 
-CU.7.ADDRESS=commit-tool/src/test/scala/commitool/domain/models/CommitTypeSpec.scala
-CU.7.LABEL=Tests already exist — no change needed
-CU.7.INSTRUCT=No action required. Acknowledged.
+  F. Ensure the final return type of load() is still Map[String, String] — the resolved types are String.
+
+  G. Verify the file compiles with sbt compile before submitting.
+
+CU.2.ADDRESS=commit-tool/src/test/scala/commitool/domain/models/CommitMessageSpec.scala
+CU.2.LABEL=No change needed — multi-paragraph body test already added in v002
+CU.2.INSTRUCT=Acknowledged. No action required.
 
 #
-# Layer summaries (existing architecture, unchanged)
+# Layer summaries (unchanged from v002)
 #
 
-DOMAIN=CommitType, StagedChange, Changelist, CommitValidationError (+ReadError new), CommitMessage (+body fix)
-APPLICATION=GitStagedChangesReader, GitCommitRunner, FileContentReader (ports), CommitUseCase (use case)
-INFRASTRUCTURE=ShellStagedChangesReader, ShellGitCommitRunner, FileSystemContentReader (+ReadError), DotEnvLoader (+literal fix), Environment
+DOMAIN=CommitType, StagedChange, Changelist, CommitValidationError, CommitMessage
+APPLICATION=GitStagedChangesReader, GitCommitRunner, FileContentReader (ports), CommitUseCase
+INFRASTRUCTURE=ShellStagedChangesReader, ShellGitCommitRunner, FileSystemContentReader, DotEnvLoader (FIX), Environment
 CONTROL=CliParser, Container, CommitToolApp
 
 #
 # Execution steps
 #
 
-ITR_GEN.STEP1=FIX_ASSEMBLY_SCRIPT — update build.sbt with explicit prepend script (CU.1)
-ITR_GEN.STEP2=FIX_BODY_TRUNCATION — fix CommitMessage.fromRaw body extraction (CU.2)
-ITR_GEN.STEP3=FIX_DOTENV_SINGLE_QUOTE — fix single-quoted value expansion in DotEnvLoader (CU.3)
-ITR_GEN.STEP4=ADD_READ_ERROR — add ReadError case to CommitValidationError (CU.4)
-ITR_GEN.STEP5=FIX_FILEREADER_ERROR — use ReadError in FileSystemContentReader (CU.5)
-ITR_GEN.STEP6=UPDATE_TESTS — add multi-paragraph body test (CU.6)
-ITR_GEN.STEP7=VERIFY_DTR_DELTAS — run dtr-builder to verify no regressions
-ITR_GEN.STEP8=WRITE_FEEDBACK — overwrite itr-buffer/commit-tool.feedback with self-assessment
-ITR_GEN.STEP9=GENERATE_COMMITS — commit all changes with custom message from FEEDBACK.COMMIT_MESSAGE
+ITR_GEN.STEP1=FIX_DOTENV_LOADER — complete ValueType integration, fix syntax, remove dead code (CU.1)
+ITR_GEN.STEP2=VERIFY_COMPILATION — run `sbt compile` and confirm zero errors
+ITR_GEN.STEP3=WRITE_FEEDBACK — overwrite itr-buffer/commit-tool.feedback with self-assessment
+ITR_GEN.STEP4=GENERATE_COMMITS — commit all changes with custom message from FEEDBACK.COMMIT_MESSAGE
