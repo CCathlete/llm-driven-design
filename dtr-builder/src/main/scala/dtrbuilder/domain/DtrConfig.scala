@@ -9,11 +9,21 @@ final case class DtrConfig(
     maxChunkSize: Long = DtrConfig.defaultMaxChunkSize,
     chunkEnabled: Boolean = true,
     noDotenv: Boolean = false,
-    additionalFilters: Seq[String] = Seq.empty
+    additionalFilters: Seq[String] = Seq.empty,
+    mode: DtrConfig.Mode = DtrConfig.ExtractMode
 )
 
 object DtrConfig {
   val defaultMaxChunkSize: Long = 1024 * 1024 // 1 MB
+
+  /** Sealed trait for distinguishing pipeline modes. */
+  sealed trait Mode
+  case object ExtractMode extends Mode
+  final case class CreateBaselineMode(
+      appName: String,
+      packageName: String,
+      language: String
+  ) extends Mode
 
   /** Create a DtrConfig with defaults, only requiring root and output paths. */
   def apply(pathRoot: Path, outputPath: Path): DtrConfig =
