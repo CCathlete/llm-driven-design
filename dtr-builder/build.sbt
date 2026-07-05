@@ -56,7 +56,7 @@ assembly / assemblyOutputPath := baseDirectory.value / "dtr-builder"
 assembly / assemblyPrependShellScript := Some(
   Seq(
     "#!/usr/bin/env sh",
-    """exec java -jar "$0" "$@" """
+    """exec java -jar "$0" "$@""""
   )
 )
 
