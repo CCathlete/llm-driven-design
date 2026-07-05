@@ -114,7 +114,7 @@ object CliParser {
       s"""dtr-builder v${Version} — Automated Extractor (X node)
          |
          |Usage: dtr-builder --out <path> [options]
-         |   or: dtr-builder --create-baseline-dtr --app-name <name> --package <pkg> [options]
+         |   or: dtr-builder --create-baseline-dtr --app-name <name> [options]
          |
          |Extract mode (default):
          |  --out <path>          Output file path template
@@ -126,7 +126,7 @@ object CliParser {
          |Baseline generation mode:
          |  --create-baseline-dtr Activate baseline DTR generation mode
          |  --app-name <name>     Application name (required)
-         |  --package <pkg>       Base package name (required, e.g. com.example.myapp)
+         |  --root <path>         DTR root path for generated output (default: current directory)
          |  --language <lang>     Primary language (default: Scala)
          |  --out <path>          Output path (default: <app-name>.dtr)
          |
