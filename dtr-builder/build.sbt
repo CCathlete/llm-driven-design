@@ -50,7 +50,7 @@ Test / fork := true
 
 // Assembly settings
 assembly / assemblyJarName := s"${name.value}-${version.value}.jar"
-assembly / outputPath := baseDirectory.value / s"${name.value}-${version.value}.jar"
+assembly / assemblyOutputPath := baseDirectory.value / s"${name.value}-${version.value}.jar"
 
 assembly / assemblyMergeStrategy := {
   case PathList("META-INF", xs @ _*) =>
