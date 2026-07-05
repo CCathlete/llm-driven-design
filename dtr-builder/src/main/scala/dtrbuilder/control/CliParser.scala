@@ -79,7 +79,6 @@ object CliParser {
 
     if (createBaseline) {
       val name = appName.getOrElse(printErrorAndExit("--app-name <name> is required in --create-baseline-dtr mode"))
-      val pkg  = packageName.getOrElse(printErrorAndExit("--package <package> is required in --create-baseline-dtr mode"))
 
       DtrConfig(
         pathRoot = root,
@@ -90,7 +89,6 @@ object CliParser {
         additionalFilters = filters,
         mode = DtrConfig.CreateBaselineMode(
           appName = name,
-          packageName = pkg,
           language = language
         )
       )
