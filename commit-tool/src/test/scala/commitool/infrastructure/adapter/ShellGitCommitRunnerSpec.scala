@@ -37,7 +37,7 @@ class ShellGitCommitRunnerSpec extends AnyFlatSpec with Matchers with BeforeAndA
     }
 
     // Verify the commit was created
-    val logOutput = Seq("git", "log", "--oneline").!!.trim
+    val logOutput = Process(Seq("git", "log", "--oneline"), tempDir.toFile).!!.trim
     logOutput should include regex """feat\(scope\): test commit"""
   }
 
