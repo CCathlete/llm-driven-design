@@ -42,7 +42,7 @@ object DtrApp {
       case e: IllegalArgumentException =>
         System.err.println(s"Error: ${e.getMessage}")
         System.err.println("Usage: dtr-builder --out <path> [--root <path>] [options]")
-        System.err.println("   or: dtr-builder --create-baseline-dtr --app-name <name> --package <pkg> [options]")
+        System.err.println("   or: dtr-builder --create-baseline-dtr --app-name <name> [--root <path>] [options]")
         sys.exit(1)
       case e: Exception =>
         System.err.println(s"Fatal error: ${e.getMessage}")
