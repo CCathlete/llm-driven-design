@@ -100,8 +100,8 @@ object DtrApp {
   private def runBaselineMode(config: DtrConfig, baseline: DtrConfig.CreateBaselineMode): Unit = {
     println(s"DTR Builder v${CliParser.Version} — Baseline Generation Mode")
     println(s"App:     ${baseline.appName}")
-    println(s"Package: ${baseline.packageName}")
     println(s"Lang:    ${baseline.language}")
+    println(s"Root:    ${config.pathRoot}")
     println(s"Out:     ${config.outputPath}")
     println()
 
@@ -113,7 +113,6 @@ object DtrApp {
     println("Loading seed template and generating baseline DTR...")
     val entries = generator.generate(
       appName     = baseline.appName,
-      packageName = baseline.packageName,
       rootPath    = config.pathRoot.toString,
       language    = baseline.language
     )
