@@ -1,6 +1,9 @@
-# DTR: TYPE.itr-compiler.application.ports.Port, TYPE.itr-compiler.application.services.Service, TYPE.itr-compiler.application.use_cases.UseCase, REL.itr-compiler.application.services.Service->itr-compiler.application.ports.Port, REL.itr-compiler.application.use_cases.UseCase->itr-compiler.application.ports.Port, REL.itr-compiler.application.use_cases.UseCase->itr-compiler.application.services.Service
-APPLICATION.PORTS=Port
-APPLICATION.SERVICES=Service
-APPLICATION.USE_CASES=UseCase
-APPLICATION.FILES=application/ports/Port.scala,application/services/Service.scala,application/use_cases/UseCase.scala
-APPLICATION.RELATIONS=Service->Port,UseCase->Port,UseCase->Service
+# DTR: TYPE.itr-compiler.application.ports.Port, TYPE.itr-compiler.application.services.Service, TYPE.itr-compiler.application.use_cases.UseCase, REL.*Service->Port, REL.*UseCase->Port, REL.*UseCase->Service
+APPLICATION.EXISTING_PORTS=Port
+APPLICATION.EXISTING_SERVICES=Service
+APPLICATION.EXISTING_USE_CASES=UseCase
+APPLICATION.EXISTING_FILES=application/ports/Port.scala,application/services/Service.scala,application/use_cases/UseCase.scala
+# DTR: (New section, no coordinates in DTR)
+APPLICATION.NEW_PORTS=DTRLoaderPort,CUWriterPort,ContentParserPort
+APPLICATION.NEW_SERVICES=CompileService,DTRCoordinateValidator,ContentParser,CUFileManager
+APPLICATION.NEW_FILES=application/ports/DTRLoaderPort.scala,application/ports/CUWriterPort.scala,application/ports/ContentParserPort.scala,application/services/CompileService.scala,application/services/DTRCoordinateValidator.scala,application/services/ContentParser.scala,application/services/CUFileManager.scala
