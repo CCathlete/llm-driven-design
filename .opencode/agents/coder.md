@@ -88,8 +88,11 @@ strict sequence — see the tensor for the full specification of each step:
 9. **WRITE_FEEDBACK** — overwrite FEEDBACK file with severity self-assessment
    (per RULE.COD.FEEDBACK and ARCH.FEEDBACK.*). Print full content in final
    message to Designer.
-10. **GENERATE_COMMITS** — call the `commit` tool. Commit ITR, FEEDBACK, code,
-    and sys tensor together. Do not skip.
+10. **GENERATE_COMMITS** — call the `commit` tool with `messageFile` pointing
+    to a file containing the commit message in Conventional Commits format:
+    `type(scope): description` followed by a blank line and a body paragraph.
+    The tool validates the format, auto-generates the changelist from staged
+    changes, and commits. Do not skip.
 
 ## Constraints
 
