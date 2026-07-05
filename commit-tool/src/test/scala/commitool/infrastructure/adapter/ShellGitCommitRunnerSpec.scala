@@ -11,7 +11,7 @@ import scala.sys.process.ProcessLogger
 class ShellGitCommitRunnerSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
   private var tempDir: Path = _
-  private val commitRunner = new ShellGitCommitRunner
+  private var commitRunner: ShellGitCommitRunner = _
 
   override def beforeEach(): Unit = {
     tempDir = Files.createTempDirectory("commit-tool-test")
