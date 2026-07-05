@@ -231,3 +231,6 @@ ITR_GEN.STEP6=GENERATE_TESTS — write all tests (CU.6, CU.7, CU.8)
 ITR_GEN.STEP7=VERIFY_DTR_DELTAS — run dtr-builder to generate DTR, verify all NEW_DTR_LINES are present
 ITR_GEN.STEP8=WRITE_FEEDBACK — overwrite itr-buffer/commit-tool.feedback with self-assessment
 ITR_GEN.STEP9=GENERATE_COMMITS — commit all changes with custom message from FEEDBACK.COMMIT_MESSAGE
+
+# Baseline reference
+BASELINE_DTR=output/commit-tool.dtr
