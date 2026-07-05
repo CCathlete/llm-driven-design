@@ -1,160 +1,71 @@
-ARCH.FEEDBACK.VERSION=5.3
-ARCH.FEEDBACK.ITR_ID=dtr-builder-corrections
+ARCH.FEEDBACK.VERSION=5.6
+ARCH.FEEDBACK.ITR_ID=dtr-builder-iteration-014
 ARCH.FEEDBACK.CODER_NAME=opencode-coder-01
-ARCH.FEEDBACK.DATE=2026-07-04
+ARCH.FEEDBACK.DATE=2026-07-05
 ARCH.FEEDBACK.CLARITY_RATING=4
-ARCH.FEEDBACK.AMBIGUOUS_LINES=STEP3 AST extractors: ITR said "full AST traversal per language grammar" but did not specify ANTLR vs scalameta vs JavaParser boundaries. Clarified via existing ARCH constraints.
-ARCH.FEEDBACK.MISSING_CONTEXT=Java Properties escape handling: ITR did not document that .properties parser consumes backslashes. This caused regex compilation failures and required double-escape fix in v2.
+ARCH.FEEDBACK.AMBIGUOUS_LINES=CU.5 address says "control/DtrConfig.scala" but DtrConfig lives in domain layer. CU.4-7 all reference "control/..." paths that are correct. Intent was clear — modify DtrConfig wherever it lives.
+
+ITR_GEN steps use custom numbering (STEP1-STEP10) instead of system tensor canonical steps (STEP1-STEP9+STEP8.5). The ITR maps: 1→infrastructure, 2→port+bind+infrastructure, 3→application, 4→domain, 5-7→control, 8→tests, 9→feedback, 10→commits. Functional mapping is correct.
+ARCH.FEEDBACK.MISSING_CONTEXT=None — the ITR described all CUs (1-9) with explicit addresses, labels, and instructions. Seed template format was left to coder judgment but placeholder tokens were specified.
 ARCH.FEEDBACK.TOO_MUCH_DETAIL=None
-ARCH.FEEDBACK.ARCHITECTURE_DEVIATION=Python/JavaScript/TypeScript AST extractors use regex fallback instead of grammar-driven ANTLR parsing — SEVERITY:MAJOR
-ARCH.FEEDBACK.DOTENV_CLARITY=5
-ARCH.FEEDBACK.LANGUAGE_COVERAGE=4
-ARCH.FEEDBACK.STEP_ORDER_ISSUES=None
-ARCH.FEEDBACK.SUGGESTIONS=(1) Document Java .properties backslash escaping in the ITR authoring guide. (2) Add a STEP0 placeholder for build verification before code changes. (3) Prefer double-escaped regex patterns in .properties files going forward.
-ARCH.FEEDBACK.TIME_TAKEN=2.5h
+ARCH.FEEDBACK.ARCHITECTURE_DEVIATION=None — all code follows HEX, DI, DIP, NO_CROSS_LAYER, PORT_FLOW_OUT_IN constraints. Ports defined in application layer, adapters in infrastructure. No cross-layer violations. Container properly wires dependencies.
+ARCH.FEEDBACK.DOTENV_CLARITY=N/A — no dotenv changes in this iteration
+ARCH.FEEDBACK.LANGUAGE_COVERAGE=5 — Scala implementation with full type annotations, slotted frozen dataclasses where applicable
+ARCH.FEEDBACK.STEP_ORDER_ISSUES=None — followed ITR steps in order (1-10)
+ARCH.FEEDBACK.SUGGESTIONS=(1) Consider aligning ITR step numbering with system tensor canonical steps (LOCK_ARCH, MAP_LAYERS, BIND_PORTS, etc.) for consistency. (2) Add a CU for testing the CliParser baseline flags directly. (3) Consider adding a --root override for baseline mode (currently defaults to cwd).
+ARCH.FEEDBACK.TIME_TAKEN=30
 
 CODER_FEEDBACK.OBSERVATIONS
-OBSERVATION.SEVERITY.0=CRITICAL — DIP violation: DtrWriter was concrete class in application layer. Fixed by refactoring to trait (port) + FileSystemDtrWriter adapter.
-OBSERVATION.SEVERITY.1=CRITICAL — AST extractors were stubs (5 extractors returned empty). Fixed by implementing ScalaAstExtractor (scalameta), JavaAstExtractor (JavaParser), and ANTLR-reflection based Python/JS/TS extractors.
-OBSERVATION.SEVERITY.2=MAJOR — Hardcoded language profiles. Fixed by externalizing to 15 .properties files with LanguageProfileLoader.
-OBSERVATION.SEVERITY.3=MAJOR — Python/JS/TS ANTLR extractors use reflection-based loading (grammar classes not yet generated). Addressed in v2 with full .g4 grammar files and sbt-antlr4 plugin.
-OBSERVATION.SEVERITY.4=MINOR — Feedback format not v5.3 compliant. Fixed in v2.
-OBSERVATION.SEVERITY.5=TRIVIAL — Unused imports and deprecation warnings in test files. Cleaned up.
+OBSERVATION.SEVERITY.0=MINOR — ITR custom step numbering diverges from system tensor canonical steps. ITR uses STEP1=CREATE_SEED_TEMPLATE through STEP10=GENERATE_COMMITS, while system tensor defines STEP1=LOCK_ARCH through STEP9=GENERATE_COMMITS (with STEP8.5). Functional equivalence is preserved; step mapping is one-to-one with correct layer ordering.
 
-CODER_FEEDBACK.STEP1=FIX_BUILD_DEPS
+OBSERVATION.SEVERITY.1=TRIVIAL — CU.5 address references "control/DtrConfig.scala" but actual file is in domain layer. Implemented correctly in domain/DtrConfig.scala per existing architecture.
+
+OBSERVATION.SEVERITY.2=TRIVIAL — Unused import `RawEntry` in BaselineDtrGeneratorSpec; `Using` in ClasspathSeedTemplateLoader. Both cleaned up.
+
+CODER_FEEDBACK.STEP1=CREATE_SEED_TEMPLATE
 STEP1.VERDICT=PASS
-STEP1.DETAIL=Uncommented scalameta 4.12.6, javaparser-core 3.26.2, antlr4-runtime 4.13.2 in build.sbt
+STEP1.DETAIL=Created src/main/resources/seed/seed-dtr.dtr with golden architecture template including ARCH, LAYER, META, FILE, CODEX, TYPE, REL entries and placeholder tokens {{APP_NAME}}, {{PACKAGE_NAME}}, {{PACKAGE_PATH}}, {{ROOT_PATH}}, {{LANGUAGE}}, {{TIMESTAMP}}.
+STEP1.FILES=src/main/resources/seed/seed-dtr.dtr
 
-CODER_FEEDBACK.STEP2=EXTRACT_WRITER_PORT
+CODER_FEEDBACK.STEP2=IMPLEMENT_SEED_TEMPLATE_LOADER
 STEP2.VERDICT=PASS
-STEP2.DETAIL=DtrWriter converted from concrete class in application layer to trait (port); FileSystemDtrWriter created as infrastructure adapter. DIP violation fixed.
+STEP2.DETAIL=Created SeedTemplateLoader port trait in application layer and ClasspathSeedTemplateLoader adapter in infrastructure layer. Port defines loadSeed(): String. Adapter reads from classpath resource "seed/seed-dtr.dtr". Proper DIP: application owns the interface, infrastructure implements it.
+STEP2.FILES=src/main/scala/dtrbuilder/application/SeedTemplateLoader.scala, src/main/scala/dtrbuilder/infrastructure/ClasspathSeedTemplateLoader.scala
 
-CODER_FEEDBACK.STEP3=IMPLEMENT_AST_EXTRACTORS
-STEP3.VERDICT=PASS_WITH_DEVIATION
-STEP3.DETAIL=5 AST extractors implemented. ScalaAstExtractor uses scalameta traversal; JavaAstExtractor uses JavaParser; Python/JavaScript/TypeScript use reflection-based ANTLR loader with regex fallback (deviation: ANTLR grammar classes not yet generated, so reflection falls through to regex). Addressed in v2.
+CODER_FEEDBACK.STEP3=IMPLEMENT_BASELINE_GENERATOR
+STEP3.VERDICT=PASS
+STEP3.DETAIL=Created BaselineDtrGenerator application service that takes SeedTemplateLoader port via constructor injection. generate() method substitutes all 6 placeholder tokens ({{APP_NAME}}, {{PACKAGE_NAME}}, {{PACKAGE_PATH}}, {{ROOT_PATH}}, {{LANGUAGE}}, {{TIMESTAMP}}) and returns Seq[RawEntry]. Comments and blank lines are stripped from output.
+STEP3.FILES=src/main/scala/dtrbuilder/application/BaselineDtrGenerator.scala
 
-CODER_FEEDBACK.STEP4=EXTERNALIZE_LANGUAGE_PROFILES
+CODER_FEEDBACK.STEP4=UPDATE_DTR_CONFIG
 STEP4.VERDICT=PASS
-STEP4.DETAIL=15 language .properties files created under src/main/resources/languages/. LanguageProfileLoader loads from classpath. LanguageDetector.createWithProfileLoader() uses loaded profiles with fallback to embedded defaults. Note: Java Properties interpreter consumes backslashes, requiring double escaping (\\\\s, \\\\w, \\\\d etc.) in regex patterns. Separator changed from comma to semicolon to avoid conflicts with regex quantifier commas (e.g., {1,6}).
+STEP4.DETAIL=Added Mode sealed trait to DtrConfig with ExtractMode case object and CreateBaselineMode(appName, packageName, language) case class. DtrConfig now carries a `mode` field defaulting to ExtractMode for backward compatibility.
+STEP4.FILES=src/main/scala/dtrbuilder/domain/DtrConfig.scala
 
-CODER_FEEDBACK.STEP5=UPDATE_CONTAINER
+CODER_FEEDBACK.STEP5=UPDATE_CLI_PARSER
 STEP5.VERDICT=PASS
-STEP5.DETAIL=Container.scala updated: wires LanguageProfileLoader, LanguageDetector.createWithProfileLoader(), all 5 AST extractors, composite SignatureExtractor, FileSystemDtrWriter adapter.
+STEP5.DETAIL=Added --create-baseline-dtr, --app-name, --package, --language flags to CliParser. In baseline mode, --out defaults to <app-name>.dtr and chunking is disabled. Updated help text with both usage modes. Version bumped to 0.1.1.
+STEP5.FILES=src/main/scala/dtrbuilder/control/CliParser.scala
 
-CODER_FEEDBACK.STEP6=GENERATE_TESTS
+CODER_FEEDBACK.STEP6=UPDATE_DTR_APP
 STEP6.VERDICT=PASS
-STEP6.DETAIL=4 new test files: ScalaAstExtractorSpec (12 tests), JavaAstExtractorSpec (11 tests), LanguageProfileLoaderSpec (17 tests), FileSystemDtrWriterSpec (6 tests). Total: 112 tests (was 65, +47 new), all passing.
+STEP6.DETAIL=DtrApp.main now matches on config.mode: ExtractMode runs existing pipeline via runExtractMode(), CreateBaselineMode runs baseline generation via runBaselineMode(). Baseline mode loads seed, generates DTR, writes via DtrWriter, reports output.
+STEP6.FILES=src/main/scala/dtrbuilder/control/DtrApp.scala
 
-CODER_FEEDBACK.STEP7=GENERATE_CODER_FEEDBACK
+CODER_FEEDBACK.STEP7=UPDATE_CONTAINER
 STEP7.VERDICT=PASS
-STEP7.DETAIL=This file written.
+STEP7.DETAIL=Added seedTemplateLoader: SeedTemplateLoader = new ClasspathSeedTemplateLoader to Container. Updated wiring order documentation comment.
+STEP7.FILES=src/main/scala/dtrbuilder/control/Container.scala
 
-CODER_FEEDBACK.STEP8=GENERATE_COMMITS
+CODER_FEEDBACK.STEP8=GENERATE_TESTS
 STEP8.VERDICT=PASS
-STEP8.DETAIL=All changes committed via auto-commit mechanism.
+STEP8.DETAIL=Created 25 new tests: SeedTemplateSpec (14 tests covering classpath loading, content verification for ARCH/LAYER/META/FILE/CODEX/TYPE/REL keys, placeholder tokens, layer files, idempotent loading) and BaselineDtrGeneratorSpec (11 tests covering token substitution, package path derivation, language, timestamp, comment stripping, KEY=VALUE format, edge cases). All 160 tests pass (was 135, +25 new).
+STEP8.FILES=src/test/scala/dtrbuilder/baseline/SeedTemplateSpec.scala, src/test/scala/dtrbuilder/baseline/BaselineDtrGeneratorSpec.scala
 
-## v2 Corrections
+CODER_FEEDBACK.STEP9=WRITE_CODER_FEEDBACK
+STEP9.VERDICT=PASS
+STEP9.DETAIL=This feedback file overwritten with full severity self-assessment. No CRITICAL deviations found. 1 MINOR (step numbering divergence — functionally equivalent) and 2 TRIVIAL (address inaccuracy, unused imports) observations.
 
-ARCH.FEEDBACK.VERSION=5.3
-ARCH.FEEDBACK.ITR_ID=dtr-builder-corrections-v2
-ARCH.FEEDBACK.CODER_NAME=opencode-coder-01
-ARCH.FEEDBACK.DATE=2026-07-04
-ARCH.FEEDBACK.CLARITY_RATING=5
-ARCH.FEEDBACK.AMBIGUOUS_LINES=STEP3 installer: ITR referenced .zip extraction but .g4 files were individually fetched from raw GitHub URLs. Clear enough once implemented.
-ARCH.FEEDBACK.MISSING_CONTEXT=TypeScript grammar needed Java base class path (JavaScriptLexerBase/JavaScriptParserBase reused for TS). Not mentioned in ITR but logically required.
-ARCH.FEEDBACK.TOO_MUCH_DETAIL=None
-ARCH.FEEDBACK.ARCHITECTURE_DEVIATION=None — v2 fully resolves the MAJOR deviation from v1.
-ARCH.FEEDBACK.DOTENV_CLARITY=N/A
-ARCH.FEEDBACK.LANGUAGE_COVERAGE=5
-ARCH.FEEDBACK.STEP_ORDER_ISSUES=None
-ARCH.FEEDBACK.SUGGESTIONS=Build a grammar validation tool that checks .g4 files compile before committing.
-ARCH.FEEDBACK.TIME_TAKEN=1h
-
-CODER_FEEDBACK.OBSERVATIONS
-OBSERVATION.SEVERITY.0=TRIVIAL — Python3 grammar 'argument' rule redefined (decorator vs parser context). Fixed by renaming to decoratorArgument.
-OBSERVATION.SEVERITY.1=TRIVIAL — TypeScript 'Null' token unreachable (overlapped by NullLiteral). Fixed by removing Null token.
-OBSERVATION.SEVERITY.2=TRIVIAL — Let and Constructor defined as parser rules instead of lexer tokens. Fixed by moving to lexer.
-OBSERVATION.SEVERITY.3=TRIVIAL — Cannot use '@' string literal in separate parser grammar. Fixed by defining AT lexer token.
-OBSERVATION.SEVERITY.4=TRIVIAL — JavaScriptParserBase missing lineTerminatorAhead() method used by generated code. Added stub returning false.
-
-CODER_FEEDBACK.STEP1=FIX_FEEDBACK_FORMAT
-STEP1.VERDICT=PASS
-STEP1.DETAIL=Rewrote dtr-builder-corrections.feedback to ARCH.FEEDBACK v5.3 standard with all required fields.
-
-CODER_FEEDBACK.STEP2=ADD_ANTLR_CODE_GENERATION_TO_BUILD
-STEP2.VERDICT=PASS
-STEP2.DETAIL=Added project/antlr4.sbt with sbt-antlr4 plugin (com.simplytyped:0.8.3). Added enablePlugins(Antlr4Plugin) and configuration (antlr4Version=4.13.2, antlr4PackageName, genVisitor=true, genListener=true) in build.sbt.
-
-CODER_FEEDBACK.STEP3=INSTALL_ANTLR_GRAMMAR_FILES
-STEP3.VERDICT=PASS_WITH_FIXES
-STEP3.DETAIL=Created 4 Java base classes (Python3LexerBase, Python3ParserBase, JavaScriptLexerBase, JavaScriptParserBase). Downloaded Python3Lexer.g4+Parser.g4 and JavaScriptLexer.g4+Parser.g4 from antlr/grammars-v4 repo. Created simplified TypeScriptLexer.g4+Parser.g4 with TypeScript-specific keywords and rules. Fixed 5 compilation errors: Null token conflict, argument redefinition, Let/Constructor parser error, @ literal token, missing lineTerminatorAhead().
-
-CODER_FEEDBACK.STEP4=REWRITE_PYTHON_AST_EXTRACTOR
-STEP4.VERDICT=PASS
-STEP4.DETAIL=Rewrote PythonAstExtractor to use Python3Lexer/Python3Parser directly (not reflection). Created Python3AstListener(scala) that extracts IMPORT, FROM_IMPORT, CLASS, FUNCTION (including async and decorated via async_stmt + async_funcdef + funcdef + classdef). Uses originalTextOf() helper for correct whitespace in import text. Falls back to regex on parse failure.
-
-CODER_FEEDBACK.STEP5=REWRITE_JAVASCRIPT_AST_EXTRACTOR
-STEP5.VERDICT=PASS
-STEP5.DETAIL=Rewrote JavaScriptAstExtractor to use JavaScriptLexer/JavaScriptParser directly. Created JavaScriptAstListener(scala) that extracts IMPORT, EXPORT, FUNCTION, CLASS, CONST/LET/VAR declarations. Falls back to regex on parse failure.
-
-CODER_FEEDBACK.STEP6=REWRITE_TYPESCRIPT_AST_EXTRACTOR
-STEP6.VERDICT=PASS
-STEP6.DETAIL=Rewrote TypeScriptAstExtractor to use TypeScriptLexer/TypeScriptParser directly. Created TypeScriptAstListener(scala) that extracts IMPORT, EXPORT, INTERFACE, TYPE, CLASS, FUNCTION, CONST, ENUM, DECORATOR. Falls back to regex on parse failure.
-
-CODER_FEEDBACK.STEP7=CREATE_TESTS
-STEP7.VERDICT=PASS
-STEP7.DETAIL=Created 3 new test specs: PythonAstExtractorSpec (7 tests), JavaScriptAstExtractorSpec (6 tests), TypeScriptAstExtractorSpec (10 tests). All 135 tests pass.
-
-CODER_FEEDBACK.STEP8=WRITE_CODER_FEEDBACK
-STEP8.VERDICT=PASS
-STEP8.DETAIL=This file updated with v2 corrections.
-
-## v3 Meta-ITR: dtr-builder Self-Analysis
-
-ARCH.FEEDBACK.VERSION=5.3
-ARCH.FEEDBACK.ITR_ID=dtr-builder-self-analysis
-ARCH.FEEDBACK.CODER_NAME=opencode-coder-01
-ARCH.FEEDBACK.DATE=2026-07-04
-ARCH.FEEDBACK.CLARITY_RATING=5
-ARCH.FEEDBACK.AMBIGUOUS_LINES=None — meta-ITR is generic but self-documenting via ITR.LEGEND.
-ARCH.FEEDBACK.MISSING_CONTEXT=None — meta-ITR explicitly references actual source tree.
-ARCH.FEEDBACK.TOO_MUCH_DETAIL=None
-ARCH.FEEDBACK.ARCHITECTURE_DEVIATION=None
-ARCH.FEEDBACK.DOTENV_CLARITY=N/A
-ARCH.FEEDBACK.LANGUAGE_COVERAGE=5 — All languages in the codebase (Scala, Java, Python/JS/TS fixtures) are extracted.
-ARCH.FEEDBACK.STEP_ORDER_ISSUES=None
-ARCH.FEEDBACK.SUGGESTIONS=(1) Add STEP_TYPE_DEFINITION step to ITR generator to distinguish TYPE extraction from RELATION detection. (2) Consider adding cross-file EXTENDS resolution (currently only matches simple parent name, not fully-qualified). (3) Add RelationDetector integration test that verifies relation counts/types against a known fixture.
-ARCH.FEEDBACK.TIME_TAKEN=1h
-
-CODER_FEEDBACK.OBSERVATIONS
-OBSERVATION.SEVERITY.0=CRITICAL — IMPORT_DEP relations silently dropped due to FQN format mismatch: detectImports stripped file extension (.scala) from fromFqn, but DtrBuilderService filter expected it. All 230 import relations were filtered out. Fixed by removing .replaceAll("\\.\\w+$", "") in fromFqn generation.
-OBSERVATION.SEVERITY.1=CRITICAL — EXTENDS/IMPLEMENTS relations never produced because all extractors emit only the type name (e.g. "FileSystemDtrWriter") in CLASS/TRAIT entries, not the full declaration. RelationDetector searched for "extends" in signature text but it was never there. Fixed by adding EXTENDS/IMPLEMENTS as new SigTypes emitted by ScalaAstExtractor and JavaAstExtractor when class/trait/object has parent types.
-OBSERVATION.SEVERITY.2=MAJOR — Companion object pairs (class Foo + object Foo) created false-positive HOLDS relations. detectHolds treated the first type sig as "container" and the rest as "contained". Fixed by skipping entries where container name == contained name.
-OBSERVATION.SEVERITY.3=MAJOR — DtrBuilderService relation filter was over-fitted to HOLDS FQN format. Filter used r.fromFqn.contains(fe.relPath.replace('/', '.')) but import/extend relations used shorter FQNs (without extension). Fixed by checking r.fromFqn == fileFqn || r.fromFqn.startsWith(fileFqn + ".").
-OBSERVATION.SEVERITY.4=MINOR — Python/JS/TS extractors still don't emit EXTENDS entries (they use ANTLR listeners which weren't updated in this iteration). Acceptable as these languages have no production code in the repo.
-OBSERVATION.SEVERITY.5=TRIVIAL — The toFqn in EXTENDS relations is a simple name (e.g. "DtrWriter") not a fully-qualified name. Cross-file resolution to FQN would require import analysis.
-
-CODER_FEEDBACK.STEP1=VERIFY_BUILD
-STEP1.VERDICT=PASS
-STEP1.DETAIL=sbt compile + sbt test passed: 135/135 tests green. DtrBuilderIntegrationSpec confirms pipeline produces valid DTR output.
-
-CODER_FEEDBACK.STEP2=EXTRACT_DTR
-STEP2.VERDICT=PASS
-STEP2.DETAIL=Generated /tmp/dtr-builder-self.itr with --root pointing to entire monorepo, blocklisting target/, project/target/, .git/. Result: 109 files, 1517 codex entries, 66 types (before fixes).
-
-CODER_FEEDBACK.STEP3=ANALYZE_DTR
-STEP3.VERDICT=PASS_WITH_FINDINGS
-STEP3.DETAIL=Analysis revealed: (1) 600 VAL entries (correct, from Scala val declarations), (2) Only 11 relations (all HOLDS, 6/11 false companions), (3) Zero IMPORT_DEP despite 212 IMPORT codex entries, (4) Zero EXTENDS despite 16+ extends clauses in source, (5) All source files present as FILE entries. Root cause: FQN format mismatch + extractors lacking extends extraction.
-
-CODER_FEEDBACK.STEP4=ITERATE
-STEP4.VERDICT=PASS
-STEP4.DETAIL=Identified 3 code bugs and 1 design fragility: (1) detectImports strips extension, (2) detectExtends uses sigType.entryName instead of class name for fromFqn, (3) detectHolds false-positive companions, (4) DtrBuilderService filter over-fitted.
-
-CODER_FEEDBACK.STEP5=CORRECT
-STEP5.VERDICT=PASS
-STEP5.DETAIL=4 fixes applied: (1) DetectImports: removed `.replaceAll("\\.\\w+$", "")` to keep file extension in fromFqn. (2) DetectExtends: now handles SigType.EXTENDS/IMPLEMENTS entries explicitly with structured parsing, plus keeps regex fallback for CLASS/TRAIT entries with full declarations. (3) DetectHolds: skips same-name companion pairs. (4) DtrBuilderService filter: checks r.fromFqn == fileFqn || r.fromFqn.startsWith(fileFqn + "."). Also added EXTENDS/IMPLEMENTS as new SigTypes and updated ScalaAstExtractor + JavaAstExtractor to emit EXTENDS entries for types with parent inits. Re-ran DTR extraction: relations went from 11 → 338 (230 IMPORT_DEP, 103 EXTENDS, 5 HOLDS). All 135 tests still pass.
-
-CODER_FEEDBACK.STEP6=WRITE_CODER_FEEDBACK
-STEP6.VERDICT=PASS
-STEP6.DETAIL=This file updated with v3 meta-ITR feedback.
-
+CODER_FEEDBACK.STEP10=GENERATE_COMMITS
+STEP10.VERDICT=PENDING
+STEP10.DETAIL=Awaiting commit via commit tool. Files to commit: ITR (itr-buffer/dtr-builder.itr), FEEDBACK (itr-buffer/dtr-builder.feedback), code changes, system tensor (if modified).
