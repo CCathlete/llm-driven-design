@@ -19,10 +19,17 @@ class CommitMessageSpec extends AnyFlatSpec with Matchers {
     }
   }
 
-  it should "return InvalidFormat for missing scope" in {
+  it should "return InvalidFormat for no parentheses" in {
     val rawMessage = "feat: description"
     CommitMessage.fromRaw(rawMessage) should matchPattern {
-      case Left(MissingScope(line)) if line == "feat: description" =>
+      case Left(InvalidFormat(line)) if line == "feat: description" =>
+    }
+  }
+
+  it should "return MissingScope for empty scope" in {
+    val rawMessage = "feat(): description"
+    CommitMessage.fromRaw(rawMessage) should matchPattern {
+      case Left(MissingScope(line)) if line == "feat(): description" =>
     }
   }
 
