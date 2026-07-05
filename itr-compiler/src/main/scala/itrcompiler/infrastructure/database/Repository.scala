@@ -1,8 +1,6 @@
 package itrcompiler.infrastructure.database
 
 import itrcompiler.application.ports.Port
-import itrcompiler.domain.models.Model
-
 /** Repository — infrastructure adapter that implements Port.
   *
   * In a full implementation this would provide persistence for domain models.
