@@ -14,7 +14,7 @@ case class CommitMessage(commitType: CommitType, scope: String, description: Str
 }
 
 object CommitMessage {
-  private val HeaderRegex = "^(\\w+)\\(([^)]+)\\): (.+)$".r
+  private val HeaderRegex = "^(\\w+)\\(([^)]*)\\): (.+)$".r
 
   def fromRaw(raw: String): Either[CommitValidationError, CommitMessage] = {
     val allLines = raw.split("\n", -1).toList
