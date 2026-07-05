@@ -1,0 +1,5 @@
+# DTR: (New section, no coordinates in DTR)
+# CU-ID: cu-006 SCOPE: Tests
+TESTS.UNIT=CUTest,CUBatchTest,CompileCommandTest,CompileTest,CoordinateRulesTest,ContentDeserializeTest,CUStoreTest,FileSystemTest,JSONFormatTest,YAMLFormatTest,CliParserTest
+TESTS.INTEGRATION=SingleCUWriteTest,BatchJSONWriteTest,BatchYAMLWriteTest,ForceOverwriteTest,AddToExistingFolderTest
+TESTS.COMPILE_BEHAVIOR=add-vs-overwrite,missing-dtr-file,invalid-dtr-coordinates

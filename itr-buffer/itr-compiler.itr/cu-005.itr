@@ -1,10 +1,12 @@
 # DTR: TYPE.itr-compiler.control.cli.CliParser, TYPE.itr-compiler.control.dependency_injection.Container, TYPE.itr-compiler.control.entry_point.App, REL.*Container->Repository, REL.*Container->UseCase, REL.*Container->Service, REL.*App->Container, REL.*App->CliParser
+# CU-ID: cu-005 SCOPE: CONTROL layer (CLI, DI, entry point, new flags)
 CONTROL.EXISTING_CLI=CliParser
 CONTROL.EXISTING_DI=Container
 CONTROL.EXISTING_ENTRY=App
 CONTROL.EXISTING_FILES=control/cli/CliParser.scala,control/dependency_injection/Container.scala,control/entry_point/App.scala
 CONTROL.EXISTING_DEPENDENCIES=Container->Repository,Container->UseCase,Container->Service,App->Container,App->CliParser
-# DTR: (New section, no coordinates in DTR)
+# NEW
 CONTROL.CLI_FLAGS=--compile,--dtr,--out-folder,--raw-content,--cu-id,--json-content,--yaml-content,--force
 CONTROL.COMPILE_MODES=single:--raw-content+--cu-id,batch-json:--json-content,batch-yaml:--yaml-content
 CONTROL.FORCE_BEHAVIOR=without-force:add-only,with-force:overwrite
+CONTROL.NEW_WIRING=Container->DTRLoad,Container->CUWrite,Container->ContentRead,Container->Compile,Container->CoordinateRules,Container->ContentDeserialize,Container->CUStore,Container->FileSystem,Container->JSONFormat,Container->YAMLFormat

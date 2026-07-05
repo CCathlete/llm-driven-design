@@ -1,4 +1,0 @@
-# DTR: (New section, no coordinates in DTR)
-TESTS.UNIT=CUTest,CUBatchTest,CompileCommandTest,CompileServiceTest,DTRCoordinateValidatorTest,ContentParserTest,CUFileManagerTest,JSONContentParserTest,YAMLContentParserTest,CliParserTest
-TESTS.INTEGRATION=SingleCUWriteTest,BatchJSONWriteTest,BatchYAMLWriteTest,ForceOverwriteTest,AddToExistingFolderTest,DTRCoordinateValidationTest
-TESTS.BEHAVIOR=add-vs-overwrite,missing-dtr,invalid-coordinates

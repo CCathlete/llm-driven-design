@@ -1,0 +1,8 @@
+# DTR: (New section, no coordinates in DTR)
+# CU-ID: cu-003 SCOPE: APPLICATION logic layer (compile orchestration, coordinate rules, content deserialization, CU store)
+APPLICATION.NEW_CLASSES=Compile,CoordinateRules,ContentDeserialize,CUStore
+APPLICATION.NEW_CLASS_FILES=application/services/Compile.scala,application/services/CoordinateRules.scala,application/services/ContentDeserialize.scala,application/services/CUStore.scala
+APPLICATION.NEW_DEPENDENCIES=Compile->DTRLoad,Compile->CoordinateRules,Compile->CUStore,ContentDeserialize->ContentRead
+COMPILE.COORDINATES_VALIDATION=validate-keys-against-dtr-coordinates,warn-on-missing
+COMPILE.CONTENT_INPUTS=raw+cu-id,json-file,yaml-file
+COMPILE.OUTPUT_BEHAVIOR=without-force:add-new-only,with-force:overwrite
