@@ -1,7 +1,7 @@
 package commitool.infrastructure.adapter
 
 import commitool.application.ports.FileContentReader
-import commitool.domain.models.{CommitValidationError, FileNotFound, MessageFileEmpty}
+import commitool.domain.models.{CommitValidationError, FileNotFound, MessageFileEmpty, ReadError}
 import scala.io.{BufferedSource, Source}
 import java.io.{FileNotFoundException, IOException}
 import scala.util.control.NonFatal
