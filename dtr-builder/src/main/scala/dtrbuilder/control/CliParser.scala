@@ -6,14 +6,13 @@ import java.nio.file.{Path, Paths}
 /** CLI argument parser for the DTR builder.
   *
   * Supported args:
-  *   --root <path>           Root directory to analyze (default: cwd)
+  *   --root <path>           Root directory (extract) / DTR root path (baseline)
   *   --out <path>            Output file path template (required for extract mode)
   *   --max-chunk-size <bytes> Override DTR_MAX_CHUNK_SIZE (optional)
   *   --filter <glob>         Additional blocklist patterns (optional, repeatable)
   *   --no-dotenv             Skip .env discovery (optional flag)
   *   --create-baseline-dtr   Activate baseline DTR generation mode
-  *   --app-name <name>       Application name (baseline mode)
-  *   --package <package>     Base package name (baseline mode)
+  *   --app-name <name>       Application name (baseline mode, required)
   *   --language <lang>       Primary language (baseline mode, default: Scala)
   *   --version               Print version
   *   --help                  Print usage
