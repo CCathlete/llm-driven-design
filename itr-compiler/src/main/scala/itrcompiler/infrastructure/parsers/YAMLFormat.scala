@@ -25,23 +25,24 @@ final class YAMLFormat {
     val cus = entryBlocks.flatMap { block =>
       val lines = block.split("\n")
       val firstLine = lines.headOption.getOrElse("")
-      if (!firstLine.contains(":")) return None
+      if (!firstLine.contains(":")) None
+      else {
+        val id = firstLine.takeWhile(_ != ':').trim
+        val props = lines.tail.mkString("\n")
 
-      val id = firstLine.takeWhile(_ != ':').trim
-      val props = lines.tail.mkString("\n")
+        val coordsPattern = """dtr-coordinates:\s*\[([^\]]*)\]""".r
+        val contentPattern = """content:\s*"?([^"]*)"?""".r
 
-      val coordsPattern = """dtr-coordinates:\s*\[([^\]]*)\]""".r
-      val contentPattern = """content:\s*"?([^"]*)"?""".r
+        val coords = coordsPattern.findFirstMatchIn(props).map { m =>
+          val str = m.group(1).trim
+          if (str.isEmpty) Seq.empty
+          else str.split(",").toSeq.map(_.trim.replaceAll("^\"|\"$", ""))
+        }.getOrElse(Seq.empty)
 
-      val coords = coordsPattern.findFirstMatchIn(props).map { m =>
-        val str = m.group(1).trim
-        if (str.isEmpty) Seq.empty
-        else str.split(",").toSeq.map(_.trim.replaceAll("^\"|\"$", ""))
-      }.getOrElse(Seq.empty)
+        val content = contentPattern.findFirstMatchIn(props).map(_.group(1).trim).getOrElse("")
 
-      val content = contentPattern.findFirstMatchIn(props).map(_.group(1).trim).getOrElse("")
-
-      Some(CU(id = id, dtrCoordinates = coords, content = content))
+        Some(CU(id = id, dtrCoordinates = coords, content = content))
+      }
     }
 
     CUBatch(cus.toSeq)
