@@ -3,7 +3,7 @@ package itrcompiler.application.services
 import itrcompiler.domain.models.{CU, CUBatch}
 import itrcompiler.application.ports.ContentRead
 import org.scalatest.funspec.AnyFunSpec
-import java.nio.file.Paths
+import java.nio.file.{Path, Paths}
 
 class ContentDeserializeTest extends AnyFunSpec {
   describe("ContentDeserialize") {
