@@ -12,7 +12,7 @@ object DotEnvLoader {
   private val varExpansionRegex: Regex = "\\$\\{([a-zA-Z_][a-zA-Z0-9_]*)\\}".r
 
   def load(): Map[String, String] = {
-    val envVars = mutable.Map[String, String]()
+    val envVars = mutable.Map[String, ValueType]()
 
     // System environment variables have precedence
     sys.env.foreach { case (k, v) => envVars(k) = v }
@@ -34,7 +34,6 @@ object DotEnvLoader {
     }
 
     val resolvedEnv = resolveExpansions(envVars.toMap)
-    sys.env.foreach { case (k, v) => resolvedEnv.updated(k, v) }
     resolvedEnv // System env vars should override after expansion too
   }
 
@@ -63,9 +62,8 @@ private sealed trait ValueType
       Expandable(value.trim)
     }
   }
-  }
 
-  private def resolveExpansions(env: Map[String, String]): Map[String, String] = {
+  private def resolveExpansions(raw: Map[String, ValueType]): Map[String, String] = {
     val resolved = mutable.Map[String, String]()
     val resolving = mutable.Set[String]() // For cycle detection
     val cache = mutable.Map[String, String]()
