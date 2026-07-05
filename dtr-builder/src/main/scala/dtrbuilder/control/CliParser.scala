@@ -7,10 +7,14 @@ import java.nio.file.{Path, Paths}
   *
   * Supported args:
   *   --root <path>           Root directory to analyze (default: cwd)
-  *   --out <path>            Output file path template (required)
+  *   --out <path>            Output file path template (required for extract mode)
   *   --max-chunk-size <bytes> Override DTR_MAX_CHUNK_SIZE (optional)
   *   --filter <glob>         Additional blocklist patterns (optional, repeatable)
   *   --no-dotenv             Skip .env discovery (optional flag)
+  *   --create-baseline-dtr   Activate baseline DTR generation mode
+  *   --app-name <name>       Application name (baseline mode)
+  *   --package <package>     Base package name (baseline mode)
+  *   --language <lang>       Primary language (baseline mode, default: Scala)
   *   --version               Print version
   *   --help                  Print usage
   */
@@ -25,6 +29,10 @@ object CliParser {
     var noDotenv = false
     var showHelp = false
     var showVersion = false
+    var createBaseline = false
+    var appName: Option[String] = None
+    var packageName: Option[String] = None
+    var language: String = "Scala"
 
     var i = 0
     while (i < args.length) {
@@ -48,6 +56,20 @@ object CliParser {
           else printErrorAndExit("--filter requires a glob pattern")
         case "--no-dotenv" =>
           noDotenv = true
+        case "--create-baseline-dtr" =>
+          createBaseline = true
+        case "--app-name" =>
+          i += 1
+          if (i < args.length) appName = Some(args(i))
+          else printErrorAndExit("--app-name requires a name argument")
+        case "--package" =>
+          i += 1
+          if (i < args.length) packageName = Some(args(i))
+          else printErrorAndExit("--package requires a package name argument")
+        case "--language" =>
+          i += 1
+          if (i < args.length) language = args(i)
+          else printErrorAndExit("--language requires a language argument")
         case "--version" =>
           showVersion = true
         case "--help" | "-h" =>
@@ -61,20 +83,38 @@ object CliParser {
     if (showHelp) { printHelp(); sys.exit(0) }
     if (showVersion) { println(s"dtr-builder version ${Version}"); sys.exit(0) }
 
-    val outPath = output.getOrElse {
-      printErrorAndExit("--out <path> is required")
-      // unreachable:
-      Paths.get("dtr.itr")
-    }
+    if (createBaseline) {
+      val name = appName.getOrElse(printErrorAndExit("--app-name <name> is required in --create-baseline-dtr mode"))
+      val pkg  = packageName.getOrElse(printErrorAndExit("--package <package> is required in --create-baseline-dtr mode"))
 
-    DtrConfig(
-      pathRoot = root,
-      outputPath = outPath,
-      maxChunkSize = maxChunkSize.getOrElse(DtrConfig.defaultMaxChunkSize),
-      chunkEnabled = maxChunkSize.isDefined || true, // always enable chunking by default
-      noDotenv = noDotenv,
-      additionalFilters = filters
-    )
+      DtrConfig(
+        pathRoot = root,
+        outputPath = output.getOrElse(Paths.get(s"$name.dtr")),
+        maxChunkSize = maxChunkSize.getOrElse(DtrConfig.defaultMaxChunkSize),
+        chunkEnabled = false,
+        noDotenv = true,
+        additionalFilters = filters,
+        mode = DtrConfig.CreateBaselineMode(
+          appName = name,
+          packageName = pkg,
+          language = language
+        )
+      )
+    } else {
+      val outPath = output.getOrElse {
+        printErrorAndExit("--out <path> is required")
+        Paths.get("dtr.itr")
+      }
+
+      DtrConfig(
+        pathRoot = root,
+        outputPath = outPath,
+        maxChunkSize = maxChunkSize.getOrElse(DtrConfig.defaultMaxChunkSize),
+        chunkEnabled = maxChunkSize.isDefined || true,
+        noDotenv = noDotenv,
+        additionalFilters = filters
+      )
+    }
   }
 
   private def printHelp(): Unit = {
@@ -82,15 +122,23 @@ object CliParser {
       s"""dtr-builder v${Version} — Automated Extractor (X node)
          |
          |Usage: dtr-builder --out <path> [options]
+         |   or: dtr-builder --create-baseline-dtr --app-name <name> --package <pkg> [options]
          |
-         |Required:
+         |Extract mode (default):
          |  --out <path>          Output file path template
-         |
-         |Options:
          |  --root <path>         Root directory to analyze (default: current directory)
          |  --max-chunk-size <n>  Max chunk size in bytes (default: 1MB, or DTR_MAX_CHUNK_SIZE env var)
          |  --filter <glob>       Additional blocklist pattern (repeatable)
          |  --no-dotenv           Skip .env file discovery
+         |
+         |Baseline generation mode:
+         |  --create-baseline-dtr Activate baseline DTR generation mode
+         |  --app-name <name>     Application name (required)
+         |  --package <pkg>       Base package name (required, e.g. com.example.myapp)
+         |  --language <lang>     Primary language (default: Scala)
+         |  --out <path>          Output path (default: <app-name>.dtr)
+         |
+         |Common:
          |  --version             Print version and exit
          |  --help                Print this help and exit
          |
@@ -104,9 +152,10 @@ object CliParser {
   private def printErrorAndExit(msg: String): Nothing = {
     System.err.println(s"Error: $msg")
     System.err.println("Usage: dtr-builder --out <path> [--root <path>] [options]")
+    System.err.println("   or: dtr-builder --create-baseline-dtr --app-name <name> --package <pkg> [options]")
     sys.exit(1)
     throw new IllegalStateException("unreachable")
   }
 
-  val Version: String = "0.1.0"
+  val Version: String = "0.1.1"
 }
