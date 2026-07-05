@@ -26,7 +26,7 @@ class ShellGitCommitRunnerSpec extends AnyFlatSpec with Matchers with BeforeAndA
   override def afterEach(): Unit = {
     // Clean up
     if (tempDir != null) {
-      val _ = Seq("rm", "-rf", tempDir.toString).!(ProcessLogger(_ => ()))
+      Process(Seq("rm", "-rf", tempDir.toString)) ! ProcessLogger(_ => ())
     }
   }
 
