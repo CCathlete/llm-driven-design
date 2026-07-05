@@ -20,7 +20,6 @@ object DtrConfig {
   sealed trait Mode
   case object ExtractMode extends Mode
   final case class CreateBaselineMode(
-      appName: String,
       language: String
   ) extends Mode
 

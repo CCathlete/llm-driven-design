@@ -12,7 +12,6 @@ import java.nio.file.{Path, Paths}
   *   --filter <glob>         Additional blocklist patterns (optional, repeatable)
   *   --no-dotenv             Skip .env discovery (optional flag)
   *   --create-baseline-dtr   Activate baseline DTR generation mode
-  *   --app-name <name>       Application name (baseline mode, required)
   *   --language <lang>       Primary language (baseline mode, default: Scala)
   *   --version               Print version
   *   --help                  Print usage
@@ -29,7 +28,6 @@ object CliParser {
     var showHelp = false
     var showVersion = false
     var createBaseline = false
-    var appName: Option[String] = None
     var language: String = "Scala"
 
     var i = 0
@@ -56,10 +54,6 @@ object CliParser {
           noDotenv = true
         case "--create-baseline-dtr" =>
           createBaseline = true
-        case "--app-name" =>
-          i += 1
-          if (i < args.length) appName = Some(args(i))
-          else printErrorAndExit("--app-name requires a name argument")
         case "--language" =>
           i += 1
           if (i < args.length) language = args(i)
@@ -78,7 +72,8 @@ object CliParser {
     if (showVersion) { println(s"dtr-builder version ${Version}"); sys.exit(0) }
 
     if (createBaseline) {
-      val name = appName.getOrElse(printErrorAndExit("--app-name <name> is required in --create-baseline-dtr mode"))
+      // Derive app name from root path filename for default output path
+      val name = root.getFileName.toString
 
       DtrConfig(
         pathRoot = root,
@@ -88,7 +83,6 @@ object CliParser {
         noDotenv = true,
         additionalFilters = filters,
         mode = DtrConfig.CreateBaselineMode(
-          appName = name,
           language = language
         )
       )
@@ -114,7 +108,7 @@ object CliParser {
       s"""dtr-builder v${Version} — Automated Extractor (X node)
          |
          |Usage: dtr-builder --out <path> [options]
-         |   or: dtr-builder --create-baseline-dtr --app-name <name> [options]
+         |   or: dtr-builder --create-baseline-dtr [options]
          |
          |Extract mode (default):
          |  --out <path>          Output file path template
@@ -125,10 +119,9 @@ object CliParser {
          |
          |Baseline generation mode:
          |  --create-baseline-dtr Activate baseline DTR generation mode
-         |  --app-name <name>     Application name (required)
-         |  --root <path>         DTR root path for generated output (default: current directory)
+         |  --root <path>         DTR root path; app name derived from its basename (default: current directory)
          |  --language <lang>     Primary language (default: Scala)
-         |  --out <path>          Output path (default: <app-name>.dtr)
+         |  --out <path>          Output path (default: <root-basename>.dtr)
          |
          |Common:
          |  --version             Print version and exit
@@ -144,7 +137,7 @@ object CliParser {
   private def printErrorAndExit(msg: String): Nothing = {
     System.err.println(s"Error: $msg")
     System.err.println("Usage: dtr-builder --out <path> [--root <path>] [options]")
-    System.err.println("   or: dtr-builder --create-baseline-dtr --app-name <name> [--root <path>] [options]")
+    System.err.println("   or: dtr-builder --create-baseline-dtr [--root <path>] [--language <lang>] [--out <path>]")
     sys.exit(1)
     throw new IllegalStateException("unreachable")
   }

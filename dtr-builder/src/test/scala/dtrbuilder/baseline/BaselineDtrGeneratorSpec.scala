@@ -8,7 +8,7 @@ import org.scalatest.matchers.should.Matchers
   *
   * Verifies:
   * - Token substitution works correctly
-  * - Multiple app names produce correct output
+  * - App name is derived from root path basename (no --app-name flag)
   * - Output contains valid DTR lines
   * - Comments are stripped
   */
@@ -41,10 +41,9 @@ class BaselineDtrGeneratorSpec extends AnyFlatSpec with Matchers {
 
   behavior of "BaselineDtrGenerator"
 
-  it should "substitute {{APP_NAME}} correctly" in {
+  it should "derive {{APP_NAME}} from the root path basename" in {
     val generator = makeGenerator()
     val entries = generator.generate(
-      appName  = "my-app",
       rootPath = "/home/user/my-app",
       language = "Scala"
     )
@@ -56,7 +55,6 @@ class BaselineDtrGeneratorSpec extends AnyFlatSpec with Matchers {
   it should "substitute {{ROOT_PATH}} correctly" in {
     val generator = makeGenerator()
     val entries = generator.generate(
-      appName  = "app",
       rootPath = "/projects/my-app",
       language = "Scala"
     )
@@ -68,7 +66,6 @@ class BaselineDtrGeneratorSpec extends AnyFlatSpec with Matchers {
   it should "substitute {{LANGUAGE}} correctly" in {
     val generator = makeGenerator()
     val entries = generator.generate(
-      appName  = "app",
       rootPath = "/root",
       language = "Python"
     )
@@ -80,7 +77,6 @@ class BaselineDtrGeneratorSpec extends AnyFlatSpec with Matchers {
   it should "substitute {{TIMESTAMP}} with a valid ISO instant" in {
     val generator = makeGenerator()
     val entries = generator.generate(
-      appName  = "app",
       rootPath = "/root",
       language = "Scala"
     )
@@ -94,7 +90,6 @@ class BaselineDtrGeneratorSpec extends AnyFlatSpec with Matchers {
   it should "strip comment lines from output" in {
     val generator = makeGenerator()
     val entries = generator.generate(
-      appName  = "app",
       rootPath = "/root",
       language = "Scala"
     )
@@ -106,7 +101,6 @@ class BaselineDtrGeneratorSpec extends AnyFlatSpec with Matchers {
   it should "produce valid DTR lines (KEY=VALUE format)" in {
     val generator = makeGenerator()
     val entries = generator.generate(
-      appName  = "app",
       rootPath = "/root",
       language = "Scala"
     )
@@ -118,7 +112,6 @@ class BaselineDtrGeneratorSpec extends AnyFlatSpec with Matchers {
   it should "produce ARCH, LAYER, META, FILE, CODEX, TYPE, REL entries" in {
     val generator = makeGenerator()
     val entries = generator.generate(
-      appName  = "app",
       rootPath = "/root",
       language = "Scala"
     )
@@ -132,14 +125,19 @@ class BaselineDtrGeneratorSpec extends AnyFlatSpec with Matchers {
     rendered should include("REL.")
   }
 
-  it should "handle various app names without issues" in {
+  it should "derive app name from various root path basenames" in {
     val generator = makeGenerator()
 
-    val names = Seq("simple", "my-app", "my_app", "App123", "a.b.c")
-    names.foreach { name =>
+    val roots = Seq(
+      "/home/user/simple",
+      "/projects/my-app",
+      "/repo/my_app",
+      "/path/to/App123",
+      "/path/to/a.b.c"
+    )
+    roots.foreach { root =>
       val entries = generator.generate(
-        appName  = name,
-        rootPath = "/root",
+        rootPath = root,
         language = "Scala"
       )
       entries should not be empty
@@ -153,7 +151,6 @@ class BaselineDtrGeneratorSpec extends AnyFlatSpec with Matchers {
     val roots = Seq("/home/user", "/", "/deeply/nested/path", "/with spaces")
     roots.foreach { root =>
       val entries = generator.generate(
-        appName  = "app",
         rootPath = root,
         language = "Scala"
       )
@@ -165,7 +162,6 @@ class BaselineDtrGeneratorSpec extends AnyFlatSpec with Matchers {
   it should "produce lines without leading/trailing whitespace" in {
     val generator = makeGenerator()
     val entries = generator.generate(
-      appName  = "app",
       rootPath = "/root",
       language = "Scala"
     )
