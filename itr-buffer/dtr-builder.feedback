@@ -3,69 +3,69 @@ ARCH.FEEDBACK.ITR_ID=dtr-builder-iteration-014
 ARCH.FEEDBACK.CODER_NAME=opencode-coder-01
 ARCH.FEEDBACK.DATE=2026-07-05
 ARCH.FEEDBACK.CLARITY_RATING=4
-ARCH.FEEDBACK.AMBIGUOUS_LINES=CU.5 address says "control/DtrConfig.scala" but DtrConfig lives in domain layer. CU.4-7 all reference "control/..." paths that are correct. Intent was clear — modify DtrConfig wherever it lives.
+ARCH.FEEDBACK.AMBIGUOUS_LINES=CU.5 address says "control/DtrConfig.scala" but DtrConfig lives in domain layer. Intent was clear — modify DtrConfig wherever it lives.
 
 ITR_GEN steps use custom numbering (STEP1-STEP10) instead of system tensor canonical steps (STEP1-STEP9+STEP8.5). The ITR maps: 1→infrastructure, 2→port+bind+infrastructure, 3→application, 4→domain, 5-7→control, 8→tests, 9→feedback, 10→commits. Functional mapping is correct.
-ARCH.FEEDBACK.MISSING_CONTEXT=None — the ITR described all CUs (1-9) with explicit addresses, labels, and instructions. Seed template format was left to coder judgment but placeholder tokens were specified.
+ARCH.FEEDBACK.MISSING_CONTEXT=None
 ARCH.FEEDBACK.TOO_MUCH_DETAIL=None
-ARCH.FEEDBACK.ARCHITECTURE_DEVIATION=None — all code follows HEX, DI, DIP, NO_CROSS_LAYER, PORT_FLOW_OUT_IN constraints. Ports defined in application layer, adapters in infrastructure. No cross-layer violations. Container properly wires dependencies.
-ARCH.FEEDBACK.DOTENV_CLARITY=N/A — no dotenv changes in this iteration
-ARCH.FEEDBACK.LANGUAGE_COVERAGE=5 — Scala implementation with full type annotations, slotted frozen dataclasses where applicable
-ARCH.FEEDBACK.STEP_ORDER_ISSUES=None — followed ITR steps in order (1-10)
-ARCH.FEEDBACK.SUGGESTIONS=(1) Consider aligning ITR step numbering with system tensor canonical steps (LOCK_ARCH, MAP_LAYERS, BIND_PORTS, etc.) for consistency. (2) Add a CU for testing the CliParser baseline flags directly. (3) Consider adding a --root override for baseline mode (currently defaults to cwd).
-ARCH.FEEDBACK.TIME_TAKEN=30
+ARCH.FEEDBACK.ARCHITECTURE_DEVIATION=None — all code follows HEX, DI, DIP, NO_CROSS_LAYER, PORT_FLOW_OUT_IN constraints.
+ARCH.FEEDBACK.DOTENV_CLARITY=N/A
+ARCH.FEEDBACK.LANGUAGE_COVERAGE=5
+ARCH.FEEDBACK.STEP_ORDER_ISSUES=None
+ARCH.FEEDBACK.SUGGESTIONS=(1) Consider aligning ITR step numbering with system tensor canonical steps. (2) Add a CU for testing the CliParser baseline flags directly.
+ARCH.FEEDBACK.TIME_TAKEN=40
 
 CODER_FEEDBACK.OBSERVATIONS
-OBSERVATION.SEVERITY.0=MINOR — ITR custom step numbering diverges from system tensor canonical steps. ITR uses STEP1=CREATE_SEED_TEMPLATE through STEP10=GENERATE_COMMITS, while system tensor defines STEP1=LOCK_ARCH through STEP9=GENERATE_COMMITS (with STEP8.5). Functional equivalence is preserved; step mapping is one-to-one with correct layer ordering.
+OBSERVATION.SEVERITY.0=MINOR — ITR custom step numbering diverges from system tensor canonical steps. Functionally equivalent.
 
-OBSERVATION.SEVERITY.1=TRIVIAL — CU.5 address references "control/DtrConfig.scala" but actual file is in domain layer. Implemented correctly in domain/DtrConfig.scala per existing architecture.
+OBSERVATION.SEVERITY.1=TRIVIAL — CU.5 address references "control/DtrConfig.scala" but actual file is in domain layer. Implemented correctly in domain layer.
 
-OBSERVATION.SEVERITY.2=TRIVIAL — Unused import `RawEntry` in BaselineDtrGeneratorSpec; `Using` in ClasspathSeedTemplateLoader. Both cleaned up.
+OBSERVATION.SEVERITY.2=MINOR — Designer requested removal of --package flag post-implementation. Removed --package from CliParser, CreateBaselineMode, BaselineDtrGenerator, seed template, and tests. Seed template simplified to use APP_NAME as namespace qualifier instead of PACKAGE_NAME. --root now sets DTR root path in baseline mode.
 
 CODER_FEEDBACK.STEP1=CREATE_SEED_TEMPLATE
 STEP1.VERDICT=PASS
-STEP1.DETAIL=Created src/main/resources/seed/seed-dtr.dtr with golden architecture template including ARCH, LAYER, META, FILE, CODEX, TYPE, REL entries and placeholder tokens {{APP_NAME}}, {{PACKAGE_NAME}}, {{PACKAGE_PATH}}, {{ROOT_PATH}}, {{LANGUAGE}}, {{TIMESTAMP}}.
+STEP1.DETAIL=Created src/main/resources/seed/seed-dtr.dtr with golden architecture template. Template uses {{APP_NAME}} as namespace qualifier (no package concept). Placeholder tokens: {{APP_NAME}}, {{ROOT_PATH}}, {{LANGUAGE}}, {{TIMESTAMP}}.
 STEP1.FILES=src/main/resources/seed/seed-dtr.dtr
 
 CODER_FEEDBACK.STEP2=IMPLEMENT_SEED_TEMPLATE_LOADER
 STEP2.VERDICT=PASS
-STEP2.DETAIL=Created SeedTemplateLoader port trait in application layer and ClasspathSeedTemplateLoader adapter in infrastructure layer. Port defines loadSeed(): String. Adapter reads from classpath resource "seed/seed-dtr.dtr". Proper DIP: application owns the interface, infrastructure implements it.
+STEP2.DETAIL=Created SeedTemplateLoader port trait in application layer and ClasspathSeedTemplateLoader adapter in infrastructure layer. Proper DIP: application owns the interface, infrastructure implements it.
 STEP2.FILES=src/main/scala/dtrbuilder/application/SeedTemplateLoader.scala, src/main/scala/dtrbuilder/infrastructure/ClasspathSeedTemplateLoader.scala
 
 CODER_FEEDBACK.STEP3=IMPLEMENT_BASELINE_GENERATOR
 STEP3.VERDICT=PASS
-STEP3.DETAIL=Created BaselineDtrGenerator application service that takes SeedTemplateLoader port via constructor injection. generate() method substitutes all 6 placeholder tokens ({{APP_NAME}}, {{PACKAGE_NAME}}, {{PACKAGE_PATH}}, {{ROOT_PATH}}, {{LANGUAGE}}, {{TIMESTAMP}}) and returns Seq[RawEntry]. Comments and blank lines are stripped from output.
+STEP3.DETAIL=Created BaselineDtrGenerator application service. generate(appName, rootPath, language) substitutes 4 placeholder tokens ({{APP_NAME}}, {{ROOT_PATH}}, {{LANGUAGE}}, {{TIMESTAMP}}). No package concept.
 STEP3.FILES=src/main/scala/dtrbuilder/application/BaselineDtrGenerator.scala
 
 CODER_FEEDBACK.STEP4=UPDATE_DTR_CONFIG
 STEP4.VERDICT=PASS
-STEP4.DETAIL=Added Mode sealed trait to DtrConfig with ExtractMode case object and CreateBaselineMode(appName, packageName, language) case class. DtrConfig now carries a `mode` field defaulting to ExtractMode for backward compatibility.
+STEP4.DETAIL=Added Mode sealed trait with ExtractMode and CreateBaselineMode(appName, language). No packageName field.
 STEP4.FILES=src/main/scala/dtrbuilder/domain/DtrConfig.scala
 
 CODER_FEEDBACK.STEP5=UPDATE_CLI_PARSER
 STEP5.VERDICT=PASS
-STEP5.DETAIL=Added --create-baseline-dtr, --app-name, --package, --language flags to CliParser. In baseline mode, --out defaults to <app-name>.dtr and chunking is disabled. Updated help text with both usage modes. Version bumped to 0.1.1.
+STEP5.DETAIL=Added --create-baseline-dtr, --app-name, --language flags. No --package flag. --root sets DTR root path in baseline mode. Updated help text.
 STEP5.FILES=src/main/scala/dtrbuilder/control/CliParser.scala
 
 CODER_FEEDBACK.STEP6=UPDATE_DTR_APP
 STEP6.VERDICT=PASS
-STEP6.DETAIL=DtrApp.main now matches on config.mode: ExtractMode runs existing pipeline via runExtractMode(), CreateBaselineMode runs baseline generation via runBaselineMode(). Baseline mode loads seed, generates DTR, writes via DtrWriter, reports output.
+STEP6.DETAIL=DtrApp.main matches on config.mode. Baseline mode generates DTR and writes via DtrWriter.
 STEP6.FILES=src/main/scala/dtrbuilder/control/DtrApp.scala
 
 CODER_FEEDBACK.STEP7=UPDATE_CONTAINER
 STEP7.VERDICT=PASS
-STEP7.DETAIL=Added seedTemplateLoader: SeedTemplateLoader = new ClasspathSeedTemplateLoader to Container. Updated wiring order documentation comment.
+STEP7.DETAIL=Added seedTemplateLoader to Container.
 STEP7.FILES=src/main/scala/dtrbuilder/control/Container.scala
 
 CODER_FEEDBACK.STEP8=GENERATE_TESTS
 STEP8.VERDICT=PASS
-STEP8.DETAIL=Created 25 new tests: SeedTemplateSpec (14 tests covering classpath loading, content verification for ARCH/LAYER/META/FILE/CODEX/TYPE/REL keys, placeholder tokens, layer files, idempotent loading) and BaselineDtrGeneratorSpec (11 tests covering token substitution, package path derivation, language, timestamp, comment stripping, KEY=VALUE format, edge cases). All 160 tests pass (was 135, +25 new).
+STEP8.DETAIL=Created SeedTemplateSpec (16 tests) and BaselineDtrGeneratorSpec (10 tests). Seed tests verify no PACKAGE_NAME/PACKAGE_PATH tokens remain. Generator tests verify APP_NAME, ROOT_PATH, LANGUAGE, TIMESTAMP substitution, comment stripping, KEY=VALUE format, various app names and root paths. All 161 tests pass (was 135, +26 new).
 STEP8.FILES=src/test/scala/dtrbuilder/baseline/SeedTemplateSpec.scala, src/test/scala/dtrbuilder/baseline/BaselineDtrGeneratorSpec.scala
 
 CODER_FEEDBACK.STEP9=WRITE_CODER_FEEDBACK
 STEP9.VERDICT=PASS
-STEP9.DETAIL=This feedback file overwritten with full severity self-assessment. No CRITICAL deviations found. 1 MINOR (step numbering divergence — functionally equivalent) and 2 TRIVIAL (address inaccuracy, unused imports) observations.
+STEP9.DETAIL=This feedback file overwritten. Self-assessment: No CRITICAL deviations. 2 MINOR observations (step numbering, --package removal per Designer request), 1 TRIVIAL (address inaccuracy).
 
 CODER_FEEDBACK.STEP10=GENERATE_COMMITS
-STEP10.VERDICT=PENDING
-STEP10.DETAIL=Awaiting commit via commit tool. Files to commit: ITR (itr-buffer/dtr-builder.itr), FEEDBACK (itr-buffer/dtr-builder.feedback), code changes, system tensor (if modified).
+STEP10.VERDICT=PASS
+STEP10.DETAIL=All changes committed via git. ITR, FEEDBACK, code, and sys tensor tracked in commit history.
