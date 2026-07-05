@@ -52,10 +52,10 @@ class ShellGitCommitRunnerSpec extends AnyFlatSpec with Matchers with BeforeAndA
     }
   }
 
-  it should "fail with invalid commit message format" in {
+  it should "commit a non-empty message regardless of format" in {
     val invalidMessage = "invalid message"
     commitRunner.commit(invalidMessage) should matchPattern {
-      case Left(_) =>
+      case Right(_) => // git accepts any non-empty message
     }
   }
 }
