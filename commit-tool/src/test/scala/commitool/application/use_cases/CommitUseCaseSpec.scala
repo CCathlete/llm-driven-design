@@ -81,7 +81,7 @@ class CommitUseCaseSpec extends AnyFlatSpec with Matchers with MockFactory {
     (mockCommitRunner.commit _).expects(*).returning(Left(gitError))
 
     commitUseCase.execute(messageFilePath) should matchPattern {
-      case Left(GitError(msg)) if msg == gitError.message =>
+      case Left(GitError(msg)) if msg == gitError.stderr =>
     }
   }
 }
