@@ -15,6 +15,7 @@ class ShellGitCommitRunnerSpec extends AnyFlatSpec with Matchers with BeforeAndA
 
   override def beforeEach(): Unit = {
     tempDir = Files.createTempDirectory("commit-tool-test")
+    commitRunner = new ShellGitCommitRunner(Some(tempDir.toFile))
     // Initialize git repository
     Process(Seq("git", "init"), tempDir.toFile) ! ProcessLogger(_ => ())
     // Configure git user for test commits
