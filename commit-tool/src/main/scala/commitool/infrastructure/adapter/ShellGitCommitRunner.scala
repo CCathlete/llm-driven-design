@@ -6,7 +6,7 @@ import java.io.{File, PrintWriter}
 import scala.sys.process._
 import scala.util.control.NonFatal
 
-class ShellGitCommitRunner extends GitCommitRunner {
+class ShellGitCommitRunner(workDir: Option[java.io.File] = None) extends GitCommitRunner {
 
   override def commit(message: String): Either[CommitValidationError, Unit] = {
     var tempFile: Option[File] = None
