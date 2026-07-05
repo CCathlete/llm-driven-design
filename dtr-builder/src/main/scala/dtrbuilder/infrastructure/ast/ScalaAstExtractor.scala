@@ -1,8 +1,8 @@
 package dtrbuilder.infrastructure.ast
 
-import dtrbuilder.application.SignatureExtractor
-import dtrbuilder.domain.{CodexEntry, FileEntry, SigType}
-import dtrbuilder.infrastructure.RegexSignatureExtractor
+import dtrbuilder.application.ports.SignatureExtractor
+import dtrbuilder.domain.models.{CodexEntry, FileEntry, SigType}
+import dtrbuilder.infrastructure.extractors.RegexSignatureExtractor
 import scala.meta._
 
 /** Full AST extractor for Scala using scala.meta.

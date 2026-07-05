@@ -12,7 +12,7 @@ Antlr4 / antlr4PackageName := Some("dtrbuilder.infrastructure.ast.antlr")
 Antlr4 / antlr4GenVisitor := true
 Antlr4 / antlr4GenListener := true
 
-mainClass := Some("dtrbuilder.control.DtrApp")
+mainClass := Some("dtrbuilder.control.entry_point.DtrApp")
 
 // Dependency resolution
 resolvers ++= Seq(

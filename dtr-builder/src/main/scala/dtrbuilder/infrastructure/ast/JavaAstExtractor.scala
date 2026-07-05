@@ -1,8 +1,8 @@
 package dtrbuilder.infrastructure.ast
 
-import dtrbuilder.application.SignatureExtractor
-import dtrbuilder.domain.{CodexEntry, FileEntry, SigType}
-import dtrbuilder.infrastructure.RegexSignatureExtractor
+import dtrbuilder.application.ports.SignatureExtractor
+import dtrbuilder.domain.models.{CodexEntry, FileEntry, SigType}
+import dtrbuilder.infrastructure.extractors.RegexSignatureExtractor
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.CompilationUnit
 import com.github.javaparser.ast.body._

@@ -1,8 +1,9 @@
 package dtrbuilder.infrastructure
 
-import dtrbuilder.application._
-import dtrbuilder.control.Container
-import dtrbuilder.domain._
+import dtrbuilder.application.ports._
+import dtrbuilder.application.services._
+import dtrbuilder.control.dependency_injection.Container
+import dtrbuilder.domain.models._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import java.nio.file.{Files, Path}
@@ -82,7 +83,7 @@ class DtrBuilderIntegrationSpec extends AnyFlatSpec with Matchers {
 
       // Create container and run
       val container = new Container()
-      val env: Environment = EnvironmentImpl
+      val env: Environment = dtrbuilder.infrastructure.environment.SystemEnvironment
 
       // Load .env
       val dotEnv = container.dotEnvLoader.load(config.pathRoot)
@@ -146,7 +147,7 @@ class DtrBuilderIntegrationSpec extends AnyFlatSpec with Matchers {
       )
 
       val container = new Container()
-      val result = container.dtrBuilderService.build(config, EnvironmentImpl)
+      val result = container.dtrBuilderService.build(config, dtrbuilder.infrastructure.environment.SystemEnvironment)
 
       result.chunkCount should be > 1
       result.outputPaths should have size result.chunkCount

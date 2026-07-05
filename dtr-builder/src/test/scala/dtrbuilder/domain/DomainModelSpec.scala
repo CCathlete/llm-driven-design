@@ -1,4 +1,4 @@
-package dtrbuilder.domain
+package dtrbuilder.domain.models
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
