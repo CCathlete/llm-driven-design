@@ -13,9 +13,9 @@ class CommitTypeSpec extends AnyFlatSpec with Matchers {
     )
 
     validTypes.foreach { typeString =>
-      CommitType.fromString(typeString) should matchPattern {
-        case Right(commitType) if commitType.label == typeString =>
-      }
+      val result = CommitType.fromString(typeString)
+      result.isRight shouldBe true
+      result.map(_.label) shouldBe Right(typeString)
     }
   }
 
