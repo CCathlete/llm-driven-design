@@ -1,7 +1,6 @@
 package dtrbuilder.baseline
 
 import dtrbuilder.application.{BaselineDtrGenerator, SeedTemplateLoader}
-import dtrbuilder.domain.RawEntry
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
