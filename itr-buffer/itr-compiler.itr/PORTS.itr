@@ -1,7 +1,0 @@
-# DTR: TYPE.itr-compiler.application.ports.Port, REL.*Repository->Port, REL.*Environment->Port
-PORTS.EXISTING_IN=Port
-PORTS.EXISTING_IMPLEMENTORS=Repository,Environment
-PORTS.EXISTING_CONSUMERS=Service,UseCase
-# DTR: (New section, no coordinates in DTR)
-PORTS.NEW_IN=DTR_LOAD_INPUT,CU_CONTENT_IN
-PORTS.NEW_OUT=CU_WRITE_OUTPUT

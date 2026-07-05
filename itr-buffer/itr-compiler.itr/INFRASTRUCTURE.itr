@@ -1,7 +1,0 @@
-# DTR: TYPE.itr-compiler.infrastructure.database.Repository, TYPE.itr-compiler.infrastructure.environment.Environment, REL.*Repository->Port, REL.*Environment->Port, REL.*Repository->Model
-INFRASTRUCTURE.EXISTING_ADAPTERS=Repository,Environment
-INFRASTRUCTURE.EXISTING_FILES=infrastructure/database/Repository.scala,infrastructure/environment/Environment.scala
-INFRASTRUCTURE.EXISTING_DEPENDENCIES=Repository->Port:IMPLEMENTS,Environment->Port:IMPLEMENTS,Repository->Model:USES
-# DTR: (New section, no coordinates in DTR)
-INFRASTRUCTURE.NEW_ADAPTERS=FileSystemAdapter,JSONContentParser,YAMLContentParser
-INFRASTRUCTURE.NEW_FILES=infrastructure/filesystem/FileSystemAdapter.scala,infrastructure/parsers/JSONContentParser.scala,infrastructure/parsers/YAMLContentParser.scala
