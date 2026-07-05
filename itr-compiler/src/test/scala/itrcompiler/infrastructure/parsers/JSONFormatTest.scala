@@ -39,7 +39,7 @@ class JSONFormatTest extends AnyFunSpec {
       }
 
       it("should unescape newlines in content") {
-        val json = """[{"cu-id":"cu-001","dtr-coordinates":[],"content":"line1\\nline2"}]"""
+        val json = """[{"cu-id":"cu-001","dtr-coordinates":[],"content":"line1\nline2"}]"""
         val batch = format.parse(json)
         assert(batch.cus.head.content == "line1\nline2")
       }
