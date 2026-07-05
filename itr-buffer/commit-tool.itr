@@ -1,0 +1,233 @@
+ITR.LEGEND=> flow, X exchange, , list separator, ${} expansion, | item separator, CRITICAL severity marker, CU computational unit, -> relation arrow
+ARCH=HEX,DI,DIP,NO_CROSS_LAYER,PORT_FLOW_OUT_IN,DOTENV_WALKUP,CODER_FEEDBACK,SEVERITY,ITR_LIFECYCLE,HARD_FAIL,DTR_DELTA_VERIFICATION
+LAYER.ORDER=DOMAIN,APPLICATION,INFRASTRUCTURE,CONTROL
+APP=commit-tool
+ITERATION=001
+SEVERITY_BASELINE=CRITICAL
+SCOPE=Implement commit-tool as a standalone Scala CLI that enforces Conventional Commits format, reads message from file, auto-generates changelist from staged git changes, and commits.
+
+PORTS.INBOUND=GitStagedChangesReader,GitCommitRunner,FileContentReader
+PORTS.FLOW=APPLICATION uses PORTS (outbound), INFRASTRUCTURE implements PORTS (inbound)
+
+#
+# Computational Units
+#
+
+CU.0.ID=BUILD_CONFIG
+CU.0.LAYER=CONTROL
+CU.0.ORDER=0
+CU.0.DEPENDENCY=NONE
+CU.0.FILES=commit-tool/build.sbt,commit-tool/project/build.properties,commit-tool/project/plugins.sbt
+CU.0.INSTRUCT=Create SBT build configuration:
+  build.sbt:
+    - name=commit-tool, organization=commitool, scalaVersion=2.13.15
+    - mainClass=commitool.control.entrypoint.CommitToolApp
+    - sbt-assembly plugin for fat JAR
+    - assembly settings: prependShellScript=("#!/usr/bin/env sh","exec java -jar \"$0\" \"$@\""), assemblyOutputPath=base/commit-tool (callable by name, no .jar)
+    - resolvers: Sonatype OSS Releases, Maven Central
+    - scalacOptions: -deprecation -feature -unchecked -Xlint -encoding UTF-8
+    - Test / fork := true
+  build.properties: sbt.version=1.10.7
+  plugins.sbt: addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "2.3.1")
+
+CU.1.ID=DOMAIN_MODELS
+CU.1.LAYER=DOMAIN
+CU.1.ORDER=1
+CU.1.DEPENDENCY=NONE
+CU.1.FILES=
+  commit-tool/src/main/scala/commitool/domain/models/CommitType.scala,
+  commit-tool/src/main/scala/commitool/domain/models/StagedChange.scala,
+  commit-tool/src/main/scala/commitool/domain/models/Changelist.scala,
+  commit-tool/src/main/scala/commitool/domain/models/CommitValidationError.scala,
+  commit-tool/src/main/scala/commitool/domain/models/CommitMessage.scala
+CU.1.INSTRUCT=
+  Package: commitool.domain.models
+  CommitType: sealed abstract class with case objects feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert. Method def label: String. Companion object def fromString(s: String): Either[CommitValidationError, CommitType].
+  StagedChange: case class status: ChangeStatus (sealed trait: case objects Added|Modified|Deleted), filePath: String. Method def changelistLabel: String — returns "new file:", "modified:", or "deleted:".
+  Changelist: case class changes: List[StagedChange]. Method def formatAsString: String — formats as:
+      Changes to be committed:
+            new file:   path
+            modified:   path
+            deleted:   path
+    with two-space indent, tab between label and path.
+  CommitValidationError: sealed trait. Case classes:
+    - InvalidFormat(line: String)
+    - UnknownType(got: String, valid: String)
+    - MissingScope(line: String)
+    - EmptyBody
+    - NoStagedChanges
+    - FileNotFound(path: String)
+    - MessageFileEmpty(path: String)
+    - GitError(stderr: String)
+    Each has def message: String returning a verbose, descriptive error string appropriate for the Designer to read.
+  CommitMessage: case class fields: commitType: CommitType, scope: String, description: String, body: String.
+    Companion object def fromRaw(raw: String): Either[CommitValidationError, CommitMessage]:
+      - Split into lines. First non-empty line is header.
+      - Parse header with regex: ^(type)\(scope\): description$ — type must be valid CommitType, scope non-empty, description non-empty.
+      - Find first blank line after header, everything after is body.
+      - Body must be non-empty.
+    Method def compose(changelist: Changelist): String — returns:
+      type(scope): description
+      <blank line>
+      body
+      <blank line>
+      <changelist.formatAsString>
+
+CU.2.ID=APPLICATION_PORTS
+CU.2.LAYER=APPLICATION
+CU.2.ORDER=2
+CU.2.DEPENDENCY=CU.1
+CU.2.FILES=
+  commit-tool/src/main/scala/commitool/application/ports/GitStagedChangesReader.scala,
+  commit-tool/src/main/scala/commitool/application/ports/GitCommitRunner.scala,
+  commit-tool/src/main/scala/commitool/application/ports/FileContentReader.scala
+CU.2.INSTRUCT=
+  Package: commitool.application.ports
+  GitStagedChangesReader: trait with method def readStagedChanges(): Either[CommitValidationError, List[StagedChange]] — gets staged changes from git. Uses domain model StagedChange and CommitValidationError.
+  GitCommitRunner: trait with method def commit(message: String): Either[CommitValidationError, Unit] — executes git commit with the composed message. Wraps git errors as GitError.
+  FileContentReader: trait with method def read(path: String): Either[CommitValidationError, String] — reads file content. Wraps IO errors as FileNotFound or MessageFileEmpty.
+
+CU.3.ID=COMMIT_USE_CASE
+CU.3.LAYER=APPLICATION
+CU.3.ORDER=3
+CU.3.DEPENDENCY=CU.1,CU.2
+CU.3.FILES=commit-tool/src/main/scala/commitool/application/use_cases/CommitUseCase.scala
+CU.3.INSTRUCT=
+  Package: commitool.application.use_cases
+  Class CommitUseCase with constructor injection (DI): gitReader: GitStagedChangesReader, commitRunner: GitCommitRunner, fileReader: FileContentReader.
+  Method execute(messageFilePath: String): Either[CommitValidationError, Unit]:
+    1. Call fileReader.read(messageFilePath) — Left propagates.
+    2. Call CommitMessage.fromRaw(content) — Left propagates.
+    3. Call gitReader.readStagedChanges() — empty list returns Left(NoStagedChanges).
+    4. Build changelist = Changelist(stagedChanges).
+    5. Call commitMessage.compose(changelist) to get final message string.
+    6. Call commitRunner.commit(finalMessage).
+    7. Return Right(()).
+
+CU.4.ID=INFRASTRUCTURE_ADAPTERS
+CU.4.LAYER=INFRASTRUCTURE
+CU.4.ORDER=4
+CU.4.DEPENDENCY=CU.1,CU.2
+CU.4.FILES=
+  commit-tool/src/main/scala/commitool/infrastructure/adapter/ShellStagedChangesReader.scala,
+  commit-tool/src/main/scala/commitool/infrastructure/adapter/ShellGitCommitRunner.scala,
+  commit-tool/src/main/scala/commitool/infrastructure/adapter/FileSystemContentReader.scala,
+  commit-tool/src/main/scala/commitool/infrastructure/environment/DotEnvLoader.scala,
+  commit-tool/src/main/scala/commitool/infrastructure/environment/Environment.scala
+CU.4.INSTRUCT=
+  Package: commitool.infrastructure.adapter + commitool.infrastructure.environment
+  ShellStagedChangesReader extends GitStagedChangesReader:
+    - Use scala.sys.process._ to run "git diff --cached --name-status"
+    - Parse stdout: each non-empty line has pattern ^(A|M|D)\t(.+)$
+    - Map A->Added, M->Modified, D->Deleted
+    - Empty list is valid (no staged changes). Error on non-zero exit.
+  ShellGitCommitRunner extends GitCommitRunner:
+    - Write message to temp file via java.io.File.createTempFile
+    - Execute "git commit -F <tmpfile>" via scala.sys.process
+    - Delete temp file in finally block
+    - Wrap non-zero exit as GitError(stderr)
+  FileSystemContentReader extends FileContentReader:
+    - Use scala.io.Source.fromFile(path)
+    - Catch FileNotFoundException -> FileNotFound(path)
+    - Catch IOException -> descriptive error
+    - If file content is empty -> MessageFileEmpty(path)
+  DotEnvLoader (singleton):
+    - Walk up from working directory toward filesystem root
+    - Check each directory for .env file
+    - Load first .env found: parse KEY=VALUE lines
+    - Support unquoted, double-quoted (expand ${}), single-quoted (literal) values
+    - ${VAR} expansion with recursive resolution, max depth 10, cycle detection
+    - System env vars override .env values (ARCH.DOTENV.MERGE=SYSTEM_OVERRIDES)
+    - Not finding .env is not an error — proceed with empty map
+  Environment (singleton object):
+    - Holds reference to DotEnvLoader
+    - Provides def get(key: String): Option[String]
+
+CU.5.ID=CONTROL_LAYER
+CU.5.LAYER=CONTROL
+CU.5.ORDER=5
+CU.5.DEPENDENCY=CU.3,CU.4
+CU.5.FILES=
+  commit-tool/src/main/scala/commitool/control/cli/CliParser.scala,
+  commit-tool/src/main/scala/commitool/control/di/Container.scala,
+  commit-tool/src/main/scala/commitool/control/entrypoint/CommitToolApp.scala
+CU.5.INSTRUCT=
+  Package: commitool.control.cli, commitool.control.di, commitool.control.entrypoint
+  CliParser (singleton):
+    - Parse args: --message-file <path> (required), --help
+    - If --message-file missing: print usage to stderr, sys.exit(1)
+    - If --help: print usage to stdout, sys.exit(0)
+    - Return parsed message file path
+  Container (class):
+    - Instantiate all adapters: ShellStagedChangesReader, ShellGitCommitRunner, FileSystemContentReader
+    - Instantiate CommitUseCase with adapters
+    - Provide def commitUseCase: CommitUseCase
+  CommitToolApp (singleton, extends App):
+    - Call CliParser.parse(args) to get messageFilePath
+    - Instantiate Container
+    - Call container.commitUseCase.execute(messageFilePath)
+    - Match on Either:
+      - Left(error) => print error.message to stderr, sys.exit(1)
+      - Right(()) => print "commit-tool: committed successfully." to stdout, sys.exit(0)
+
+CU.6.ID=DOMAIN_TESTS
+CU.6.LAYER=TEST
+CU.6.ORDER=6
+CU.6.DEPENDENCY=CU.1
+CU.6.FILES=
+  commit-tool/src/test/scala/commitool/domain/models/CommitTypeSpec.scala,
+  commit-tool/src/test/scala/commitool/domain/models/CommitMessageSpec.scala,
+  commit-tool/src/test/scala/commitool/domain/models/ChangelistSpec.scala
+CU.6.INSTRUCT=
+  Package: commitool.domain.models
+  Use ScalaTest.
+  CommitTypeSpec: verify all 11 types parse correctly, invalid string returns UnknownType.
+  CommitMessageSpec: test valid message parsing, missing scope, invalid type, missing body, empty input, edge cases.
+  ChangelistSpec: test formatting with Mix of Added/Modified/Deleted, empty list, single item.
+
+CU.7.ID=APPLICATION_TESTS
+CU.7.LAYER=TEST
+CU.7.ORDER=7
+CU.7.DEPENDENCY=CU.3
+CU.7.FILES=commit-tool/src/test/scala/commitool/application/use_cases/CommitUseCaseSpec.scala
+CU.7.INSTRUCT=
+  Package: commitool.application.use_cases
+  Mock all three ports. Test:
+    - Success path: happy commit flow
+    - File not found error
+    - Invalid message format error
+    - No staged changes error
+    - Git failure error
+
+CU.8.ID=INFRASTRUCTURE_TESTS
+CU.8.LAYER=TEST
+CU.8.ORDER=8
+CU.8.DEPENDENCY=CU.4
+CU.8.FILES=commit-tool/src/test/scala/commitool/infrastructure/adapter/ShellGitCommitRunnerSpec.scala
+CU.8.INSTRUCT=
+  Package: commitool.infrastructure.adapter
+  Integration test for ShellGitCommitRunner with actual git init in temp dir.
+
+#
+# Layer summaries for Coder orientation
+#
+
+DOMAIN=CommitType (enum), StagedChange (case class), Changelist (case class), CommitValidationError (sealed trait), CommitMessage (case class with validation)
+APPLICATION=Ports: GitStagedChangesReader (trait), GitCommitRunner (trait), FileContentReader (trait). UseCase: CommitUseCase (class with DI)
+INFRASTRUCTURE=Adapters: ShellStagedChangesReader, ShellGitCommitRunner, FileSystemContentReader. Environment: DotEnvLoader, Environment singleton.
+CONTROL=CliParser (object), Container (class), CommitToolApp (object)
+
+#
+# Execution steps
+#
+
+ITR_GEN.STEP0=BUILD_CONFIG — create build.sbt, project/build.properties, project/plugins.sbt
+ITR_GEN.STEP1=DECOMPOSE_DOMAIN — implement domain models (CU.1)
+ITR_GEN.STEP2=BIND_PORTS — implement application port interfaces (CU.2)
+ITR_GEN.STEP3=DERIVE_APPLICATION — implement CommitUseCase (CU.3)
+ITR_GEN.STEP4=BUILD_INFRASTRUCTURE — implement all adapters and environment (CU.4)
+ITR_GEN.STEP5=WIRE_CONTROL — implement CliParser, Container, CommitToolApp (CU.5)
+ITR_GEN.STEP6=GENERATE_TESTS — write all tests (CU.6, CU.7, CU.8)
+ITR_GEN.STEP7=VERIFY_DTR_DELTAS — run dtr-builder to generate DTR, verify all NEW_DTR_LINES are present
+ITR_GEN.STEP8=WRITE_FEEDBACK — overwrite itr-buffer/commit-tool.feedback with self-assessment
+ITR_GEN.STEP9=GENERATE_COMMITS — commit all changes with custom message from FEEDBACK.COMMIT_MESSAGE
