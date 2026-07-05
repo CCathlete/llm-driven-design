@@ -1,7 +1,65 @@
-ITR.LEGEND=> flow, X exchange, , list separator, ${} expansion, -> relation arrow, CRITICAL severity marker
+ITR.LEGEND=> flow, X exchange, , list separator, ${} expansion, -> relation arrow, CRITICAL severity marker, CU computational unit
 ARCH=HEX,DI,DIP,NO_CROSS_LAYER,PORT_FLOW_OUT_IN,DOTENV_WALKUP,CODER_FEEDBACK,SEVERITY,ITR_LIFECYCLE,HARD_FAIL
 LAYER.ORDER=DOMAIN,APPLICATION,INFRASTRUCTURE,CONTROL
 ITR.APP=dtr-builder
-ITR.ITERATION=013
+ITR.ITERATION=014
 ITR.SEVERITY_BASELINE=CRITICAL
-ITR.COMMIT_FORMAT=commit message includes full changelist section with file statuses
+ITR.SCOPE=Add --create-baseline-dtr mode to dtr-builder: embed seed DTR template, generate customized baseline DTRs from CLI flags
+
+# Computational Units (CUs)
+# Each CU targets a DTR address and provides implementation instructions
+
+CU.1.ADDRESS=infrastructure/seed/SeedTemplate.scala
+CU.1.LABEL=SeedTemplate — embed a golden-architecture DTR as a classpath resource
+CU.1.INSTRUCT=Create src/main/resources/seed/seed-dtr.dtr containing the canonical address map of a well-structured Scala app following LLMDD conventions (domain, application, infrastructure, control layers). The seed should include placeholder tokens like {{APP_NAME}}, {{PACKAGE_NAME}}, {{ROOT_PATH}} for later substitution.
+
+CU.2.ADDRESS=infrastructure/seed/SeedTemplateLoader.scala
+CU.2.LABEL=SeedTemplateLoader — infrastructure adapter that loads the seed template from classpath
+CU.2.INSTRUCT=Implement SeedTemplateLoader that reads src/main/resources/seed/seed-dtr.dtr from the classpath and returns its content as a string. Must handle missing resource gracefully (hard error with clear message). Port interface defined in application layer.
+
+CU.3.ADDRESS=application/BaselineDtrGenerator.scala
+CU.3.LABEL=BaselineDtrGenerator — application service that mutates the seed template based on CLI parameters
+CU.3.INSTRUCT=Implement BaselineDtrGenerator that: (1) receives the raw seed template string, (2) applies search-and-replace mutations (e.g. {{APP_NAME}} -> user's app name, {{PACKAGE_NAME}} -> user's package, {{ROOT_PATH}} -> user's root), (3) outputs RawEntry[] suitable for DtrWriter. Extends or uses a port for template loading.
+
+CU.4.ADDRESS=control/CliParser.scala
+CU.4.LABEL=CliParser — add new CLI flags for baseline DTR generation
+CU.4.INSTRUCT=Add flags: --create-baseline-dtr (flag to activate mode), --app-name <name>, --package <package>, --language <lang>, --root <path> (reuse existing). Update help text. Parse these into a new DtrConfig.Mode variant.
+
+CU.5.ADDRESS=control/DtrConfig.scala
+CU.5.LABEL=DtrConfig — add Mode ADT to distinguish extract vs. baseline generation
+CU.5.INSTRUCT=Add sealed trait Mode with case objects ExtractMode and CreateBaselineMode(appName: String, packageName: String, language: String). Update DtrConfig to carry Mode.
+
+CU.6.ADDRESS=control/DtrApp.scala
+CU.6.LABEL=DtrApp — route to extract or generate based on Mode
+CU.6.INSTRUCT=In DtrApp.main, match on config.mode: if ExtractMode, run existing pipeline; if CreateBaselineMode, instantiate SeedTemplateLoader and BaselineDtrGenerator, generate baseline DTR, write via DtrWriter, report output.
+
+CU.7.ADDRESS=control/Container.scala
+CU.7.LABEL=Container — wire new dependencies
+CU.7.INSTRUCT=Add SeedTemplateLoader and BaselineDtrGenerator to the DI container. Wire BaselineDtrGenerator to DtrWriter for output.
+
+CU.8.ADDRESS=tests/baseline/SeedTemplateSpec.scala
+CU.8.LABEL=Tests — verify seed template exists and is parseable
+CU.8.INSTRUCT=Test that seed-dtr.dtr is on classpath and contains expected keys (META, FILE, CODEX, TYPE, REL). Test that placeholder tokens {{APP_NAME}} etc are present.
+
+CU.9.ADDRESS=tests/baseline/BaselineDtrGeneratorSpec.scala
+CU.9.LABEL=Tests — verify BaselineDtrGenerator produces correct output
+CU.9.INSTRUCT=Test that BaselineDtrGenerator substitutes tokens correctly. Test with various app names and packages. Verify output contains valid DTR lines.
+
+# Existing components
+PORTS=SeedTemplateLoader (port in application), DtrWriter (port, existing)
+DOMAIN=NONE — no domain model changes
+APPLICATION=BaselineDtrGenerator (new service), SeedTemplateLoader (port interface)
+INFRASTRUCTURE=SeedTemplate (resource), SeedTemplateLoader (adapter)
+CONTROL=CliParser, DtrConfig, DtrApp, Container — all modified
+TESTS=SeedTemplateSpec, BaselineDtrGeneratorSpec
+
+ITR_GEN.STEP1=CREATE_SEED_TEMPLATE — write src/main/resources/seed/seed-dtr.dtr with golden architecture
+ITR_GEN.STEP2=IMPLEMENT_SEED_TEMPLATE_LOADER — write SeedTemplateLoader port + adapter
+ITR_GEN.STEP3=IMPLEMENT_BASELINE_GENERATOR — write BaselineDtrGenerator application service
+ITR_GEN.STEP4=UPDATE_DTR_CONFIG — add Mode ADT to DtrConfig
+ITR_GEN.STEP5=UPDATE_CLI_PARSER — add --create-baseline-dtr and related flags
+ITR_GEN.STEP6=UPDATE_DTR_APP — route to extract vs. generate based on Mode
+ITR_GEN.STEP7=UPDATE_CONTAINER — wire new dependencies
+ITR_GEN.STEP8=WRITE_TESTS — verify seed, generator, and integration
+ITR_GEN.STEP9=WRITE_CODER_FEEDBACK — self-assess severity, document deviations
+ITR_GEN.STEP10=GENERATE_COMMITS — commit all changes together
