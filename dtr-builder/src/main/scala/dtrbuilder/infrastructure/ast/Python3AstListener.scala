@@ -1,6 +1,6 @@
 package dtrbuilder.infrastructure.ast
 
-import dtrbuilder.domain.{CodexEntry, SigType}
+import dtrbuilder.domain.models.{CodexEntry, SigType}
 import dtrbuilder.infrastructure.ast.antlr.{Python3Parser, Python3ParserBaseListener}
 import org.antlr.v4.runtime.misc.Interval
 

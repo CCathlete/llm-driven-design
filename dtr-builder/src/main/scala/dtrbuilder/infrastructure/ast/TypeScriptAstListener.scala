@@ -1,6 +1,6 @@
 package dtrbuilder.infrastructure.ast
 
-import dtrbuilder.domain.{CodexEntry, SigType}
+import dtrbuilder.domain.models.{CodexEntry, SigType}
 import dtrbuilder.infrastructure.ast.antlr.{TypeScriptParser, TypeScriptParserBaseListener}
 
 import scala.collection.mutable.ArrayBuffer

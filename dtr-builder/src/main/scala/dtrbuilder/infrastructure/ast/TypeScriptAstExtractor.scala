@@ -1,8 +1,8 @@
 package dtrbuilder.infrastructure.ast
 
-import dtrbuilder.application.SignatureExtractor
-import dtrbuilder.domain.{CodexEntry, FileEntry}
-import dtrbuilder.infrastructure.RegexSignatureExtractor
+import dtrbuilder.application.ports.SignatureExtractor
+import dtrbuilder.domain.models.{CodexEntry, FileEntry}
+import dtrbuilder.infrastructure.extractors.RegexSignatureExtractor
 import dtrbuilder.infrastructure.ast.antlr.{TypeScriptLexer, TypeScriptParser}
 import org.antlr.v4.runtime.{CharStreams, CommonTokenStream}
 import org.antlr.v4.runtime.tree.ParseTreeWalker

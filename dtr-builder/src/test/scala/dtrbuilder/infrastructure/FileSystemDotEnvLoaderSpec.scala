@@ -1,5 +1,6 @@
 package dtrbuilder.infrastructure
 
+import dtrbuilder.infrastructure.loader.FileSystemDotEnvLoader
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import java.nio.file.{Files, Path}

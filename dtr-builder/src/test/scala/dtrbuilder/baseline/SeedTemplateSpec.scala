@@ -1,6 +1,6 @@
 package dtrbuilder.baseline
 
-import dtrbuilder.infrastructure.ClasspathSeedTemplateLoader
+import dtrbuilder.infrastructure.loader.ClasspathSeedTemplateLoader
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -11,6 +11,8 @@ import org.scalatest.matchers.should.Matchers
   * - Contains expected keys (ARCH, LAYER, META, FILE, CODEX, TYPE, REL)
   * - Contains placeholder tokens ({{APP_NAME}}, {{ROOT_PATH}}, etc.)
   * - No package-specific tokens remain
+  * - Layer structure: domain/models/, application/{ports,services,use_cases}/,
+  *   infrastructure/<feature>/, control/{cli,dependency_injection,entry_point}/
   * - Can be loaded via ClasspathSeedTemplateLoader
   */
 class SeedTemplateSpec extends AnyFlatSpec with Matchers {
@@ -82,27 +84,28 @@ class SeedTemplateSpec extends AnyFlatSpec with Matchers {
 
   it should "contain domain layer files" in {
     val content = loader.loadSeed()
-    content should include("domain/Model.scala")
-    content should include("domain/ValueObject.scala")
+    content should include("domain/models/Model.scala")
+    content should include("domain/models/ValueObject.scala")
   }
 
   it should "contain application layer files" in {
     val content = loader.loadSeed()
-    content should include("application/Service.scala")
-    content should include("application/Port.scala")
+    content should include("application/ports/Port.scala")
+    content should include("application/services/Service.scala")
+    content should include("application/use_cases/UseCase.scala")
   }
 
   it should "contain infrastructure layer files" in {
     val content = loader.loadSeed()
-    content should include("infrastructure/Adapter.scala")
-    content should include("infrastructure/EnvironmentImpl.scala")
+    content should include("infrastructure/database/Repository.scala")
+    content should include("infrastructure/environment/Environment.scala")
   }
 
   it should "contain control layer files" in {
     val content = loader.loadSeed()
-    content should include("control/Container.scala")
-    content should include("control/CliParser.scala")
-    content should include("control/App.scala")
+    content should include("control/cli/CliParser.scala")
+    content should include("control/dependency_injection/Container.scala")
+    content should include("control/entry_point/App.scala")
   }
 
   it should "load successfully multiple times" in {

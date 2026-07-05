@@ -1,6 +1,7 @@
 package dtrbuilder.infrastructure
 
-import dtrbuilder.domain.FileEntry
+import dtrbuilder.domain.models.FileEntry
+import dtrbuilder.infrastructure.metadata.FileMetadataAnalyzer
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import java.nio.file.{Files}

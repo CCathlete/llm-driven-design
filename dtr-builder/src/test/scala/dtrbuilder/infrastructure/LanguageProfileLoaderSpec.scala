@@ -1,15 +1,15 @@
 package dtrbuilder.infrastructure
 
-import dtrbuilder.domain.Language
+import dtrbuilder.domain.models.Language
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 /** Unit tests for LanguageProfileLoader loading from classpath resources. */
 class LanguageProfileLoaderSpec extends AnyFlatSpec with Matchers {
 
-  private val loader = new LanguageProfileLoader
+  private val loader = new dtrbuilder.infrastructure.detection.ClasspathLanguageProfileLoader
 
-  behavior of "LanguageProfileLoader"
+  behavior of "ClasspathLanguageProfileLoader"
 
   it should "load the Scala profile from classpath" in {
     val lang = loader.load("languages/scala.properties")

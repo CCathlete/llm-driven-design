@@ -4,8 +4,21 @@
 # Replace {{APP_NAME}} and {{ROOT_PATH}} with actual values
 #
 # LEGEND: This DTR defines a canonical hexagonal-architecture application
-# following LLMDD conventions (domain → application → infrastructure → control).
-# The architecture enforces DI, DIP, no cross-layer dependencies, port flow out→in.
+# following LLMDD conventions.
+#
+# Layer structure (domain → application → infrastructure → control):
+#   DOMAIN.models          — domain models (entities, value objects)
+#   APPLICATION.ports      — port interfaces (driven/driving)
+#   APPLICATION.services   — business logic services
+#   APPLICATION.use_cases  — use case orchestrators
+#   INFRASTRUCTURE.<feature> — adapters grouped by feature
+#   CONTROL.cli              — CLI parsing
+#   CONTROL.dependency_injection — DI container wiring
+#   CONTROL.entry_point      — application entry point
+#
+# Naming conventions:
+#   - No Impl, Port, Service suffixes on classes/modules
+#   - Folder structure tells the role (port vs service vs adapter)
 
 ARCH=HEX,DI,DIP,NO_CROSS_LAYER,PORT_FLOW_OUT_IN,DOTENV_WALKUP,CODER_FEEDBACK,SEVERITY,ITR_LIFECYCLE,HARD_FAIL
 LAYER.ORDER=DOMAIN,APPLICATION,INFRASTRUCTURE,CONTROL
@@ -18,52 +31,67 @@ META.ROOT_PATH={{ROOT_PATH}}
 META.TIMESTAMP={{TIMESTAMP}}
 META.LANGUAGE={{LANGUAGE}}
 
-# ─── FILES ───
-FILE.{{ROOT_PATH}}/src/main/scala/domain/Model.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
-FILE.{{ROOT_PATH}}/src/main/scala/domain/ValueObject.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
-FILE.{{ROOT_PATH}}/src/main/scala/application/Service.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
-FILE.{{ROOT_PATH}}/src/main/scala/application/Port.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
-FILE.{{ROOT_PATH}}/src/main/scala/infrastructure/Adapter.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
-FILE.{{ROOT_PATH}}/src/main/scala/infrastructure/EnvironmentImpl.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
-FILE.{{ROOT_PATH}}/src/main/scala/control/Container.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
-FILE.{{ROOT_PATH}}/src/main/scala/control/CliParser.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
-FILE.{{ROOT_PATH}}/src/main/scala/control/App.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
+# ─── FILES: Domain Layer ───
+FILE.{{ROOT_PATH}}/src/main/scala/domain/models/Model.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
+FILE.{{ROOT_PATH}}/src/main/scala/domain/models/ValueObject.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
+
+# ─── FILES: Application Layer ───
+FILE.{{ROOT_PATH}}/src/main/scala/application/ports/Port.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
+FILE.{{ROOT_PATH}}/src/main/scala/application/services/Service.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
+FILE.{{ROOT_PATH}}/src/main/scala/application/use_cases/UseCase.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
+
+# ─── FILES: Infrastructure Layer ───
+FILE.{{ROOT_PATH}}/src/main/scala/infrastructure/database/Repository.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
+FILE.{{ROOT_PATH}}/src/main/scala/infrastructure/environment/Environment.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
+
+# ─── FILES: Control Layer ───
+FILE.{{ROOT_PATH}}/src/main/scala/control/cli/CliParser.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
+FILE.{{ROOT_PATH}}/src/main/scala/control/dependency_injection/Container.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
+FILE.{{ROOT_PATH}}/src/main/scala/control/entry_point/App.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
+
+# ─── FILES: Build ───
 FILE.{{ROOT_PATH}}/build.sbt=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:sbt
 FILE.{{ROOT_PATH}}/.env=SIZE:0,MIME:text/plain,ENCODING:UTF-8,LANG:Unknown,EXT:env
 
 # ─── CODEX: Domain Layer ───
-CODEX.{{ROOT_PATH}}/src/main/scala/domain/Model.scala=CLASS:Model
-CODEX.{{ROOT_PATH}}/src/main/scala/domain/ValueObject.scala=CLASS:ValueObject
+CODEX.{{ROOT_PATH}}/src/main/scala/domain/models/Model.scala=CLASS:Model
+CODEX.{{ROOT_PATH}}/src/main/scala/domain/models/ValueObject.scala=CLASS:ValueObject
 
 # ─── CODEX: Application Layer ───
-CODEX.{{ROOT_PATH}}/src/main/scala/application/Service.scala=CLASS:Service
-CODEX.{{ROOT_PATH}}/src/main/scala/application/Port.scala=TRAIT:Port
+CODEX.{{ROOT_PATH}}/src/main/scala/application/ports/Port.scala=TRAIT:Port
+CODEX.{{ROOT_PATH}}/src/main/scala/application/services/Service.scala=CLASS:Service
+CODEX.{{ROOT_PATH}}/src/main/scala/application/use_cases/UseCase.scala=CLASS:UseCase
 
 # ─── CODEX: Infrastructure Layer ───
-CODEX.{{ROOT_PATH}}/src/main/scala/infrastructure/Adapter.scala=CLASS:Adapter
-CODEX.{{ROOT_PATH}}/src/main/scala/infrastructure/EnvironmentImpl.scala=OBJECT:EnvironmentImpl
+CODEX.{{ROOT_PATH}}/src/main/scala/infrastructure/database/Repository.scala=CLASS:Repository
+CODEX.{{ROOT_PATH}}/src/main/scala/infrastructure/environment/Environment.scala=OBJECT:Environment
 
 # ─── CODEX: Control Layer ───
-CODEX.{{ROOT_PATH}}/src/main/scala/control/Container.scala=CLASS:Container
-CODEX.{{ROOT_PATH}}/src/main/scala/control/CliParser.scala=OBJECT:CliParser
-CODEX.{{ROOT_PATH}}/src/main/scala/control/App.scala=OBJECT:App
+CODEX.{{ROOT_PATH}}/src/main/scala/control/cli/CliParser.scala=OBJECT:CliParser
+CODEX.{{ROOT_PATH}}/src/main/scala/control/dependency_injection/Container.scala=CLASS:Container
+CODEX.{{ROOT_PATH}}/src/main/scala/control/entry_point/App.scala=OBJECT:App
 
 # ─── TYPE DEFINITIONS ───
-TYPE.{{APP_NAME}}.domain.Model=KIND:CLASS,FILE:{{ROOT_PATH}}/src/main/scala/domain/Model.scala
-TYPE.{{APP_NAME}}.domain.ValueObject=KIND:CLASS,FILE:{{ROOT_PATH}}/src/main/scala/domain/ValueObject.scala
-TYPE.{{APP_NAME}}.application.Service=KIND:CLASS,FILE:{{ROOT_PATH}}/src/main/scala/application/Service.scala
-TYPE.{{APP_NAME}}.application.Port=KIND:TRAIT,FILE:{{ROOT_PATH}}/src/main/scala/application/Port.scala
-TYPE.{{APP_NAME}}.infrastructure.Adapter=KIND:CLASS,FILE:{{ROOT_PATH}}/src/main/scala/infrastructure/Adapter.scala
-TYPE.{{APP_NAME}}.infrastructure.EnvironmentImpl=KIND:OBJECT,FILE:{{ROOT_PATH}}/src/main/scala/infrastructure/EnvironmentImpl.scala
-TYPE.{{APP_NAME}}.control.Container=KIND:CLASS,FILE:{{ROOT_PATH}}/src/main/scala/control/Container.scala
-TYPE.{{APP_NAME}}.control.CliParser=KIND:OBJECT,FILE:{{ROOT_PATH}}/src/main/scala/control/CliParser.scala
-TYPE.{{APP_NAME}}.control.App=KIND:OBJECT,FILE:{{ROOT_PATH}}/src/main/scala/control/App.scala
+TYPE.{{APP_NAME}}.domain.models.Model=KIND:CLASS,FILE:{{ROOT_PATH}}/src/main/scala/domain/models/Model.scala
+TYPE.{{APP_NAME}}.domain.models.ValueObject=KIND:CLASS,FILE:{{ROOT_PATH}}/src/main/scala/domain/models/ValueObject.scala
+TYPE.{{APP_NAME}}.application.ports.Port=KIND:TRAIT,FILE:{{ROOT_PATH}}/src/main/scala/application/ports/Port.scala
+TYPE.{{APP_NAME}}.application.services.Service=KIND:CLASS,FILE:{{ROOT_PATH}}/src/main/scala/application/services/Service.scala
+TYPE.{{APP_NAME}}.application.use_cases.UseCase=KIND:CLASS,FILE:{{ROOT_PATH}}/src/main/scala/application/use_cases/UseCase.scala
+TYPE.{{APP_NAME}}.infrastructure.database.Repository=KIND:CLASS,FILE:{{ROOT_PATH}}/src/main/scala/infrastructure/database/Repository.scala
+TYPE.{{APP_NAME}}.infrastructure.environment.Environment=KIND:OBJECT,FILE:{{ROOT_PATH}}/src/main/scala/infrastructure/environment/Environment.scala
+TYPE.{{APP_NAME}}.control.cli.CliParser=KIND:OBJECT,FILE:{{ROOT_PATH}}/src/main/scala/control/cli/CliParser.scala
+TYPE.{{APP_NAME}}.control.dependency_injection.Container=KIND:CLASS,FILE:{{ROOT_PATH}}/src/main/scala/control/dependency_injection/Container.scala
+TYPE.{{APP_NAME}}.control.entry_point.App=KIND:OBJECT,FILE:{{ROOT_PATH}}/src/main/scala/control/entry_point/App.scala
 
 # ─── RELATIONS ───
-REL.{{APP_NAME}}.application.Service->{{APP_NAME}}.application.Port=USES:Service uses Port interface
-REL.{{APP_NAME}}.infrastructure.Adapter->{{APP_NAME}}.application.Port=IMPLEMENTS:Adapter implements Port
-REL.{{APP_NAME}}.infrastructure.Adapter->{{APP_NAME}}.domain.Model=USES:Adapter uses Model
-REL.{{APP_NAME}}.control.Container->{{APP_NAME}}.infrastructure.Adapter=HOLDS:Container holds Adapter
-REL.{{APP_NAME}}.control.Container->{{APP_NAME}}.application.Service=HOLDS:Container holds Service
-REL.{{APP_NAME}}.control.App->{{APP_NAME}}.control.Container=USES:App creates Container
-REL.{{APP_NAME}}.control.App->{{APP_NAME}}.control.CliParser=USES:App calls CliParser
+REL.{{APP_NAME}}.application.services.Service->{{APP_NAME}}.application.ports.Port=USES:Service uses Port interface
+REL.{{APP_NAME}}.application.use_cases.UseCase->{{APP_NAME}}.application.ports.Port=USES:UseCase uses Port interface
+REL.{{APP_NAME}}.application.use_cases.UseCase->{{APP_NAME}}.application.services.Service=USES:UseCase orchestrates Service
+REL.{{APP_NAME}}.infrastructure.database.Repository->{{APP_NAME}}.application.ports.Port=IMPLEMENTS:Repository implements Port
+REL.{{APP_NAME}}.infrastructure.database.Repository->{{APP_NAME}}.domain.models.Model=USES:Repository uses Model
+REL.{{APP_NAME}}.infrastructure.environment.Environment->{{APP_NAME}}.application.ports.Port=IMPLEMENTS:Environment implements Port
+REL.{{APP_NAME}}.control.dependency_injection.Container->{{APP_NAME}}.infrastructure.database.Repository=HOLDS:Container holds Repository
+REL.{{APP_NAME}}.control.dependency_injection.Container->{{APP_NAME}}.application.use_cases.UseCase=HOLDS:Container holds UseCase
+REL.{{APP_NAME}}.control.dependency_injection.Container->{{APP_NAME}}.application.services.Service=HOLDS:Container holds Service
+REL.{{APP_NAME}}.control.entry_point.App->{{APP_NAME}}.control.dependency_injection.Container=USES:App creates Container
+REL.{{APP_NAME}}.control.entry_point.App->{{APP_NAME}}.control.cli.CliParser=USES:App calls CliParser

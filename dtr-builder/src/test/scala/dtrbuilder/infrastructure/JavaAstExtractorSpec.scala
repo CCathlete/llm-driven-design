@@ -1,8 +1,9 @@
 package dtrbuilder.infrastructure
 
-import dtrbuilder.application.LanguageDetector
-import dtrbuilder.domain._
+import dtrbuilder.application.services.LanguageDetector
+import dtrbuilder.domain.models._
 import dtrbuilder.infrastructure.ast.JavaAstExtractor
+import dtrbuilder.infrastructure.extractors.RegexSignatureExtractor
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import java.nio.file.{Files, Path}
