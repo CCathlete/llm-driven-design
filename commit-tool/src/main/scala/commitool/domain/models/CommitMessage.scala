@@ -17,10 +17,11 @@ object CommitMessage {
   private val HeaderRegex = "^(\\w+)\\(([^)]+)\\): (.+)$".r
 
   def fromRaw(raw: String): Either[CommitValidationError, CommitMessage] = {
-    val lines = raw.split("\n").map(_.trim).filter(_.nonEmpty).toList
-    if (lines.isEmpty) return Left(InvalidFormat(""))
+    val allLines = raw.split("\n", -1).toList
+    val headerIndex = allLines.indexWhere(_.trim.nonEmpty)
+    if (headerIndex == -1) return Left(InvalidFormat(""))
 
-    val headerLine = lines.head
+    val headerLine = allLines(headerIndex).trim
     HeaderRegex.findFirstMatchIn(headerLine) match {
       case Some(m) =>
         val typeString = m.group(1)
@@ -30,18 +31,20 @@ object CommitMessage {
         if (scope.isEmpty) return Left(MissingScope(headerLine))
         if (description.isEmpty) return Left(InvalidFormat(headerLine))
 
-        CommitType.fromString(typeString).flatMap {
-          commitType =>
-            val bodyStartIndex = raw.indexOf("\n\n")
-            val bodyContent = if (bodyStartIndex != -1) {
-              raw.substring(bodyStartIndex + 2).trim
-            } else ""
+        CommitType.fromString(typeString).flatMap { commitType =>
+          val afterHeaderLines = allLines.drop(headerIndex + 1)
+          val bodyStartIndex = afterHeaderLines.indexWhere(_.trim.isEmpty)
+          val bodyContent = if (bodyStartIndex != -1) {
+            afterHeaderLines.drop(bodyStartIndex + 1).mkString("\n").trim
+          } else {
+            afterHeaderLines.mkString("\n").trim
+          }
 
-            if (bodyContent.isEmpty) {
-              Left(EmptyBody)
-            } else {
-              Right(CommitMessage(commitType, scope, description, bodyContent))
-            }
+          if (bodyContent.isEmpty) {
+            Left(EmptyBody)
+          } else {
+            Right(CommitMessage(commitType, scope, description, bodyContent))
+          }
         }
       case None => Left(InvalidFormat(headerLine))
     }
