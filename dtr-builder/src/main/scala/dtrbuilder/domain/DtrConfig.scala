@@ -21,7 +21,6 @@ object DtrConfig {
   case object ExtractMode extends Mode
   final case class CreateBaselineMode(
       appName: String,
-      packageName: String,
       language: String
   ) extends Mode
 
