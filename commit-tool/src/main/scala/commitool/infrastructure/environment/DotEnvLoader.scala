@@ -15,7 +15,7 @@ object DotEnvLoader {
     val envVars = mutable.Map[String, ValueType]()
 
     // System environment variables have precedence
-    sys.env.foreach { case (k, v) => envVars(k) = v }
+    sys.env.foreach { case (k, v) => envVars(k) = Expandable(v) }
 
     findDotEnvFile().foreach {
       filePath =>
@@ -64,43 +64,36 @@ private sealed trait ValueType
   }
 
   private def resolveExpansions(raw: Map[String, ValueType]): Map[String, String] = {
-    val resolved = mutable.Map[String, String]()
-    val resolving = mutable.Set[String]() // For cycle detection
+    val resolving = mutable.Set[String]()
     val cache = mutable.Map[String, String]()
 
-    def resolveVar(key: String, depth: Int = 0): Option[String] = {
-      if (depth > 10) {
+    def resolveVar(key: String, depth: Int): Option[String] = {
+      if (depth > 10)
         throw new IllegalStateException(s"Circular or too deep expansion detected for key: $key")
-      }
-      if (resolving.contains(key)) {
+      if (resolving.contains(key))
         throw new IllegalStateException(s"Circular reference detected for key: $key")
-      }
-      cache.get(key) match {
-        case Some(value) => Some(value)
-        case None =>
-          env.get(key) match {
-            case Some(rawValue) =>
-              resolving.add(key)
-              val expandedValue = varExpansionRegex.replaceAllIn(rawValue, m => {
-                val refKey = m.group(1)
-                resolveVar(refKey, depth + 1).getOrElse({
-                  // If referenced variable is not found, leave as is or replace with empty string
-                  // According to ITR, system env vars override .env values, and not finding .env is not an error.
-                  // For missing internal references, we treat them as empty string as per common .env loader behavior.
-                  System.err.println(s"Warning: Environment variable \'$refKey\' referenced in \'$key\' is not defined.")
-                  ""
-                })
-              })
-              resolving.remove(key)
-              cache(key) = expandedValue
-              Some(expandedValue)
-            case None =>
-              None
-          }
+
+      cache.get(key).orElse {
+        raw.get(key) match {
+          case Some(Expandable(rawValue)) =>
+            resolving.add(key)
+            val expanded = varExpansionRegex.replaceAllIn(rawValue, m => {
+              val refKey = m.group(1)
+              resolveVar(refKey, depth + 1).getOrElse {
+                System.err.println(s"Warning: Environment variable '$refKey' referenced in '$key' is not defined.")
+                ""
+              }
+            })
+            resolving.remove(key)
+            cache(key) = expanded
+            Some(expanded)
+          case Some(Literal(value)) => Some(value) // literal: no expansion
+          case None => None
+        }
       }
     }
 
-    env.keys.foreach(key => resolveVar(key))
-    env.map { case (key, _) => key -> resolveVar(key).getOrElse(env(key)) }
+    raw.keys.foreach(key => resolveVar(key, 0))
+    raw.map { case (key, _) => key -> resolveVar(key, 0).getOrElse(throw new IllegalStateException(s"Unresolvable key: $key")) }
   }
 }
