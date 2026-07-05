@@ -1,3 +1,4 @@
-# DTR: DOMAIN.MODELS, TYPE.itr-compiler.domain.models.DTR, TYPE.itr-compiler.domain.models.ITR, TYPE.itr-compiler.domain.models.ComponentUnit
-DOMAIN.MODELS=DTR,ITR,ComponentUnit
-DOMAIN.VALIDATION_RULES=DTR_STRUCTURE,CONSTRAINTS,SEVERITY
+# DTR: TYPE.itr-compiler.domain.models.Model, TYPE.itr-compiler.domain.models.ValueObject, FILE.src/domain/models/Model.scala, FILE.src/domain/models/ValueObject.scala
+DOMAIN.MODELS=Model,ValueObject
+DOMAIN.FILES=domain/models/Model.scala,domain/models/ValueObject.scala
+DOMAIN.TYPES=itr-compiler.domain.models.Model,itr-compiler.domain.models.ValueObject

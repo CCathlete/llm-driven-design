@@ -1,3 +1,5 @@
-# DTR: APPLICATION.PORTS
-PORTS.DTR_INPUT=IN,FILE_PATH
-PORTS.ITR_OUTPUT=OUT,FOLDER
+# DTR: TYPE.itr-compiler.application.ports.Port, REL.itr-compiler.infrastructure.database.Repository->itr-compiler.application.ports.Port, REL.itr-compiler.infrastructure.environment.Environment->itr-compiler.application.ports.Port
+PORTS.IN=Port
+PORTS.OUT=Port
+PORTS.IMPLEMENTORS=Repository,Environment
+PORTS.CONSUMERS=Service,UseCase

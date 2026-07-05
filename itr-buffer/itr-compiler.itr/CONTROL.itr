@@ -1,4 +1,6 @@
-# DTR: CONTROL.ENTRY_POINT, TYPE.itr-compiler.control.entry_point.App, TYPE.itr-compiler.control.cli.CliParser
-CONTROL.ENTRY_POINT=App.scala
-CONTROL.CLI=--dtr-path,--output-dir
-CONTROL.CONTAINER=Scala3
+# DTR: TYPE.itr-compiler.control.cli.CliParser, TYPE.itr-compiler.control.dependency_injection.Container, TYPE.itr-compiler.control.entry_point.App, REL.itr-compiler.control.dependency_injection.Container->itr-compiler.infrastructure.database.Repository, REL.itr-compiler.control.dependency_injection.Container->itr-compiler.application.use_cases.UseCase, REL.itr-compiler.control.dependency_injection.Container->itr-compiler.application.services.Service, REL.itr-compiler.control.entry_point.App->itr-compiler.control.dependency_injection.Container, REL.itr-compiler.control.entry_point.App->itr-compiler.control.cli.CliParser
+CONTROL.ENTRY_POINT=App
+CONTROL.CLI=CliParser
+CONTROL.DI_CONTAINER=Container
+CONTROL.FILES=control/cli/CliParser.scala,control/dependency_injection/Container.scala,control/entry_point/App.scala
+CONTROL.DEPENDENCIES=Container->Repository,Container->UseCase,Container->Service,App->Container,App->CliParser
