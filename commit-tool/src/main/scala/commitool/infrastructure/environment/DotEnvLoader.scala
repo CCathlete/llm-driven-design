@@ -33,8 +33,7 @@ object DotEnvLoader {
         }
     }
 
-    val resolvedEnv = resolveExpansions(envVars.toMap)
-    resolvedEnv // System env vars should override after expansion too
+    resolveExpansions(envVars.toMap)
   }
 
   private def findDotEnvFile(): Option[Path] = {
