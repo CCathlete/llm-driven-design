@@ -32,6 +32,9 @@ class Container {
   // Infrastructure: Environment singleton
   val environment: Environment = EnvironmentImpl
 
+  // Infrastructure: SeedTemplateLoader — loads seed DTR from classpath resource
+  val seedTemplateLoader: SeedTemplateLoader = new ClasspathSeedTemplateLoader
+
   // Infrastructure: LanguageProfileLoader — loads from classpath resources
   val languageProfileLoader: LanguageProfileLoader = new LanguageProfileLoader
 
