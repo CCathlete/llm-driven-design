@@ -14,14 +14,9 @@ class ChangelistSpec extends AnyFlatSpec with Matchers {
     )
     val changelist = Changelist(changes)
 
-    val expected = """
-      Changes to be committed:
-        new file:  file1.txt
-        modified:  file2.txt
-        deleted:  file3.txt
-      """
+    val expected = "Changes to be committed:\n  new file:\tfile1.txt\n  modified:\tfile2.txt\n  deleted:\tfile3.txt"
 
-    changelist.formatAsString should equal (expected.trim)
+    changelist.formatAsString should equal (expected)
   }
 
   it should "return empty string for empty changelist" in {
@@ -35,12 +30,9 @@ class ChangelistSpec extends AnyFlatSpec with Matchers {
     )
     val changelist = Changelist(changes)
 
-    val expected = """
-      Changes to be committed:
-        modified:  single.txt
-      """
+    val expected = "Changes to be committed:\n  modified:\tsingle.txt"
 
-    changelist.formatAsString should equal (expected.trim)
+    changelist.formatAsString should equal (expected)
   }
 
   it should "handle special characters in file paths" in {
@@ -50,12 +42,8 @@ class ChangelistSpec extends AnyFlatSpec with Matchers {
     )
     val changelist = Changelist(changes)
 
-    val expected = """
-      Changes to be committed:
-        new file:  path with spaces/file.txt
-        modified:  path/with/special!@#$%^&*().txt
-      """
+    val expected = "Changes to be committed:\n  new file:\tpath with spaces/file.txt\n  modified:\tpath/with/special!@#$%^&*().txt"
 
-    changelist.formatAsString should equal (expected.trim)
+    changelist.formatAsString should equal (expected)
   }
 }
