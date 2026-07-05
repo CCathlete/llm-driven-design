@@ -5,7 +5,8 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import java.nio.file.{Files, Path}
-import scala.sys.process.{Process, ProcessLogger}
+import scala.sys.process.Process
+import scala.sys.process.ProcessLogger
 
 class ShellGitCommitRunnerSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
