@@ -1,0 +1,4 @@
+# DTR: CONTROL.ENTRY_POINT, TYPE.itr-compiler.control.entry_point.App, TYPE.itr-compiler.control.cli.CliParser
+CONTROL.ENTRY_POINT=App.scala
+CONTROL.CLI=--dtr-path,--output-dir
+CONTROL.CONTAINER=Scala3
