@@ -48,9 +48,17 @@ scalacOptions ++= Seq(
 // Fork for test execution
 Test / fork := true
 
-// Assembly settings
-assembly / assemblyJarName := s"${name.value}-${version.value}.jar"
-assembly / assemblyOutputPath := baseDirectory.value / s"${name.value}-${version.value}.jar"
+// Assembly settings — per SCALA.EXECUTABLE=PREPEND_EXECUTION_SCRIPT
+// Output is a self-executing file (no .jar extension) with prepended shell script.
+// Callable by name: ./dtr-builder
+assembly / assemblyJarName := "dtr-builder"
+assembly / assemblyOutputPath := baseDirectory.value / "dtr-builder"
+assembly / assemblyPrependShellScript := Some(
+  Seq(
+    "#!/usr/bin/env sh",
+    """exec java -jar "$0" "$@" """
+  )
+)
 
 assembly / assemblyMergeStrategy := {
   case PathList("META-INF", xs @ _*) =>
