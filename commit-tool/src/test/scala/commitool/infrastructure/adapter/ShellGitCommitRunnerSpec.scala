@@ -16,13 +16,11 @@ class ShellGitCommitRunnerSpec extends AnyFlatSpec with Matchers with BeforeAndA
   override def beforeEach(): Unit = {
     tempDir = Files.createTempDirectory("commit-tool-test")
     // Initialize git repository
-    Seq("git", "init").!(ProcessLogger(_ => ()))
-    // Change to temp directory
-    System.setProperty("user.dir", tempDir.toString)
+    Process(Seq("git", "init"), tempDir.toFile) ! ProcessLogger(_ => ())
     // Create a test file
     Files.write(tempDir.resolve("test.txt"), "test content".getBytes)
     // Stage the test file
-    Seq("git", "add", "test.txt").!(ProcessLogger(_ => ()))
+    Process(Seq("git", "add", "test.txt"), tempDir.toFile) ! ProcessLogger(_ => ())
   }
 
   override def afterEach(): Unit = {
