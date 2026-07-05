@@ -1,7 +1,7 @@
 package itrcompiler.application.services
 
 import itrcompiler.application.ports.ContentRead
-import itrcompiler.domain.models.{CU, CUBatch}
+import itrcompiler.domain.models.CUBatch
 import java.nio.file.Path
 
 /** Service: deserializes batch content from JSON or YAML files.
