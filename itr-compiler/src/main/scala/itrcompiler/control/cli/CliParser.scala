@@ -26,26 +26,33 @@ object CliParser {
   def parse(args: Array[String]): Option[CompileCommand] = {
     if (args.isEmpty) return None
 
-    val flags = args.sliding(2, 1).collect {
-      case Array("--compile", _)      => "--compile" -> ""
-      case Array("--dtr", v)          => "--dtr" -> v
-      case Array("--out-folder", v)   => "--out-folder" -> v
-      case Array("--raw-content", v)  => "--raw-content" -> v
-      case Array("--cu-id", v)        => "--cu-id" -> v
-      case Array("--json-content", v) => "--json-content" -> v
-      case Array("--yaml-content", v) => "--yaml-content" -> v
-      case Array("--force", _)        => "--force" -> ""
-    }.toMap
+    val flags = args.iterator
+    val buf = Map.newBuilder[String, String]
+    val bools = Set.newBuilder[String]
+
+    while (flags.hasNext) {
+      val flag = flags.next()
+      flag match {
+        case "--compile" | "--force" =>
+          bools += flag
+        case "--dtr" | "--out-folder" | "--raw-content" | "--cu-id" | "--json-content" | "--yaml-content" =>
+          if (flags.hasNext) buf += flag -> flags.next()
+        case _ =>
+          // skip unknown flags
+      }
+    }
+
+    val vals = buf.result()
 
     Some(CompileCommand(
-      compile      = flags.contains("--compile"),
-      dtr          = flags.get("--dtr").map(Paths.get(_)),
-      outFolder    = flags.get("--out-folder").map(Paths.get(_)).getOrElse(Paths.get("out")),
-      rawContent   = flags.get("--raw-content"),
-      cuId         = flags.get("--cu-id"),
-      jsonContent  = flags.get("--json-content").map(Paths.get(_)),
-      yamlContent  = flags.get("--yaml-content").map(Paths.get(_)),
-      force        = flags.contains("--force")
+      compile      = bools.result().contains("--compile"),
+      dtr          = vals.get("--dtr").map(Paths.get(_)),
+      outFolder    = vals.get("--out-folder").map(Paths.get(_)).getOrElse(Paths.get("out")),
+      rawContent   = vals.get("--raw-content"),
+      cuId         = vals.get("--cu-id"),
+      jsonContent  = vals.get("--json-content").map(Paths.get(_)),
+      yamlContent  = vals.get("--yaml-content").map(Paths.get(_)),
+      force        = bools.result().contains("--force")
     ))
   }
 }
