@@ -52,11 +52,12 @@ class CommitMessageSpec extends AnyFlatSpec with Matchers {
     CommitMessage.fromRaw(specialCharsMessage + "\n\nbody") should matchPattern {
       case Right(CommitMessage(_, _, description, _)) if description == "description with !@#$%^&*()" =>
     }
+  }
 
-    // Test with multi-line body
-    val multiLineBodyMessage = "feat(scope): description\n\nline1\nline2\nline3"
-    CommitMessage.fromRaw(multiLineBodyMessage) should matchPattern {
-      case Right(CommitMessage(_, _, _, body)) if body == "line1\nline2\nline3" =>
+  it should "preserve multi-paragraph body with blank lines" in {
+    val raw = "feat(scope): description\n\nParagraph one.\n\nParagraph two.\n\nParagraph three."
+    CommitMessage.fromRaw(raw) should matchPattern {
+      case Right(CommitMessage(_, _, _, body)) if body == "Paragraph one.\n\nParagraph two.\n\nParagraph three." =>
     }
   }
 }
