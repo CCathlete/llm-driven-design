@@ -34,14 +34,7 @@ object CommitMessage {
           commitType =>
             val bodyStartIndex = raw.indexOf("\n\n")
             val bodyContent = if (bodyStartIndex != -1) {
-              val fullBody = raw.substring(bodyStartIndex + 2).trim
-              val bodyLines = fullBody.split("\n").toList
-              val firstBlankLineIndex = bodyLines.indexOf("")
-              if (firstBlankLineIndex != -1) {
-                bodyLines.take(firstBlankLineIndex).mkString("\n").trim
-              } else {
-                fullBody
-              }
+              raw.substring(bodyStartIndex + 2).trim
             } else ""
 
             if (bodyContent.isEmpty) {
