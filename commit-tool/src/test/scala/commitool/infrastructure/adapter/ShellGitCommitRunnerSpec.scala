@@ -17,6 +17,9 @@ class ShellGitCommitRunnerSpec extends AnyFlatSpec with Matchers with BeforeAndA
     tempDir = Files.createTempDirectory("commit-tool-test")
     // Initialize git repository
     Process(Seq("git", "init"), tempDir.toFile) ! ProcessLogger(_ => ())
+    // Configure git user for test commits
+    Process(Seq("git", "config", "user.name", "Test User"), tempDir.toFile) ! ProcessLogger(_ => ())
+    Process(Seq("git", "config", "user.email", "test@example.com"), tempDir.toFile) ! ProcessLogger(_ => ())
     // Create a test file
     Files.write(tempDir.resolve("test.txt"), "test content".getBytes)
     // Stage the test file
