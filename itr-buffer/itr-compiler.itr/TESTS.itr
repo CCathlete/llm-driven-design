@@ -1,4 +1,4 @@
 # DTR: (New section, no coordinates in DTR)
-TESTS.UNIT=DTRParserTest,ITRCompilerTest,ValidatorTest
+TESTS.UNIT=ModelTest,ValueObjectTest,PortTest,ServiceTest,UseCaseTest,RepositoryTest,EnvironmentTest,CliParserTest,ContainerTest,AppTest
 TESTS.INTEGRATION=EndToEndTest
-TESTS.VALIDATION=ConstraintsTest,SeverityTest
+TESTS.LAYER_COVERAGE=DOMAIN,APPLICATION,INFRASTRUCTURE,CONTROL

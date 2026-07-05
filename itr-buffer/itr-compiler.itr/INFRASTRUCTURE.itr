@@ -1,3 +1,4 @@
-# DTR: INFRASTRUCTURE.ADAPTERS, TYPE.itr-compiler.infrastructure.filesystem.FileSystemAdapter
-INFRASTRUCTURE.ADAPTERS=FileSystemAdapter
-INFRASTRUCTURE.ENV=ITR_BUFFER_PATH,SEVERITY
+# DTR: TYPE.itr-compiler.infrastructure.database.Repository, TYPE.itr-compiler.infrastructure.environment.Environment, REL.itr-compiler.infrastructure.database.Repository->itr-compiler.application.ports.Port, REL.itr-compiler.infrastructure.environment.Environment->itr-compiler.application.ports.Port, REL.itr-compiler.infrastructure.database.Repository->itr-compiler.domain.models.Model
+INFRASTRUCTURE.ADAPTERS=Repository,Environment
+INFRASTRUCTURE.FILES=infrastructure/database/Repository.scala,infrastructure/environment/Environment.scala
+INFRASTRUCTURE.DEPENDENCIES=implements:Port,uses:Model

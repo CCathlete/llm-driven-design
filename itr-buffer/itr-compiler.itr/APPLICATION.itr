@@ -1,4 +1,6 @@
-# DTR: APPLICATION.SERVICES, APPLICATION.PORTS, TYPE.itr-compiler.application.services.DTRParser, TYPE.itr-compiler.application.services.ITRCompiler, TYPE.itr-compiler.application.services.Validator
-APPLICATION.SERVICES=DTRParser,ITRCompiler,Validator
-APPLICATION.PORTS=DTR_INPUT,ITR_OUTPUT
-APPLICATION.USE_CASES=ParseDTR,GenerateITR,ValidateDTR
+# DTR: TYPE.itr-compiler.application.ports.Port, TYPE.itr-compiler.application.services.Service, TYPE.itr-compiler.application.use_cases.UseCase, REL.itr-compiler.application.services.Service->itr-compiler.application.ports.Port, REL.itr-compiler.application.use_cases.UseCase->itr-compiler.application.ports.Port, REL.itr-compiler.application.use_cases.UseCase->itr-compiler.application.services.Service
+APPLICATION.PORTS=Port
+APPLICATION.SERVICES=Service
+APPLICATION.USE_CASES=UseCase
+APPLICATION.FILES=application/ports/Port.scala,application/services/Service.scala,application/use_cases/UseCase.scala
+APPLICATION.RELATIONS=Service->Port,UseCase->Port,UseCase->Service
