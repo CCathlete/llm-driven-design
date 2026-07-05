@@ -50,14 +50,19 @@ object DotEnvLoader {
     None
   }
 
-  private def parseValue(value: String): String = {
-    if (value.startsWith("\'") && value.endsWith("\'")) {
-      value.substring(1, value.length - 1) // Single quoted, literal
+private sealed trait ValueType
+  private case class Literal(value: String) extends ValueType
+  private case class Expandable(value: String) extends ValueType
+
+  private def parseValue(value: String): ValueType = {
+    if (value.startsWith("'") && value.endsWith("'")) {
+      Literal(value.substring(1, value.length - 1))
     } else if (value.startsWith("\"") && value.endsWith("\"")) {
-      value.substring(1, value.length - 1) // Double quoted, needs expansion
+      Expandable(value.substring(1, value.length - 1))
     } else {
-      value // Unquoted, needs expansion
+      Expandable(value.trim)
     }
+  }
   }
 
   private def resolveExpansions(env: Map[String, String]): Map[String, String] = {
