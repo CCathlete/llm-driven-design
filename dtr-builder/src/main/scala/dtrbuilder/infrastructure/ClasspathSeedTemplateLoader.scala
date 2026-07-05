@@ -2,7 +2,7 @@ package dtrbuilder.infrastructure
 
 import dtrbuilder.application.SeedTemplateLoader
 import scala.io.Source
-import scala.util.{Try, Using}
+import scala.util.Try
 
 /** Infrastructure adapter: loads the seed DTR template from classpath resource.
   *
