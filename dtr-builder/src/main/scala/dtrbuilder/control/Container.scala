@@ -10,18 +10,19 @@ import dtrbuilder.infrastructure.ast._
   * Wiring order (respecting DIP and NO_CROSS_LAYER):
   *   1. DotEnvLoader (infrastructure)
   *   2. Environment (infrastructure singleton)
-  *   3. LanguageProfileLoader (infrastructure) — loads profiles from classpath
-  *   4. LanguageDetector (application service) — uses loaded profiles
-  *   5. FileSystemWalker (infrastructure)
-  *   6. FileMetadataAnalyzer (infrastructure)
-  *   7. RegexSignatureExtractor (infrastructure) — baseline for all languages
-  *   8. AST extractors (infrastructure, with regex fallback on parse failure)
-  *   9. SignatureExtractor composite (wraps regex + AST with proper precedence)
-  *   10. RelationDetector (application service)
-  *   11. DtrFormatter (application service)
-  *   12. DtrChunker (application service)
-  *   13. FileSystemDtrWriter (infrastructure adapter for DtrWriter port)
-  *   14. DtrBuilderService (application service)
+  *   3. SeedTemplateLoader (infrastructure) — loads seed template from classpath
+  *   4. LanguageProfileLoader (infrastructure) — loads profiles from classpath
+  *   5. LanguageDetector (application service) — uses loaded profiles
+  *   6. FileSystemWalker (infrastructure)
+  *   7. FileMetadataAnalyzer (infrastructure)
+  *   8. RegexSignatureExtractor (infrastructure) — baseline for all languages
+  *   9. AST extractors (infrastructure, with regex fallback on parse failure)
+  *   10. SignatureExtractor composite (wraps regex + AST with proper precedence)
+  *   11. RelationDetector (application service)
+  *   12. DtrFormatter (application service)
+  *   13. DtrChunker (application service)
+  *   14. FileSystemDtrWriter (infrastructure adapter for DtrWriter port)
+  *   15. DtrBuilderService (application service)
   */
 class Container {
 
