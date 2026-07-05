@@ -35,3 +35,7 @@ case class MessageFileEmpty(path: String) extends CommitValidationError {
 case class GitError(stderr: String) extends CommitValidationError {
   override def message: String = s"Git command failed with the following error:\n$stderr"
 }
+
+case class ReadError(path: String, detail: String) extends CommitValidationError {
+  override def message: String = s"Error reading file '$path': $detail"
+}
