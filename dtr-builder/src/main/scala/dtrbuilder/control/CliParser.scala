@@ -60,10 +60,6 @@ object CliParser {
           i += 1
           if (i < args.length) appName = Some(args(i))
           else printErrorAndExit("--app-name requires a name argument")
-        case "--package" =>
-          i += 1
-          if (i < args.length) packageName = Some(args(i))
-          else printErrorAndExit("--package requires a package name argument")
         case "--language" =>
           i += 1
           if (i < args.length) language = args(i)
