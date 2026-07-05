@@ -39,10 +39,10 @@ object DtrApp {
 
       sys.exit(0)
     } catch {
-      case e: IllegalArgumentException =>
+        case e: IllegalArgumentException =>
         System.err.println(s"Error: ${e.getMessage}")
         System.err.println("Usage: dtr-builder --out <path> [--root <path>] [options]")
-        System.err.println("   or: dtr-builder --create-baseline-dtr --app-name <name> [--root <path>] [options]")
+        System.err.println("   or: dtr-builder --create-baseline-dtr [--root <path>] [--language <lang>] [--out <path>]")
         sys.exit(1)
       case e: Exception =>
         System.err.println(s"Fatal error: ${e.getMessage}")
@@ -98,8 +98,9 @@ object DtrApp {
 
   /** Run the baseline DTR generation mode. */
   private def runBaselineMode(config: DtrConfig, baseline: DtrConfig.CreateBaselineMode): Unit = {
+    val appName = config.pathRoot.getFileName.toString
     println(s"DTR Builder v${CliParser.Version} — Baseline Generation Mode")
-    println(s"App:     ${baseline.appName}")
+    println(s"App:     $appName")
     println(s"Lang:    ${baseline.language}")
     println(s"Root:    ${config.pathRoot}")
     println(s"Out:     ${config.outputPath}")
@@ -112,7 +113,6 @@ object DtrApp {
     // Generate baseline DTR entries
     println("Loading seed template and generating baseline DTR...")
     val entries = generator.generate(
-      appName     = baseline.appName,
       rootPath    = config.pathRoot.toString,
       language    = baseline.language
     )
