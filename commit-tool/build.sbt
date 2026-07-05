@@ -6,9 +6,12 @@ mainClass := Some("commitool.control.entrypoint.CommitToolApp")
 
 assembly / assemblyOutputPath := baseDirectory.value / "commit-tool"
 
-assembly / assemblyOption := (assembly / assemblyOption).value.copy(
-  prependShellScript = Some(sbtassembly.AssemblyPlugin.defaultUniversalScript(shebang = false))
-)
+assembly / assemblyJarName := "commit-tool"
+assembly / assemblyOutputPath := baseDirectory.value / "commit-tool"
+assembly / assemblyPrependShellScript := Some(Seq(
+  "#!/usr/bin/env sh",
+  """exec java -jar "$0" "$@""""
+))
 
 resolvers ++= Seq(
   "Sonatype OSS Releases" at "https://oss.sonatype.org/content/repositories/releases/",
