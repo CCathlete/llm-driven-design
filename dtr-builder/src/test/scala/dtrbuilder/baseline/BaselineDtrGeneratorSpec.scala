@@ -8,26 +8,25 @@ import org.scalatest.matchers.should.Matchers
   *
   * Verifies:
   * - Token substitution works correctly
-  * - Multiple app names and packages produce correct output
+  * - Multiple app names produce correct output
   * - Output contains valid DTR lines
   * - Comments are stripped
   */
 class BaselineDtrGeneratorSpec extends AnyFlatSpec with Matchers {
 
-  // A minimal seed template for testing
+  // A minimal seed template for testing (no package tokens)
   private val testSeed: String =
     """# Seed DTR — Baseline design tensor for {{APP_NAME}}
       |ARCH=HEX,DI,DIP
       |LAYER.ORDER=DOMAIN,APPLICATION,INFRASTRUCTURE,CONTROL
       |META.APP_NAME={{APP_NAME}}
-      |META.PACKAGE_NAME={{PACKAGE_NAME}}
       |META.ROOT_PATH={{ROOT_PATH}}
       |META.TIMESTAMP={{TIMESTAMP}}
       |META.LANGUAGE={{LANGUAGE}}
-      |FILE.{{ROOT_PATH}}/src/main/scala/{{PACKAGE_PATH}}/domain/Model.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
-      |CODEX.{{ROOT_PATH}}/src/main/scala/{{PACKAGE_PATH}}/domain/Model.scala=CLASS:Model
-      |TYPE.{{PACKAGE_NAME}}.domain.Model=KIND:CLASS,FILE:{{ROOT_PATH}}/src/main/scala/{{PACKAGE_PATH}}/domain/Model.scala
-      |REL.{{PACKAGE_NAME}}.infrastructure.Adapter->{{PACKAGE_NAME}}.application.Port=IMPLEMENTS:Adapter implements Port
+      |FILE.{{ROOT_PATH}}/src/main/scala/domain/Model.scala=SIZE:0,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala
+      |CODEX.{{ROOT_PATH}}/src/main/scala/domain/Model.scala=CLASS:Model
+      |TYPE.{{APP_NAME}}.domain.Model=KIND:CLASS,FILE:{{ROOT_PATH}}/src/main/scala/domain/Model.scala
+      |REL.{{APP_NAME}}.infrastructure.Adapter->{{APP_NAME}}.application.Port=IMPLEMENTS:Adapter implements Port
       |""".stripMargin.trim
 
   /** A test SeedTemplateLoader that returns the minimal seed. */
@@ -45,38 +44,21 @@ class BaselineDtrGeneratorSpec extends AnyFlatSpec with Matchers {
   it should "substitute {{APP_NAME}} correctly" in {
     val generator = makeGenerator()
     val entries = generator.generate(
-      appName     = "my-app",
-      packageName = "com.example",
-      rootPath    = "/home/user/my-app",
-      language    = "Scala"
+      appName  = "my-app",
+      rootPath = "/home/user/my-app",
+      language = "Scala"
     )
     val rendered = entries.map(_.tensorLine).mkString("\n")
     rendered should include("my-app")
     rendered should not include "{{APP_NAME}}"
   }
 
-  it should "substitute {{PACKAGE_NAME}} and {{PACKAGE_PATH}}" in {
-    val generator = makeGenerator()
-    val entries = generator.generate(
-      appName     = "test",
-      packageName = "com.example.myapp",
-      rootPath    = "/root",
-      language    = "Scala"
-    )
-    val rendered = entries.map(_.tensorLine).mkString("\n")
-    rendered should include("com.example.myapp")
-    rendered should include("com/example/myapp") // PACKAGE_PATH
-    rendered should not include "{{PACKAGE_NAME}}"
-    rendered should not include "{{PACKAGE_PATH}}"
-  }
-
   it should "substitute {{ROOT_PATH}} correctly" in {
     val generator = makeGenerator()
     val entries = generator.generate(
-      appName     = "app",
-      packageName = "org.test",
-      rootPath    = "/projects/my-app",
-      language    = "Scala"
+      appName  = "app",
+      rootPath = "/projects/my-app",
+      language = "Scala"
     )
     val rendered = entries.map(_.tensorLine).mkString("\n")
     rendered should include("/projects/my-app")
@@ -86,10 +68,9 @@ class BaselineDtrGeneratorSpec extends AnyFlatSpec with Matchers {
   it should "substitute {{LANGUAGE}} correctly" in {
     val generator = makeGenerator()
     val entries = generator.generate(
-      appName     = "app",
-      packageName = "org.test",
-      rootPath    = "/root",
-      language    = "Python"
+      appName  = "app",
+      rootPath = "/root",
+      language = "Python"
     )
     val rendered = entries.map(_.tensorLine).mkString("\n")
     rendered should include("Python")
@@ -99,10 +80,9 @@ class BaselineDtrGeneratorSpec extends AnyFlatSpec with Matchers {
   it should "substitute {{TIMESTAMP}} with a valid ISO instant" in {
     val generator = makeGenerator()
     val entries = generator.generate(
-      appName     = "app",
-      packageName = "org.test",
-      rootPath    = "/root",
-      language    = "Scala"
+      appName  = "app",
+      rootPath = "/root",
+      language = "Scala"
     )
     val rendered = entries.map(_.tensorLine).mkString("\n")
     // TIMESTAMP is replaced with an ISO-8601 instant (contains T and Z or +)
@@ -114,10 +94,9 @@ class BaselineDtrGeneratorSpec extends AnyFlatSpec with Matchers {
   it should "strip comment lines from output" in {
     val generator = makeGenerator()
     val entries = generator.generate(
-      appName     = "app",
-      packageName = "org.test",
-      rootPath    = "/root",
-      language    = "Scala"
+      appName  = "app",
+      rootPath = "/root",
+      language = "Scala"
     )
     val rendered = entries.map(_.tensorLine).mkString("\n")
     rendered should not include "#"
@@ -127,10 +106,9 @@ class BaselineDtrGeneratorSpec extends AnyFlatSpec with Matchers {
   it should "produce valid DTR lines (KEY=VALUE format)" in {
     val generator = makeGenerator()
     val entries = generator.generate(
-      appName     = "app",
-      packageName = "org.test",
-      rootPath    = "/root",
-      language    = "Scala"
+      appName  = "app",
+      rootPath = "/root",
+      language = "Scala"
     )
     entries.foreach { entry =>
       entry.tensorLine should include("=")
@@ -140,10 +118,9 @@ class BaselineDtrGeneratorSpec extends AnyFlatSpec with Matchers {
   it should "produce ARCH, LAYER, META, FILE, CODEX, TYPE, REL entries" in {
     val generator = makeGenerator()
     val entries = generator.generate(
-      appName     = "app",
-      packageName = "org.test",
-      rootPath    = "/root",
-      language    = "Scala"
+      appName  = "app",
+      rootPath = "/root",
+      language = "Scala"
     )
     val rendered = entries.map(_.tensorLine).mkString("\n")
     rendered should include("ARCH=")
@@ -161,26 +138,24 @@ class BaselineDtrGeneratorSpec extends AnyFlatSpec with Matchers {
     val names = Seq("simple", "my-app", "my_app", "App123", "a.b.c")
     names.foreach { name =>
       val entries = generator.generate(
-        appName     = name,
-        packageName = "com.test",
-        rootPath    = "/root",
-        language    = "Scala"
+        appName  = name,
+        rootPath = "/root",
+        language = "Scala"
       )
       entries should not be empty
       entries.foreach(_.tensorLine should include("="))
     }
   }
 
-  it should "handle various package names without issues" in {
+  it should "handle various root paths without issues" in {
     val generator = makeGenerator()
 
-    val packages = Seq("com.test", "org.example.myapp", "io.github.user", "single")
-    packages.foreach { pkg =>
+    val roots = Seq("/home/user", "/", "/deeply/nested/path", "/with spaces")
+    roots.foreach { root =>
       val entries = generator.generate(
-        appName     = "app",
-        packageName = pkg,
-        rootPath    = "/root",
-        language    = "Scala"
+        appName  = "app",
+        rootPath = root,
+        language = "Scala"
       )
       entries should not be empty
       entries.foreach(_.tensorLine should include("="))
@@ -190,10 +165,9 @@ class BaselineDtrGeneratorSpec extends AnyFlatSpec with Matchers {
   it should "produce lines without leading/trailing whitespace" in {
     val generator = makeGenerator()
     val entries = generator.generate(
-      appName     = "app",
-      packageName = "com.test",
-      rootPath    = "/root",
-      language    = "Scala"
+      appName  = "app",
+      rootPath = "/root",
+      language = "Scala"
     )
     entries.foreach { entry =>
       entry.tensorLine shouldBe entry.tensorLine.trim
