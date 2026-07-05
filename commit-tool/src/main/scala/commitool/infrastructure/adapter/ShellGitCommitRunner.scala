@@ -28,7 +28,8 @@ class ShellGitCommitRunner(workDir: Option[java.io.File] = None) extends GitComm
       )
 
       val command = s"git commit -F ${tempFile.get.getAbsolutePath}"
-      val exitCode = command ! processLogger
+      val processBuilder = Process(command, workDir.orNull)
+      val exitCode = processBuilder ! processLogger
 
       if (exitCode == 0) {
         Right(())
