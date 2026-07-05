@@ -1,4 +1,7 @@
-# DTR: TYPE.itr-compiler.domain.models.Model, TYPE.itr-compiler.domain.models.ValueObject, FILE.src/domain/models/Model.scala, FILE.src/domain/models/ValueObject.scala
+# DTR: TYPE.itr-compiler.domain.models.Model, TYPE.itr-compiler.domain.models.ValueObject
 DOMAIN.MODELS=Model,ValueObject
 DOMAIN.FILES=domain/models/Model.scala,domain/models/ValueObject.scala
 DOMAIN.TYPES=itr-compiler.domain.models.Model,itr-compiler.domain.models.ValueObject
+# DTR: (New section, no coordinates in DTR)
+DOMAIN.NEW_MODELS=CU,CUBatch,CompileCommand
+DOMAIN.NEW_FILES=domain/models/CU.scala,domain/models/CUBatch.scala,domain/models/CompileCommand.scala

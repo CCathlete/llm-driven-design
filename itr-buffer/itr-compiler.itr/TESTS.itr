@@ -1,4 +1,4 @@
 # DTR: (New section, no coordinates in DTR)
-TESTS.UNIT=ModelTest,ValueObjectTest,PortTest,ServiceTest,UseCaseTest,RepositoryTest,EnvironmentTest,CliParserTest,ContainerTest,AppTest
-TESTS.INTEGRATION=EndToEndTest
-TESTS.LAYER_COVERAGE=DOMAIN,APPLICATION,INFRASTRUCTURE,CONTROL
+TESTS.UNIT=CUTest,CUBatchTest,CompileCommandTest,CompileServiceTest,DTRCoordinateValidatorTest,ContentParserTest,CUFileManagerTest,JSONContentParserTest,YAMLContentParserTest,CliParserTest
+TESTS.INTEGRATION=SingleCUWriteTest,BatchJSONWriteTest,BatchYAMLWriteTest,ForceOverwriteTest,AddToExistingFolderTest,DTRCoordinateValidationTest
+TESTS.BEHAVIOR=add-vs-overwrite,missing-dtr,invalid-coordinates

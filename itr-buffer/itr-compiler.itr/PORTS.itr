@@ -1,5 +1,7 @@
-# DTR: TYPE.itr-compiler.application.ports.Port, REL.itr-compiler.infrastructure.database.Repository->itr-compiler.application.ports.Port, REL.itr-compiler.infrastructure.environment.Environment->itr-compiler.application.ports.Port
-PORTS.IN=Port
-PORTS.OUT=Port
-PORTS.IMPLEMENTORS=Repository,Environment
-PORTS.CONSUMERS=Service,UseCase
+# DTR: TYPE.itr-compiler.application.ports.Port, REL.*Repository->Port, REL.*Environment->Port
+PORTS.EXISTING_IN=Port
+PORTS.EXISTING_IMPLEMENTORS=Repository,Environment
+PORTS.EXISTING_CONSUMERS=Service,UseCase
+# DTR: (New section, no coordinates in DTR)
+PORTS.NEW_IN=DTR_LOAD_INPUT,CU_CONTENT_IN
+PORTS.NEW_OUT=CU_WRITE_OUTPUT
