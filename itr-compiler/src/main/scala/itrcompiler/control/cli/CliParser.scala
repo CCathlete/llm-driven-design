@@ -1,7 +1,7 @@
 package itrcompiler.control.cli
 
 import itrcompiler.domain.models.CompileCommand
-import java.nio.file.{Path, Paths}
+import java.nio.file.Paths
 
 /** CLI argument parser for the itr-compiler.
   *
