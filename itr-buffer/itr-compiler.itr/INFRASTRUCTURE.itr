@@ -1,0 +1,3 @@
+# DTR: INFRASTRUCTURE.ADAPTERS, TYPE.itr-compiler.infrastructure.filesystem.FileSystemAdapter
+INFRASTRUCTURE.ADAPTERS=FileSystemAdapter
+INFRASTRUCTURE.ENV=ITR_BUFFER_PATH,SEVERITY

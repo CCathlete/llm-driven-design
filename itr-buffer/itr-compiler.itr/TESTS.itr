@@ -1,0 +1,4 @@
+# DTR: (New section, no coordinates in DTR)
+TESTS.UNIT=DTRParserTest,ITRCompilerTest,ValidatorTest
+TESTS.INTEGRATION=EndToEndTest
+TESTS.VALIDATION=ConstraintsTest,SeverityTest

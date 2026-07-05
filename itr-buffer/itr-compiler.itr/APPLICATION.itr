@@ -1,0 +1,4 @@
+# DTR: APPLICATION.SERVICES, APPLICATION.PORTS, TYPE.itr-compiler.application.services.DTRParser, TYPE.itr-compiler.application.services.ITRCompiler, TYPE.itr-compiler.application.services.Validator
+APPLICATION.SERVICES=DTRParser,ITRCompiler,Validator
+APPLICATION.PORTS=DTR_INPUT,ITR_OUTPUT
+APPLICATION.USE_CASES=ParseDTR,GenerateITR,ValidateDTR

@@ -1,0 +1,3 @@
+# DTR: DOMAIN.MODELS, TYPE.itr-compiler.domain.models.DTR, TYPE.itr-compiler.domain.models.ITR, TYPE.itr-compiler.domain.models.ComponentUnit
+DOMAIN.MODELS=DTR,ITR,ComponentUnit
+DOMAIN.VALIDATION_RULES=DTR_STRUCTURE,CONSTRAINTS,SEVERITY
