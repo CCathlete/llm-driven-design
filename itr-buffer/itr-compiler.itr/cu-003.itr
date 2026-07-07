@@ -1,0 +1,10 @@
+# DTR: (New section, no coordinates in DTR)
+# CU-ID: cu-003 SCOPE: Compile orchestration — creates deterministic CU frames with passed-through content
+COMPILE.FRAME_CREATION=build-header-from-flags,wrap-free-form-content,write-to-out-folder
+COMPILE.HEADER_FIELDS=CU-ID:from-flag-or-json,timestamp:auto,dtr-coordinates:from-json-yaml
+COMPILE.CONTENT_HANDLING=raw:pass-through,json:frame-per-entry,yaml:frame-per-entry
+COMPILE.OVERRIDE_BEHAVIOR=force:overwrite,no-force:skip-existing
+COMPILE.ERROR_HANDLING=per-cu:continue-on-error,report-warnings,partial-output-allowed
+COMPILE.CLASSES=Compile,CoordinateRules,ContentDeserialize,CUStore
+COMPILE.FILES=application/services/Compile.scala,application/services/CoordinateRules.scala,application/services/ContentDeserialize.scala,application/services/CUStore.scala
+COMPILE.DEPENDENCIES=Compile->DTRLoad,Compile->CoordinateRules,Compile->CUStore,ContentDeserialize->ContentRead

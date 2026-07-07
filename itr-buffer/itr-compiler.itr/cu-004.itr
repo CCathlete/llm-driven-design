@@ -1,0 +1,8 @@
+# DTR: TYPE.itr-compiler.infrastructure.database.Repository, TYPE.itr-compiler.infrastructure.environment.Environment, REL.*Repository->Port, REL.*Environment->Port, REL.*Repository->Model, FILE.src/build.sbt, FILE.src/.env
+# CU-ID: cu-004 SCOPE: INFRASTRUCTURE existing + new adapters
+INFRASTRUCTURE.EXISTING=Repository,Environment
+INFRASTRUCTURE.EXISTING_FILES=infrastructure/database/Repository.scala,infrastructure/environment/Environment.scala
+INFRASTRUCTURE.EXISTING_DEPENDENCIES=Repository->Port:IMPLEMENTS,Environment->Port:IMPLEMENTS,Repository->Model:USES
+# NEW
+INFRASTRUCTURE.NEW=FileSystem,JSONFormat,YAMLFormat
+INFRASTRUCTURE.NEW_FILES=infrastructure/filesystem/FileSystem.scala,infrastructure/parsers/JSONFormat.scala,infrastructure/parsers/YAMLFormat.scala
