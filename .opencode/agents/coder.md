@@ -92,7 +92,8 @@ MISSING_CONTEXT=<context you needed but wasn't provided>
 TOO_MUCH_DETAIL=<level of unnecessary detail>
 ARCHITECTURE_DEVIATION=<description of any deviation>
 ARCHITECTURE_DEVIATION.SEVERITY=NONE|MINOR|MAJOR|CRITICAL
-TIME_TAKEN=<minutes>
+TIME_TAKEN_MINUTES=<minutes>
+AI_CREDITS_USED=<number of AI credits consumed>
 COMMIT_MESSAGE=<descriptive summary of all changes in this task>
 ```
 
