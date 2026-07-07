@@ -37,7 +37,7 @@ Key Coder-specific rules from the tensor (see tensor for full detail):
 - **NO_DESIGN_CHANGE** — you never modify the design
 - **STRICT_CU_ORDER** — you implement CUs in their dependency order
 - **RULE.COD.FEEDBACK_MANDATORY** — you MUST write a per-CU FEEDBACK file for
-  every CU you implement. File: `<app>.itr/cu-<id>.feedback`. Overwrite it
+  every CU you implement. File: `<app>.feedback/cu-<id>.feedback.txt`. Overwrite it
   (never append). Self-assess SEVERITY of each architecture deviation.
 - **RULE.COD.COMMIT_SCOPE=TASK** — one commit per coder task, regardless of CU
   count. Commit includes: application code + CU frame files + per-CU FEEDBACK
@@ -79,7 +79,7 @@ Read the `LEGEND.itr` first to understand all symbols used in the CU frames.
 ## Per-CU Feedback
 
 For each CU you implement, write a feedback file at:
-`itr-buffer/<app>.itr/cu-<id>.feedback`
+`itr-buffer/<app>.feedback/cu-<id>.feedback.txt`
 
 Format (ITR tensor format, `KEY=VALUE` per line):
 ```ini
