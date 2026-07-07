@@ -10,9 +10,9 @@ Every development task is a team of three:
 
 | Role     | Who             | Responsibility |
 |----------|-----------------|----------------|
-| Designer | Human           | Extracts DTR, brainstorms, gives green light |
-| Advisor  | AI agent        | Analyzes DTR, discusses design, emits ITR |
-| Coder    | AI agent        | Receives ITR, implements in strict order |
+| Designer | Human           | Obtains baseline DTR, brainstorms, approves CU content, runs itr-compiler, assigns CUs |
+| Advisor  | AI agent        | Analyzes baseline DTR, discusses design, drafts CU content |
+| Coder    | AI agent        | Receives compiled CU frames, implements in order, writes per-CU feedback |
 
 The Designer opens an **Advisor session** for design work and a **Coder
 session** for implementation. See `.opencode/agents/advisor.md` and
@@ -22,11 +22,11 @@ session** for implementation. See `.opencode/agents/advisor.md` and
 
 The LLMDD pipeline is defined in `system_tensors/llm-driven-design-sys-prompt.itr`:
 
-1. **Extract** — Designer produces a DTR from the codebase (AST, files, types, relations)
-2. **Advise** — Advisor analyzes the DTR and brainstorms with Designer
-3. **Design** — On green light, Advisor emits an ITR
-4. **Code** — Coder executes the ITR (strict order, no skipping)
-5. **Output** — Produced code, feeds back into the next DTR
+1. **Obtain Baseline** — Designer runs `dtr-builder` to produce a baseline DTR (extract from existing code or --create-baseline for greenfield)
+2. **Analyze & Decompose** — Advisor analyzes the DTR and brainstorms with Designer, decomposing work into Computational Units (CUs)
+3. **Draft CU Content** — On green light, Advisor drafts CU content (JSON/YAML format) with CU-ID, DTR coordinates, and implementation content
+4. **Compile ITR** — Designer runs `itr-compiler` to compile CU content + baseline DTR into per-CU `.itr` frame files
+5. **Implement** — Coder receives compiled CU frames, implements in dependency order, writes per-CU feedback, and commits
 
 ## Architecture rules
 
@@ -45,11 +45,18 @@ Project-specific knowledge is stored in `.opencode/instructions/`:
 
 Two primary agents are defined in `.opencode/agents/`:
 
-- **advisor** — design partner; reads only, never edits
+- **advisor** — design partner; reads only, never edits; thinks and drafts
 - **coder** — implementation engine; reads and writes, never designs
 
 Use `opencode --agent advisor` or `opencode --agent coder` to start a
 session in the respective role.
+
+## Source of truth
+
+The master specification is `system_tensors/llm-driven-design-sys-prompt.itr`.
+The `.opencode/agents/` files are convenience wrappers. Any agent or chat
+assistant that reads the system tensor at session start understands the LLMDD
+standard.
 
 ## Pre-push hook
 
