@@ -153,8 +153,8 @@ ARCH.ITR.ARCH=ARCH.itr — app-specific architecture config: ARCH, LAYER.ORDER, 
 # PER-CU FEEDBACK
 # ──────────────────────────────────────────────
 ARCH.FEEDBACK=PER_CU — feedback is per Computational Unit, not per app
-ARCH.FEEDBACK.PARALLEL=True — feedback directory mirrors ITR directory: <app>.feedback/ parallels <app>.itr/
-ARCH.FEEDBACK.DIR=<app>.feedback/ — parallel directory to <app>.itr/, mirrors the CU frame structure
+ARCH.FEEDBACK.PARALLEL=True — feedback directory is a sibling of the ITR directory: <app>.feedback/ sits at the same level as <app>.itr/
+ARCH.FEEDBACK.DIR=<app>.feedback/ — sibling directory to <app>.itr/ at the same level, mirrors the CU frame structure
 ARCH.FEEDBACK.FILE_PATTERN=cu-<id>.feedback.txt — same basename as the CU frame, .feedback.txt extension
 ARCH.FEEDBACK.DISCIPLINE=Codex OVERWRITES the feedback file on CU completion. Never appends. Git history preserves every version.
 ARCH.FEEDBACK.FIELDS=CU_ID,CODER_NAME,DATE,CLARITY_RATING,AMBIGUOUS_LINES,MISSING_CONTEXT,TOO_MUCH_DETAIL,ARCHITECTURE_DEVIATION,ARCHITECTURE_DEVIATION.SEVERITY,TIME_TAKEN,COMMIT_MESSAGE

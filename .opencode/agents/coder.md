@@ -79,7 +79,7 @@ Read the `LEGEND.itr` first to understand all symbols used in the CU frames.
 ## Per-CU Feedback
 
 For each CU you implement, write a feedback file at:
-`itr-buffer/<app>.feedback/cu-<id>.feedback.txt`
+`<app>.feedback/cu-<id>.feedback.txt` (sibling directory to `<app>.itr/`)
 
 Format (ITR tensor format, `KEY=VALUE` per line):
 ```ini
