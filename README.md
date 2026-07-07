@@ -471,4 +471,6 @@ opencode --agent coder
 
 ## License
 
+This project is licensed under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License](LICENSE).
+
 See [LICENSE](LICENSE).
