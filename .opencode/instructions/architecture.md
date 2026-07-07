@@ -73,9 +73,14 @@ CU frame files:
 ├── LEGEND.itr          # Symbol definitions
 ├── ARCH.itr            # App-specific architecture config
 ├── cu-001.itr          # Compiled frame for CU 001
-├── cu-001.feedback     # Coder feedback for CU 001
 ├── cu-002.itr          # Compiled frame for CU 002
-└── cu-002.feedback     # Coder feedback for CU 002
+└── ...
+
+# Feedback lives in a parallel directory:
+<app>.feedback/
+├── cu-001.feedback.txt # Coder feedback for CU 001
+├── cu-002.feedback.txt # Coder feedback for CU 002
+└── ...
 ```
 
 Each CU frame is compiled by `itr-compiler` from CU content + baseline DTR.

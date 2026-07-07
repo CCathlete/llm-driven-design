@@ -148,18 +148,18 @@ An **ITR** is a **directory** of compiled CU frame files, not a single file.
 Located at `itr-buffer/<app>.itr/`, it contains:
 
 | File | Purpose |
-|------|---------|
+|------|--------|
 | `LEGEND.itr` | Symbol definitions — coder never needs external context |
 | `ARCH.itr` | App-specific architecture config, language, version |
 | `cu-001.itr` | Compiled frame for CU 001 |
 | `cu-002.itr` | Compiled frame for CU 002 |
 | `...` | ... |
-| `cu-001.feedback` | Coder feedback for CU 001 (written by Coder) |
-| `cu-002.feedback` | Coder feedback for CU 002 |
-| `...` | ... |
 
 Each CU frame file has a header (CU-ID, timestamp, DTR coordinates) and a
 body (implementation content).
+
+**Feedback** lives in a parallel directory `itr-buffer/<app>.feedback/` with
+one `.feedback.txt` file per CU (see [Per-CU Feedback](#per-cu-feedback)).
 
 ---
 
@@ -355,9 +355,9 @@ system tensor under `ARCH.*`):
 After implementing a CU, the Coder writes a **per-CU feedback file**. This
 allows distributed coders to provide feedback in parallel without conflicts.
 
-**File pattern:** `itr-buffer/<app>.itr/cu-<id>.feedback`
+**File pattern:** `itr-buffer/<app>.feedback/cu-<id>.feedback.txt`
 
-**Example `cu-001.feedback`:**
+**Example `cu-001.feedback.txt`:**
 ```ini
 CU_ID=cu-001
 CODER_NAME=Coder (big-pickle)
@@ -400,20 +400,22 @@ llm-driven-design/
 ├── commit-tool/                            # Tool: structured git commits
 │   ├── build.sbt
 │   └── src/
-├── itr-buffer/                             # Compiled ITR directories per app
-│   └── <app>.itr/                          # e.g. itr-compiler.itr/
-│       ├── LEGEND.itr
-│       ├── ARCH.itr
-│       ├── cu-001.itr
-│       ├── cu-001.feedback
-│       ├── cu-002.itr
-│       └── cu-002.feedback
+├── itr-buffer/                             # Compiled ITR + feedback directories per app
+│   ├── <app>.itr/                          # ITR frames (e.g. itr-compiler.itr/)
+│   │   ├── LEGEND.itr
+│   │   ├── ARCH.itr
+│   │   ├── cu-001.itr
+│   │   ├── cu-002.itr
+│   │   └── ...
+│   └── <app>.feedback/                    # Per-CU feedback (parallel to .itr/)
+│       ├── cu-001.feedback.txt
+│       ├── cu-002.feedback.txt
+│       └── ...
 ├── .opencode/                              # OpenCode agent config (optional)
 │   ├── agents/advisor.md
 │   ├── agents/coder.md
 │   └── instructions/
 └── README.md
-```
 
 ---
 

@@ -153,8 +153,9 @@ ARCH.ITR.ARCH=ARCH.itr — app-specific architecture config: ARCH, LAYER.ORDER, 
 # PER-CU FEEDBACK
 # ──────────────────────────────────────────────
 ARCH.FEEDBACK=PER_CU — feedback is per Computational Unit, not per app
-ARCH.FEEDBACK.DIR=<app>.itr/ — feedback files sit in same directory as CU frame files
-ARCH.FEEDBACK.FILE_PATTERN=cu-<id>.feedback — same basename as the CU frame, .feedback extension
+ARCH.FEEDBACK.PARALLEL=True — feedback directory mirrors ITR directory: <app>.feedback/ parallels <app>.itr/
+ARCH.FEEDBACK.DIR=<app>.feedback/ — parallel directory to <app>.itr/, mirrors the CU frame structure
+ARCH.FEEDBACK.FILE_PATTERN=cu-<id>.feedback.txt — same basename as the CU frame, .feedback.txt extension
 ARCH.FEEDBACK.DISCIPLINE=Codex OVERWRITES the feedback file on CU completion. Never appends. Git history preserves every version.
 ARCH.FEEDBACK.FIELDS=CU_ID,CODER_NAME,DATE,CLARITY_RATING,AMBIGUOUS_LINES,MISSING_CONTEXT,TOO_MUCH_DETAIL,ARCHITECTURE_DEVIATION,ARCHITECTURE_DEVIATION.SEVERITY,TIME_TAKEN,COMMIT_MESSAGE
 ARCH.FEEDBACK.FORMAT=ITR tensor format: KEY=VALUE per line, one semantic unit per line
@@ -184,7 +185,7 @@ RULE.DSG.APPROVE_CUS=Designer reviews and approves CU content before compilation
 # ──────────────────────────────────────────────
 RULE.COD=EXECUTE_ITR_ONLY,NO_DESIGN_CHANGE,STRICT_CU_ORDER,COMMIT_PER_TASK
 RULE.COD.IMPLEMENT=Codex implements assigned CUs in dependency order. Each CU frame file (cu-<id>.itr) contains: CU-ID, DTR-COORDINATES, TIMESTAMP, CONTENT.
-RULE.COD.FEEDBACK_MANDATORY=Codex MUST write a per-CU FEEDBACK file for every CU implemented. File pattern: <app>.itr/cu-<id>.feedback. Must overwrite, never append. Self-assess SEVERITY of each ARCHITECTURE_DEVIATION. Print full feedback content in final message.
+RULE.COD.FEEDBACK_MANDATORY=Codex MUST write a per-CU FEEDBACK file for every CU implemented. File pattern: <app>.feedback/cu-<id>.feedback.txt. Must overwrite, never append. Self-assess SEVERITY of each ARCHITECTURE_DEVIATION. Print full feedback content in final message.
 RULE.COD.COMMIT_SCOPE=TASK — one commit per coder task, regardless of CU count. Commit includes: application code + CU frame files + per-CU FEEDBACK files + updated sys tensor.
 RULE.COD.COMMIT_MESSAGE=Codex provides a descriptive COMMIT_MESSAGE in the feedback summarizing all changes in the task. The commit message MUST be this summary.
 RULE.COD.SEVERITY_BASELINE=Every CU deliverable is implicitly SEVERITY:CRITICAL unless Advisor marked otherwise. Codex may not downgrade without DSG approval.
