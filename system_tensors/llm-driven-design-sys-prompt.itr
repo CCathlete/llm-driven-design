@@ -157,10 +157,11 @@ ARCH.FEEDBACK.PARALLEL=True — feedback directory is a sibling of the ITR direc
 ARCH.FEEDBACK.DIR=<app>.feedback/ — sibling directory to <app>.itr/ at the same level, mirrors the CU frame structure
 ARCH.FEEDBACK.FILE_PATTERN=cu-<id>.feedback.txt — same basename as the CU frame, .feedback.txt extension
 ARCH.FEEDBACK.DISCIPLINE=Codex OVERWRITES the feedback file on CU completion. Never appends. Git history preserves every version.
-ARCH.FEEDBACK.FIELDS=CU_ID,CODER_NAME,DATE,CLARITY_RATING,AMBIGUOUS_LINES,MISSING_CONTEXT,TOO_MUCH_DETAIL,ARCHITECTURE_DEVIATION,ARCHITECTURE_DEVIATION.SEVERITY,TIME_TAKEN,COMMIT_MESSAGE
+ARCH.FEEDBACK.FIELDS=CU_ID,CODER_NAME,DATE,CLARITY_RATING,AMBIGUOUS_LINES,MISSING_CONTEXT,TOO_MUCH_DETAIL,ARCHITECTURE_DEVIATION,ARCHITECTURE_DEVIATION.SEVERITY,TIME_TAKEN_MINUTES,AI_CREDITS_USED,COMMIT_MESSAGE
 ARCH.FEEDBACK.FORMAT=ITR tensor format: KEY=VALUE per line, one semantic unit per line
 ARCH.FEEDBACK.RATING_SCALE=1-5 — 1=impossible to follow, 5=crystal clear, no questions
-ARCH.FEEDBACK.TIME_TAKEN=Duration to implement the CU from start to feedback creation. Unit: minutes.
+ARCH.FEEDBACK.TIME_TAKEN_MINUTES=Duration to implement the CU from start to feedback creation, in minutes.
+ARCH.FEEDBACK.AI_CREDITS_USED=Number of AI credits consumed during implementation of this CU.
 
 # ──────────────────────────────────────────────
 # RULES: DESIGN TENSOR
