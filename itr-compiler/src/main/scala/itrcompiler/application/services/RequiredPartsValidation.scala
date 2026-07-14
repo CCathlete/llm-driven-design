@@ -1,6 +1,6 @@
 package itrcompiler.application.services
 
-import itrcompiler.domain.models.{CU, CUBatch, CUType, ArchCU, LegendCU, VerificationCU, E2eVerificationCU}
+import itrcompiler.domain.models.{CU, CUBatch, CUType, RegularCU, ArchCU, LegendCU, VerificationCU, E2eVerificationCU}
 
 import java.nio.file.Path
 
@@ -8,6 +8,8 @@ import java.nio.file.Path
   * before allowing compilation to proceed.
   *
   * Required parts: ARCH, LEGEND, VERIFICATION, E2EVERIFICATION.
+  *
+  * Detection: cu-type field first, then fallback to ID matching.
   */
 final class RequiredPartsValidation {
 
@@ -17,8 +19,20 @@ final class RequiredPartsValidation {
     existingParts: Set[CUType]
   )
 
+  /** Infer CUType from ID when cu-type is not specified (backward compat). */
+  private def inferCuType(cu: CU): CUType = {
+    if (cu.cuType != RegularCU) return cu.cuType
+    val id = cu.id.toLowerCase
+    // E2E check must come before general verification check
+    if (id == "arch" || id.startsWith("arch-")) ArchCU
+    else if (id == "legend" || id.startsWith("legend-")) LegendCU
+    else if (id == "e2everification" || id == "e2e-verification" || id.startsWith("e2everification-") || id.contains("e2e") && id.contains("verification")) E2eVerificationCU
+    else if (id.contains("verification")) VerificationCU
+    else RegularCU
+  }
+
   def validateBatch(batch: CUBatch): ValidationResult = {
-    val batchTypes = batch.cus.map(_.cuType).toSet
+    val batchTypes = batch.cus.map(inferCuType).toSet
     val missing = CU.requiredParts -- batchTypes
     ValidationResult(
       isValid = missing.isEmpty,
@@ -32,7 +46,8 @@ final class RequiredPartsValidation {
     currentCU: CU,
     existingFiles: Set[String]
   ): ValidationResult = {
-    val willCreate = if (currentCU.isRequiredPart) Set(currentCU.cuType) else Set.empty
+    val inferredType = inferCuType(currentCU)
+    val willCreate = if (inferredType != RegularCU) Set(inferredType) else Set.empty
     val existing = CU.requiredParts.filter { part =>
       part match {
         case ArchCU => existingFiles.contains("ARCH.itr")
