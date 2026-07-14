@@ -1,0 +1,49 @@
+# CU-ID: cu-003
+# TIMESTAMP: 2026-07-14T15:52:27.507237153Z
+# DTR-COORDINATES: 
+
+# Update coder.md with escalation format
+
+Changes to .opencode/agents/coder.md:
+
+1. Add STATUS field to feedback format:
+STATUS=COMPLETED|ESCALATED
+(COMPLETED = CU done, ESCALATED = blocked, needs code lead)
+
+2. Add ESCALATION fields to feedback format:
+ESCALATION_REASON=<why you are blocked>
+ESCALATION_DETAIL=<detailed description of the issue>
+
+3. Add VERIFICATION fields to feedback format:
+VERIFICATION_RESULT=PASSED|FAILED|NOT_RUN
+VERIFICATION_DETAILS=<test results summary>
+
+4. Update the feedback format example to include new fields:
+
+CU_ID=cu-002
+CODER_NAME=cod-2
+DATE=2026-07-14
+CLARITY_RATING=4
+AMBIGUOUS_LINES=none
+MISSING_CONTEXT=none
+TOO_MUCH_DETAIL=none
+ARCHITECTURE_DEVIATION=none
+ARCHITECTURE_DEVIATION.SEVERITY=NONE
+TIME_TAKEN_MINUTES=15
+AI_CREDITS_USED=50
+COMMIT_MESSAGE=Implemented cu-002: verifier agent
+STATUS=COMPLETED
+ESCALATION_REASON=none
+ESCALATION_DETAIL=none
+VERIFICATION_RESULT=PASSED
+VERIFICATION_DETAILS=All tests pass
+
+5. Add escalation rules:
+- If you cannot complete a CU (blocked, missing dependency, etc.) set STATUS=ESCALATION in your feedback
+- Write ESCALATION_REASON and ESCALATION_DETAIL explaining the issue
+- The code lead (VER) will pick up escalations and perform fixes
+- Do NOT commit if STATUS=ESCALATION - the code lead will commit
+
+6. Update commit rules:
+- If STATUS=COMPLETED: commit as before (code + frames + feedback)
+- If STATUS=ESCALATION: do NOT commit - code lead will handle

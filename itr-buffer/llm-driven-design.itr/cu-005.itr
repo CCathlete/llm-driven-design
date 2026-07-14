@@ -1,0 +1,23 @@
+# CU-ID: cu-005
+# TIMESTAMP: 2026-07-14T15:52:42.402060132Z
+# DTR-COORDINATES: 
+
+# Update AGENTS.md for v8
+
+Changes to .opencode/instructions/AGENTS.md:
+
+1. Update triad table:
+The triad is now a team of four: Designer, Advisor, Coder, Code Lead. But the Code Lead is the same agent type as Coder (just smarter model), so it is still conceptually a triad with an enhanced Coder role.
+
+2. Add verifier to the agents table:
+| Code Lead | VER | AI agent | Monitors Coder feedback, picks up escalations, runs e2e tests, repairs cross-CU issues |
+
+3. Update workflow section to include new steps 6-8
+
+4. Add verifier to the OpenCode agents section:
+- verifier - code lead; monitors feedback, picks up escalations, runs e2e tests; smarter model
+
+5. Update the use opencode --agent section:
+Use opencode --agent advisor for design work
+Use opencode --agent coder for implementation
+Use opencode --agent verifier for verification and e2e

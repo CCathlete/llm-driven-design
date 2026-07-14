@@ -1,0 +1,22 @@
+# CU-ID: cu-004
+# TIMESTAMP: 2026-07-14T15:52:33.966100915Z
+# DTR-COORDINATES: 
+
+# Update architecture.md for v8
+
+Changes to .opencode/instructions/architecture.md:
+
+1. Update triad table to include Verifier (code lead):
+| Verifier | VER | AI agent | Code lead. Smarter model. Monitors Coder feedback, picks up escalations, runs e2e tests, repairs cross-CU issues. |
+
+2. Update pipeline diagram to show VER running in parallel with COD
+
+3. Update workflow section to include new steps:
+5. Implement - Coder implements CUs in order, writes per-CU feedback
+6. Verify - Code lead monitors feedback, picks up escalations
+7. E2E Verify - Code lead runs e2e tests, repairs until convergence
+8. Iterate - Re-scan with dtr-builder, repeat
+
+4. Update node roles table to include VER
+
+5. Update version reference: LLMDDv7.0 -> LLMDDv8.0

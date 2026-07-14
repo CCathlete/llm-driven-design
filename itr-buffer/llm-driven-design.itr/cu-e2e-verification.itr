@@ -1,0 +1,53 @@
+# CU-ID: cu-e2e-verification
+# TIMESTAMP: 2026-07-14T15:51:43.512374147Z
+# DTR-COORDINATES: 
+
+# E2E Verification Tests for LLMDD v8
+
+## Test Suite
+#!/bin/bash
+set -e
+
+echo '=== E2E Testing LLMDD v8 Pipeline ==='
+
+# Test 1: System tensor compiles
+echo 'Test 1: System tensor syntax valid'
+! grep -qP '^\s+[^#]' system_tensors/llm-driven-design-sys-prompt.itr
+
+# Test 2: itr-compiler compiles
+echo 'Test 2: itr-compiler compiles'
+cd itr-compiler && sbt compile && cd ..
+
+# Test 3: Verifier agent exists
+echo 'Test 3: Verifier agent exists'
+test -f .opencode/agents/verifier.md
+grep -q 'CODE_LEAD' .opencode/agents/verifier.md
+
+# Test 4: Coder agent has escalation format
+echo 'Test 4: Coder agent has escalation format'
+grep -q 'STATUS=COMPLETED|ESCALATED' .opencode/agents/coder.md
+grep -q 'ESCALATION_REASON' .opencode/agents/coder.md
+
+# Test 5: Architecture docs updated
+echo 'Test 5: Architecture docs updated'
+grep -q 'Verifier' .opencode/instructions/architecture.md
+grep -q 'LLMDDv8' .opencode/instructions/architecture.md
+
+# Test 6: AGENTS.md updated
+echo 'Test 6: AGENTS.md updated'
+grep -q 'verifier' .opencode/instructions/AGENTS.md
+grep -q 'ESCALATION' .opencode/instructions/AGENTS.md
+
+# Test 7: Memory.md updated
+echo 'Test 7: Memory.md updated'
+grep -q 'verifier.md' .opencode/instructions/memory.md
+grep -q 'LLMDDv8' .opencode/instructions/memory.md
+
+# Test 8: All files consistent
+echo 'Test 8: All files consistent'
+grep -q 'NODE.VER' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'Verifier' .opencode/instructions/architecture.md
+grep -q 'verifier' .opencode/instructions/AGENTS.md
+grep -q 'verifier.md' .opencode/instructions/memory.md
+
+echo '=== All E2E tests passed ==='

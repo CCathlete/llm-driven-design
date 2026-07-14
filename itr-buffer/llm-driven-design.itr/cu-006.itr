@@ -1,0 +1,20 @@
+# CU-ID: cu-006
+# TIMESTAMP: 2026-07-14T15:52:48.736685079Z
+# DTR-COORDINATES: 
+
+# Update memory.md for v8
+
+Changes to .opencode/instructions/memory.md:
+
+1. Update key files table:
+- Add .opencode/agents/verifier.md - Code lead agent (verification, e2e)
+- Update version reference: LLMDDv4 -> LLMDDv8
+
+2. Update OpenCode setup section:
+- Add verifier agent: verifier (code lead, smarter model)
+- Note: verifier runs in parallel with coders
+
+3. Add session notes about v8 changes:
+<!-- v8 changes: verification control loop added -->
+<!-- VER (code lead) monitors COD feedback, picks up escalations -->
+<!-- E2E verification runs after all CUs converge -->

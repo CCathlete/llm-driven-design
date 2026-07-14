@@ -4,14 +4,6 @@
 #
 # Usage:
 #   ./run-waves.fish --itr <itr-path> --app <app-name> [--waves <waves-json>]
-#
-# If --waves is not provided, waves are auto-detected from CU dependencies.
-#
-# Wave structure:
-#   - Each wave runs parallel coders (gemini 2.5 flash)
-#   - After each wave, code lead (opencode zen big pickle) reviews
-#   - Code lead fixes escalations before next wave
-#   - Final wave: code lead runs e2e tests
 
 # ── Argument parsing ──────────────────────────────────────────────
 
@@ -19,8 +11,8 @@ function usage
     echo "Usage: ./run-waves.fish --itr <itr-path> --app <app-name> [--waves <waves-json>]"
     echo ""
     echo "Options:"
-    echo "  --itr <path>       Path to compiled ITR directory (e.g., itr-buffer/llm-driven-design.itr)"
-    echo "  --app <name>       Application name (e.g., llm-driven-design)"
+    echo "  --itr <path>       Path to compiled ITR directory"
+    echo "  --app <name>       Application name"
     echo "  --waves <json>     Optional JSON file defining wave structure"
     echo "  --coder-model <m>  Model for coders (default: gemini-2.5-flash)"
     echo "  --lead-model <m>   Model for code lead (default: opencode-zen-big-pickle)"
@@ -31,13 +23,13 @@ function usage
 end
 
 # Defaults
-set -l ITR_PATH ""
-set -l APP_NAME ""
-set -l WAVES_FILE ""
-set -l CODER_MODEL "gemini-2.5-flash"
-set -l LEAD_MODEL "opencode-zen-big-pickle"
-set -l MAX_FIX_ITERATIONS 3
-set -l DRY_RUN false
+set -g ITR_PATH ""
+set -g APP_NAME ""
+set -g WAVES_FILE ""
+set -g CODER_MODEL "gemini-2.5-flash"
+set -g LEAD_MODEL "opencode-zen-big-pickle"
+set -g MAX_FIX_ITERATIONS 3
+set -g DRY_RUN false
 
 # Parse arguments
 set -l i 1
@@ -45,24 +37,24 @@ while test $i -le (count $argv)
     switch $argv[$i]
         case --itr
             set i (math $i + 1)
-            set ITR_PATH $argv[$i]
+            set -g ITR_PATH $argv[$i]
         case --app
             set i (math $i + 1)
-            set APP_NAME $argv[$i]
+            set -g APP_NAME $argv[$i]
         case --waves
             set i (math $i + 1)
-            set WAVES_FILE $argv[$i]
+            set -g WAVES_FILE $argv[$i]
         case --coder-model
             set i (math $i + 1)
-            set CODER_MODEL $argv[$i]
+            set -g CODER_MODEL $argv[$i]
         case --lead-model
             set i (math $i + 1)
-            set LEAD_MODEL $argv[$i]
+            set -g LEAD_MODEL $argv[$i]
         case --max-fix-iterations
             set i (math $i + 1)
-            set MAX_FIX_ITERATIONS $argv[$i]
+            set -g MAX_FIX_ITERATIONS $argv[$i]
         case --dry-run
-            set DRY_RUN true
+            set -g DRY_RUN true
         case --help
             usage
         case '*'
@@ -83,6 +75,11 @@ if test -z "$APP_NAME"
     usage
 end
 
+# Resolve ITR_PATH to absolute path
+if not string match -r '^/' "$ITR_PATH"
+    set -g ITR_PATH (realpath "$ITR_PATH")
+end
+
 if not test -d "$ITR_PATH"
     echo "Error: ITR path does not exist: $ITR_PATH"
     exit 1
@@ -90,10 +87,10 @@ end
 
 # ── Configuration ─────────────────────────────────────────────────
 
-set -l FEEDBACK_DIR "$ITR_PATH/../$APP_NAME.feedback"
-set -l CONVERGENCE_FILE "$ITR_PATH/../$APP_NAME.convergence.json"
-set -l LOG_DIR "$ITR_PATH/../$APP_NAME.logs"
-set -l WAVE_LOG "$LOG_DIR/waves.log"
+set -g WORK_DIR (dirname "$ITR_PATH")
+set -g FEEDBACK_DIR "$WORK_DIR/$APP_NAME.feedback"
+set -g CONVERGENCE_FILE "$WORK_DIR/$APP_NAME.convergence.json"
+set -g LOG_DIR "$WORK_DIR/$APP_NAME.logs"
 
 # Create directories
 mkdir -p "$FEEDBACK_DIR"
@@ -106,17 +103,14 @@ function detect_waves
     set -l waves_file $argv[2]
 
     if test -n "$waves_file" -a -f "$waves_file"
-        # Use provided waves file
         cat "$waves_file"
         return
     end
 
     # Auto-detect waves from CU dependencies
-    # Parse CU files and build dependency graph
     set -l cus (ls "$itr_path"/cu-*.itr 2>/dev/null | sort)
     set -l wave_num 1
     set -l remaining $cus
-    set -l assigned
 
     echo "["
     set -l first true
@@ -126,13 +120,11 @@ function detect_waves
         set -l wave_cus
 
         for cu in $remaining
-            set -l cu_id (basename "$cu" .itr | sed 's/-verification//')
-            # Check if this CU has dependencies in remaining
+            set -l cu_id (basename "$cu" .itr)
             set -l has_deps false
             for other in $remaining
                 if test "$other" != "$cu"
                     set -l other_id (basename "$other" .itr)
-                    # Simple heuristic: CUs with higher numbers depend on lower ones
                     if string match -r "cu-0[0-9]+" "$cu_id" >/dev/null
                         and string match -r "cu-0[0-9]+" "$other_id" >/dev/null
                         set -l num1 (echo "$cu_id" | grep -oP '\d+')
@@ -153,14 +145,12 @@ function detect_waves
         end
 
         if test (count $wave_cus) -eq 0
-            # All remaining have dependencies, put them all in next wave
             set wave_cus $remaining
             set remaining
         else
             set remaining $next_remaining
         end
 
-        # Output wave JSON
         if test "$first" = true
             set first false
         else
@@ -193,41 +183,27 @@ function run_coder
 
     echo "  [coder] Starting $cu_id with model $model"
 
-    # Run opencode with coder agent
     opencode --agent coder \
         --model "$model" \
         --prompt "Implement CU $cu_id from ITR at $itr_path. Read the CU frame file $cu_file, implement it, write feedback to $feedback_dir/$cu_id.feedback.txt, and commit." \
-        > "$log_file" 2>&1
+        > "$log_file" 2>&1; or return 1
 
-    set -l status $status
-
-    if test $status -eq 0
-        echo "  [coder] ✓ $cu_id completed"
-    else
-        echo "  [coder] ✗ $cu_id failed (exit $status)"
-    end
-
-    return $status
+    echo "  [coder] ✓ $cu_id completed"
+    return 0
 end
 
 function run_coder_parallel
-    set -l cu_files $argv[1..-2]
-    set -l itr_path $argv[-1]
-
+    set -l cu_files $argv
     set -l pids
-    set -l statuses
 
     for cu_file in $cu_files
-        # Launch coder in background
-        run_coder "$cu_file" "$itr_path" "$FEEDBACK_DIR" "$CODER_MODEL" "$LOG_DIR" &
+        run_coder "$cu_file" "$ITR_PATH" "$FEEDBACK_DIR" "$CODER_MODEL" "$LOG_DIR" &
         set -a pids $last_pid
     end
 
-    # Wait for all coders
     set -l all_passed true
     for pid in $pids
         wait $pid
-        set -l status $status
         if test $status -ne 0
             set all_passed false
         end
@@ -254,7 +230,6 @@ function run_code_lead
 
     echo "  [lead] Starting code lead review for wave $wave"
 
-    # Run opencode with verifier/code-lead agent
     opencode --agent verifier \
         --model "$lead_model" \
         --prompt "You are the code lead. Review wave $wave implementation.
@@ -267,17 +242,10 @@ function run_code_lead
 
 Max fix iterations: $max_iterations
 If tests don't converge after $max_iterations, write DIAGNOSIS report." \
-        > "$log_file" 2>&1
+        > "$log_file" 2>&1; or return 1
 
-    set -l status $status
-
-    if test $status -eq 0
-        echo "  [lead] ✓ Wave $wave review completed"
-    else
-        echo "  [lead] ✗ Wave $wave review failed (exit $status)"
-    end
-
-    return $status
+    echo "  [lead] ✓ Wave $wave review completed"
+    return 0
 end
 
 # ── Main execution ────────────────────────────────────────────────
@@ -340,17 +308,17 @@ while test $wave -le $num_waves
     if test "$DRY_RUN" = true
         echo "  [dry-run] Would execute:"
         for cu_file in $cu_files
-            echo "    - (basename $cu_file)"
+            echo "    - "(basename "$cu_file")
         end
         set wave (math $wave + 1)
         continue
     end
 
     # Run parallel coders for this wave
-    echo "  Launching $(count $cu_files) parallel coder(s)..."
+    echo "  Launching "(count $cu_files)" parallel coder(s)..."
     echo ""
 
-    run_coder_parallel $cu_files "$ITR_PATH"
+    run_coder_parallel $cu_files
     set -l coder_status $status
 
     echo ""
@@ -377,7 +345,8 @@ while test $wave -le $num_waves
     end
 
     # Update convergence file
-    jq ".waves += [{\"wave\": $wave, \"cus\": [$(string join ',' (echo "$wave_cus" | jq -R . | jq -s .))], \"escalations\": $escalations, \"coder_status\": $coder_status, \"lead_status\": $lead_status}]" "$CONVERGENCE_FILE" > "$CONVERGENCE_FILE.tmp"
+    set -l wave_cus_json (echo "$wave_cus" | jq -R . | jq -s .)
+    jq ".waves += [{\"wave\": $wave, \"cus\": $wave_cus_json, \"escalations\": $escalations, \"coder_status\": $coder_status, \"lead_status\": $lead_status}]" "$CONVERGENCE_FILE" > "$CONVERGENCE_FILE.tmp"
     mv "$CONVERGENCE_FILE.tmp" "$CONVERGENCE_FILE"
 
     if test $escalations -gt 0
@@ -399,7 +368,6 @@ if test "$DRY_RUN" = false
     echo "═══════════════════════════════════════════════════════════════"
     echo ""
 
-    # Find E2E verification CU
     set -l e2e_cu "$ITR_PATH/cu-e2e-verification.itr"
     if test -f "$e2e_cu"
         echo "  Running E2E tests..."
@@ -431,14 +399,9 @@ if test "$DRY_RUN" = true
     echo "  [dry-run] No changes made"
 else
     echo "  Waves executed: $num_waves"
-    echo "  Feedback files: $(ls $FEEDBACK_DIR/*.feedback.txt 2>/dev/null | wc -l)"
+    echo "  Feedback files: "(ls "$FEEDBACK_DIR"/*.feedback.txt 2>/dev/null | wc -l)
     echo "  Log files: $LOG_DIR"
     echo "  Convergence: $CONVERGENCE_FILE"
-    echo ""
-    echo "  Check results:"
-    echo "    cat $CONVERGENCE_FILE | jq ."
-    echo "    ls $FEEDBACK_DIR/"
-    echo "    ls $LOG_DIR/"
 end
 
 echo ""
