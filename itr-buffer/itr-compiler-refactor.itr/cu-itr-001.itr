@@ -1,0 +1,27 @@
+# CU-ID: cu-itr-001
+# TIMESTAMP: 2026-07-14T16:12:36.404166076Z
+# DTR-COORDINATES: 
+
+# Fix StackOverflowError in JSON parser regex
+
+File: itr-compiler/src/main/scala/itrcompiler/infrastructure/parsers/JSONFormat.scala
+
+Problem:
+The content field regex ((?:[^"\\]|\\.)*) causes catastrophic backtracking
+on large inputs. The regex engine recursive matching stack overflows.
+
+Fix:
+Replace line 20-21 regex with simpler pattern that avoids nested alternation.
+
+Replace:
+  val cuPattern =
+    """\{\s*"cu-id"\s*:\s*"([^"]+)"\s*,\s*"dtr-coordinates"\s*:\s*\[([^\]]*)\]\s*,\s*"content"\s*:\s*"((?:[^"\\\\]|\\\\.)*)"\s*\}""".r
+
+With:
+  val cuPattern =
+    """\{\s*"cu-id"\s*:\s*"([^"]+)"\s*,\s*"dtr-coordinates"\s*:\s*\[([^\]]*)\]\s*,\s*"content"\s*:\s*"([^"]*(?:\\\\.[^"]*)*)"\s*\}""".r
+
+Key change: ([^"]*(?:\\\\.[^"]*)*) instead of ((?:[^"\\\\]|\\\\.)*)).
+This avoids catastrophic backtracking by matching non-quotes first, then escaped sequences.
+
+Also add test for large content in JSONFormatTest.scala.

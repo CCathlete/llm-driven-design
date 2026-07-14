@@ -1,0 +1,17 @@
+[
+  {
+    "wave": 1,
+    "description": "Update system tensor v7 to v8",
+    "cus": ["cu-001"]
+  },
+  {
+    "wave": 2,
+    "description": "Add verifier agent, update coder escalation, update docs (all depend on system tensor)",
+    "cus": ["cu-002", "cu-003", "cu-004", "cu-005", "cu-006"]
+  },
+  {
+    "wave": 3,
+    "description": "E2E verification",
+    "cus": ["cu-e2e-verification"]
+  }
+]
