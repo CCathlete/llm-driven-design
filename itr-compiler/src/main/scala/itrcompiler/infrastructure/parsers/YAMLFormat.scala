@@ -1,11 +1,12 @@
 package itrcompiler.infrastructure.parsers
 
-import itrcompiler.domain.models.{CU, CUBatch}
+import itrcompiler.domain.models.{CU, CUBatch, CUType, RegularCU}
 
 /** YAML format parser/serializer for CU batch data.
   *
   * YAML structure:
   *   cu-id:
+  *     cu-type: regular
   *     dtr-coordinates: [str, str]
   *     content: "free-form text"
   *
@@ -30,8 +31,13 @@ final class YAMLFormat {
         val id = firstLine.takeWhile(_ != ':').trim
         val props = lines.tail.mkString("\n")
 
+        val cuTypePattern = """cu-type:\s*"?([^"\s]*)"?""".r
         val coordsPattern = """dtr-coordinates:\s*\[([^\]]*)\]""".r
         val contentPattern = """content:\s*"?([^"]*)"?""".r
+
+        val cuType = cuTypePattern.findFirstMatchIn(props).map(m =>
+          CUType.fromString(m.group(1).trim)
+        ).getOrElse(RegularCU)
 
         val coords = coordsPattern.findFirstMatchIn(props).map { m =>
           val str = m.group(1).trim
@@ -41,7 +47,7 @@ final class YAMLFormat {
 
         val content = contentPattern.findFirstMatchIn(props).map(_.group(1).trim).getOrElse("")
 
-        Some(CU(id = id, dtrCoordinates = coords, content = content))
+        Some(CU(id = id, dtrCoordinates = coords, content = content, cuType = cuType))
       }
     }
 
@@ -53,6 +59,7 @@ final class YAMLFormat {
     batch.cus.map { cu =>
       val coords = cu.dtrCoordinates.map(c => s""""$c"""").mkString("[", ", ", "]")
       s"""${cu.id}:
+        |  cu-type: ${cu.cuType}
         |  dtr-coordinates: $coords
         |  content: "${cu.content}"""".stripMargin
     }.mkString("\n")

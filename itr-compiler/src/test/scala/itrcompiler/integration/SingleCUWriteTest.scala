@@ -1,8 +1,8 @@
 package itrcompiler.integration
 
-import itrcompiler.application.ports.{ContentRead, CUWrite, DTRLoad}
-import itrcompiler.application.services.{Compile, ContentDeserialize, CoordinateRules, CUStore}
-import itrcompiler.domain.models.{CU, CUBatch, CompileCommand}
+import itrcompiler.application.ports.DTRLoad
+import itrcompiler.application.services.{Compile, ContentDeserialize, CoordinateRules, CUStore, RequiredPartsValidation}
+import itrcompiler.domain.models.CompileCommand
 import org.scalatest.funspec.AnyFunSpec
 import java.nio.file.{Files, Path, Paths}
 
@@ -10,18 +10,23 @@ class SingleCUWriteTest extends AnyFunSpec {
   it("should compile a single CU and write it to disk") {
     val tmpDir = Files.createTempDirectory("int-single-")
 
-    // Real FileSystem for writing
+    // Pre-create required parts so validation passes
+    Files.write(tmpDir.resolve("ARCH.itr"), "ARCH".getBytes)
+    Files.write(tmpDir.resolve("LEGEND.itr"), "LEGEND".getBytes)
+    Files.write(tmpDir.resolve("verification.verification.itr"), "VERIFICATION".getBytes)
+    Files.write(tmpDir.resolve("E2EVERIFICATION.itr"), "E2E".getBytes)
+
     val fs = new itrcompiler.infrastructure.filesystem.FileSystem()
     val coordRules = new CoordinateRules
     val cuStore = new CUStore(fs)
     val contentDeser = new ContentDeserialize(fs)
+    val requiredPartsValidation = new RequiredPartsValidation
 
-    // DTRLoad that returns fake DTR content
     val dtrLoad = new DTRLoad {
       def load(path: Path): String = "TYPE.Foo\nFILE.Bar\n"
     }
 
-    val compile = new Compile(dtrLoad, coordRules, cuStore, contentDeser)
+    val compile = new Compile(dtrLoad, coordRules, cuStore, contentDeser, requiredPartsValidation)
 
     val cmd = CompileCommand(
       compile = true,

@@ -1,10 +1,10 @@
 package itrcompiler.infrastructure.parsers
 
-import itrcompiler.domain.models.{CU, CUBatch}
+import itrcompiler.domain.models.{CU, CUBatch, CUType, RegularCU}
 
 /** JSON format parser/serializer for CU batch data.
   *
-  * JSON structure: [{cu-id, dtr-coordinates:[str], content:str}]
+  * JSON structure: [{cu-id, [cu-type,] dtr-coordinates:[str], content:str}]
   *
   * This is a lightweight, dependency-free parser that handles the
   * expected input structures. For production use, consider a full
@@ -17,22 +17,24 @@ final class JSONFormat {
     val trimmed = json.trim
     if (trimmed.isEmpty || trimmed == "[]") return CUBatch(Seq.empty)
 
+    // Single pattern with optional cu-type field
     val cuPattern =
-      """\{\s*"cu-id"\s*:\s*"([^"]+)"\s*,\s*"dtr-coordinates"\s*:\s*\[([^\]]*)\]\s*,\s*"content"\s*:\s*"((?:[^"\\]|\\.)*)"\s*\}""".r
+      """\{\s*"cu-id"\s*:\s*"([^"]+)"\s*(?:,\s*"cu-type"\s*:\s*"([^"]+)"\s*)?,\s*"dtr-coordinates"\s*:\s*\[([^\]]*)\]\s*,\s*"content"\s*:\s*"([^"]*(?:\\.[^"]*)*)"\s*\}""".r
 
     val cus = cuPattern.findAllMatchIn(trimmed).map { m =>
       val id = m.group(1)
-      val coordsStr = m.group(2).trim
+      val cuType = Option(m.group(2)).map(CUType.fromString).getOrElse(RegularCU)
+      val coordsStr = m.group(3).trim
       val coords =
         if (coordsStr.isEmpty) Seq.empty
         else coordsStr.split(",").toSeq.map(_.trim.replaceAll("^\"|\"$", ""))
-      val rawContent = m.group(3)
+      val rawContent = m.group(4)
       val content = rawContent
         .replace("\\n", "\n")
         .replace("\\t", "\t")
         .replace("\\\"", "\"")
         .replace("\\\\", "\\")
-      CU(id = id, dtrCoordinates = coords, content = content)
+      CU(id = id, dtrCoordinates = coords, content = content, cuType = cuType)
     }.toSeq
 
     CUBatch(cus)
@@ -47,7 +49,7 @@ final class JSONFormat {
         .replace("\"", "\\\"")
         .replace("\n", "\\n")
         .replace("\t", "\\t")
-      s"""{"cu-id":"${cu.id}","dtr-coordinates":$coords,"content":"$escaped"}"""
+      s"""{"cu-id":"${cu.id}","cu-type":"${cu.cuType}","dtr-coordinates":$coords,"content":"$escaped"}"""
     }
     "[" + entries.mkString(",\n  ") + "]"
   }

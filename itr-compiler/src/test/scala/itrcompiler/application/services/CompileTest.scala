@@ -1,7 +1,7 @@
 package itrcompiler.application.services
 
 import itrcompiler.application.ports.{ContentRead, CUWrite, DTRLoad}
-import itrcompiler.domain.models.{CU, CUBatch, CompileCommand}
+import itrcompiler.domain.models._
 import org.scalatest.funspec.AnyFunSpec
 import java.nio.file.Paths
 
@@ -16,15 +16,24 @@ class CompileTest extends AnyFunSpec {
     }
     val contentRead = new ContentRead {
       def readJson(path: java.nio.file.Path) = CUBatch(Seq(
+        CU(id = "arch", dtrCoordinates = Seq.empty, content = "arch content", cuType = ArchCU),
+        CU(id = "legend", dtrCoordinates = Seq.empty, content = "legend content", cuType = LegendCU),
+        CU(id = "verification", dtrCoordinates = Seq.empty, content = "verification content", cuType = VerificationCU),
+        CU(id = "e2everification", dtrCoordinates = Seq.empty, content = "e2e content", cuType = E2eVerificationCU),
         CU(id = "cu-json", dtrCoordinates = Seq("TYPE.Json"), content = "from json")
       ))
       def readYaml(path: java.nio.file.Path) = CUBatch(Seq(
+        CU(id = "arch", dtrCoordinates = Seq.empty, content = "arch content", cuType = ArchCU),
+        CU(id = "legend", dtrCoordinates = Seq.empty, content = "legend content", cuType = LegendCU),
+        CU(id = "verification", dtrCoordinates = Seq.empty, content = "verification content", cuType = VerificationCU),
+        CU(id = "e2everification", dtrCoordinates = Seq.empty, content = "e2e content", cuType = E2eVerificationCU),
         CU(id = "cu-yaml", dtrCoordinates = Seq("TYPE.Yaml"), content = "from yaml")
       ))
     }
     val cuStore = new CUStore(cuWrite)
     val contentDeser = new ContentDeserialize(contentRead)
-    new Compile(dtrLoad, coordRules, cuStore, contentDeser)
+    val requiredPartsValidation = new RequiredPartsValidation
+    new Compile(dtrLoad, coordRules, cuStore, contentDeser, requiredPartsValidation)
   }
 
   describe("Compile") {
@@ -46,7 +55,7 @@ class CompileTest extends AnyFunSpec {
       assert(results.head.content == "hello world")
     }
 
-    it("should compile a JSON batch") {
+    it("should compile a JSON batch with required parts") {
       val compile = fixture
       val cmd = CompileCommand(
         compile = true,
@@ -59,11 +68,15 @@ class CompileTest extends AnyFunSpec {
         force = false
       )
       val results = compile.execute(cmd)
-      assert(results.size == 1)
-      assert(results.head.id == "cu-json")
+      assert(results.size == 5)
+      assert(results.exists(_.id == "cu-json"))
+      assert(results.exists(_.cuType == ArchCU))
+      assert(results.exists(_.cuType == LegendCU))
+      assert(results.exists(_.cuType == VerificationCU))
+      assert(results.exists(_.cuType == E2eVerificationCU))
     }
 
-    it("should compile a YAML batch") {
+    it("should compile a YAML batch with required parts") {
       val compile = fixture
       val cmd = CompileCommand(
         compile = true,
@@ -76,8 +89,12 @@ class CompileTest extends AnyFunSpec {
         force = false
       )
       val results = compile.execute(cmd)
-      assert(results.size == 1)
-      assert(results.head.id == "cu-yaml")
+      assert(results.size == 5)
+      assert(results.exists(_.id == "cu-yaml"))
+      assert(results.exists(_.cuType == ArchCU))
+      assert(results.exists(_.cuType == LegendCU))
+      assert(results.exists(_.cuType == VerificationCU))
+      assert(results.exists(_.cuType == E2eVerificationCU))
     }
 
     it("should handle empty input gracefully") {
