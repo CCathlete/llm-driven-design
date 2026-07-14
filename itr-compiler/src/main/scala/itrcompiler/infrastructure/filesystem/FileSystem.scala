@@ -31,21 +31,24 @@ final class FileSystem(
     *
     * Frame format:
     *   # CU-ID: <id>
+    *   # CU-TYPE: <type>
     *   # TIMESTAMP: <timestamp>
     *   # DTR-COORDINATES: <coord1>, <coord2>, ...
     *   <blank line>
     *   <content>
     *
+    * File name is determined by CU.fileName (e.g., ARCH.itr, LEGEND.itr).
     * If the file already exists and force=false, it is skipped.
     */
   override def write(cu: CU, outFolder: Path, force: Boolean): Unit = {
     Files.createDirectories(outFolder)
-    val cuFile = outFolder.resolve(s"${cu.id}.itr")
+    val cuFile = outFolder.resolve(cu.fileName)
 
     if (!force && Files.exists(cuFile)) return
 
     val header = Seq(
       s"# CU-ID: ${cu.id}",
+      s"# CU-TYPE: ${cu.cuType}",
       s"# TIMESTAMP: ${cu.timestamp}",
       s"# DTR-COORDINATES: ${cu.dtrCoordinates.mkString(", ")}"
     ).mkString("\n")

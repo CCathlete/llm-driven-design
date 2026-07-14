@@ -9,17 +9,23 @@ import java.nio.file.Path
   * Flow:
   *   1. Optionally load DTR content (provides coordinate targets)
   *   2. Determine input mode: raw (single CU), JSON batch, or YAML batch
-  *   3. For each CU: validate coordinates via CoordinateRules
-  *   4. Build deterministic CU frames with header (CU-ID, timestamp, coords)
-  *   5. Write each frame to the output folder via CUStore
+  *   3. Validate required parts for batch mode (ARCH, LEGEND, VERIFICATION, E2EVERIFICATION)
+  *   4. For each CU: validate coordinates via CoordinateRules
+  *   5. Build deterministic CU frames with header (CU-ID, timestamp, coords)
+  *   6. Write each frame to the output folder via CUStore
   *
   * Error handling: per-CU continue-on-error with warnings.
+  *
+  * Note: Required parts validation only applies to batch mode (JSON/YAML).
+  * Single CU mode (rawContent) is used for incremental additions and does
+  * not enforce required parts.
   */
 final class Compile(
     dtrLoad: DTRLoad,
     coordinateRules: CoordinateRules,
     cuStore: CUStore,
-    contentDeserialize: ContentDeserialize
+    contentDeserialize: ContentDeserialize,
+    requiredPartsValidation: RequiredPartsValidation
 ) extends Service {
 
   /** Execute a compile command.
@@ -28,6 +34,27 @@ final class Compile(
     */
   def execute(cmd: CompileCommand): Seq[CU] = {
     val batch = buildBatch(cmd)
+
+    // Validate required parts (batch mode only)
+    val validation = cmd match {
+      case _ if cmd.jsonContent.isDefined || cmd.yamlContent.isDefined =>
+        requiredPartsValidation.validateBatch(batch)
+      case _ =>
+        // Single CU mode or empty: skip required parts validation
+        requiredPartsValidation.ValidationResult(
+          isValid = true,
+          missingParts = Set.empty,
+          existingParts = Set.empty
+        )
+    }
+
+    if (!validation.isValid) {
+      throw new IllegalStateException(
+        s"Missing required parts: ${validation.missingParts.mkString(", ")}. " +
+        s"ITR must contain ARCH, LEGEND, VERIFICATION, and E2EVERIFICATION."
+      )
+    }
+
     val validated = batch.cus.map { cu =>
       val coords = coordinateRules.validate(cu.dtrCoordinates)
       cu.copy(dtrCoordinates = coords)

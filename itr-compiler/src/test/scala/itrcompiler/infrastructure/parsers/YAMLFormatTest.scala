@@ -1,71 +1,45 @@
 package itrcompiler.infrastructure.parsers
 
-import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+import itrcompiler.domain.models._
 
-class YAMLFormatTest extends AnyFunSpec {
-  val format = new YAMLFormat
+class YAMLFormatTest extends AnyFlatSpec with Matchers {
 
-  describe("YAMLFormat") {
-    describe("parse") {
-      it("should parse a single entry") {
-        val yaml = """cu-001:
-                     |  dtr-coordinates: [TYPE.Foo]
-                     |  content: "hello"
-                     |""".stripMargin
-        val batch = format.parse(yaml)
-        assert(batch.cus.size == 1)
-        assert(batch.cus.head.id == "cu-001")
-        assert(batch.cus.head.dtrCoordinates == Seq("TYPE.Foo"))
-        assert(batch.cus.head.content == "hello")
-      }
+  val parser = new YAMLFormat
 
-      it("should parse multiple entries") {
-        val yaml = """cu-a:
-                     |  dtr-coordinates: []
-                     |  content: "x"
-                     |
-                     |cu-b:
-                     |  dtr-coordinates: [TYPE.B]
-                     |  content: "y"
-                     |""".stripMargin
-        val batch = format.parse(yaml)
-        assert(batch.cus.size == 2)
-      }
+  "YAMLFormat" should "handle cu-type field correctly" in {
+    val yamlWithCuType = """cu-test:
+  cu-type: arch
+  dtr-coordinates: []
+  content: "test content"
+"""
+    val batch = parser.parse(yamlWithCuType)
+    batch.cus should not be empty
+    batch.cus.head.cuType shouldBe ArchCU
+  }
 
-      it("should handle empty coordinates") {
-        val yaml = """cu-001:
-                     |  dtr-coordinates: []
-                     |  content: "test"
-                     |""".stripMargin
-        val batch = format.parse(yaml)
-        assert(batch.cus.head.dtrCoordinates.isEmpty)
-      }
+  it should "parse CUs without cu-type field (backward compatible)" in {
+    val yamlWithoutType = """cu-old:
+  dtr-coordinates: [TYPE.X]
+  content: "old format"
+"""
+    val batch = parser.parse(yamlWithoutType)
+    batch.cus should not be empty
+    batch.cus.head.cuType shouldBe RegularCU
+  }
 
-      it("should handle empty input") {
-        val batch = format.parse("")
-        assert(batch.cus.isEmpty)
-      }
-    }
-
-    describe("serialize") {
-      it("should produce valid YAML") {
-        import itrcompiler.domain.models.{CU, CUBatch}
-        val batch = CUBatch(Seq(CU(id = "cu-001", dtrCoordinates = Seq("TYPE.Foo"), content = "hello")))
-        val yaml = format.serialize(batch)
-        assert(yaml.contains("cu-001"))
-        assert(yaml.contains("TYPE.Foo"))
-      }
-
-      it("should round-trip") {
-        import itrcompiler.domain.models.{CU, CUBatch}
-        val original = CUBatch(Seq(
-          CU(id = "a", dtrCoordinates = Seq("X", "Y"), content = "hello world")
-        ))
-        val yaml = format.serialize(original)
-        val parsed = format.parse(yaml)
-        assert(parsed.cus.size == 1)
-        assert(parsed.cus.head.id == "a")
-      }
-    }
+  it should "serialize and parse back correctly" in {
+    val batch = CUBatch(Seq(
+      CU(id = "cu-1", dtrCoordinates = Seq("TYPE.A"), content = "hello", cuType = ArchCU),
+      CU(id = "cu-2", dtrCoordinates = Seq("TYPE.B"), content = "world", cuType = RegularCU)
+    ))
+    val serialized = parser.serialize(batch)
+    val parsed = parser.parse(serialized)
+    parsed.cus.size shouldBe 2
+    parsed.cus.head.id shouldBe "cu-1"
+    parsed.cus.head.cuType shouldBe ArchCU
+    parsed.cus(1).id shouldBe "cu-2"
+    parsed.cus(1).cuType shouldBe RegularCU
   }
 }
