@@ -1,4 +1,4 @@
-SYS=LLMDDv7.0
+SYS=LLMDDv8.0
 MODE=DTR_BASELINE_X_CU_COMPILE
 
 # ──────────────────────────────────────────────
@@ -23,14 +23,14 @@ NODE.ADV_DESC=Receives baseline DTR, analyzes structure, brainstorms with Design
 NODE.ITR_COMPILER=ITR_COMPILER
 NODE.ITR_COMPILER_DESC=Tool: itr-compiler --compile. Takes a baseline DTR and CU content (single/JSON/YAML/JSONL batch), produces a directory of per-CU .itr frame files.
 NODE.COD=CODER
-NODE.COD_DESC=Receives compiled CU frames. Implements CUs in dependency order. Produces per-CU feedback. Commits once per task.
+NODE.COD_DESC=Receives compiled CU frames. Implements CUs in dependency order. Produces per-CU FEEDBACK files. If blocked: writes ESCALATION in feedback for code lead pickup. Commits once per task.
 NODE.OUT=OUTPUT
 NODE.OUT_DESC=Produced code + per-CU FEEDBACK files. Updated DTR feeds the next iteration.
 
 # ──────────────────────────────────────────────
 # PIPELINE FLOW
 # ──────────────────────────────────────────────
-FLOW=X>DTR>ADV X DSG>ITR_COMPILER>COD>OUT>DTR
+FLOW=X>DTR>ADV X DSG>ITR_COMPILER>COD(s)+VER X VER>E2E>DTR
 FLOW.FEEDBACK=COD>PER_CU_FEEDBACK>ADV — per-CU feedback flows back to Advisor for ITR optimization
 
 # ──────────────────────────────────────────────
@@ -49,10 +49,10 @@ WORKFLOW.STEP4=COMPILE_ITR
 WORKFLOW.STEP4_DESC=DSG runs itr-compiler --compile with CU content and baseline DTR. Output: <app>.itr/ directory with per-CU frame files (cu-001.itr, cu-002.itr, ...) plus LEGEND.itr and ARCH.itr.
 
 WORKFLOW.STEP5=IMPLEMENT_CUS
-WORKFLOW.STEP5_DESC=COD receives compiled ITR directory. Implements CUs in dependency order. Writes per-CU FEEDBACK files. Commits code, CU frames, and feedback once per task.
+WORKFLOW.STEP5_DESC=COD receives compiled ITR directory. Implements CUs in dependency order. Writes per-CU FEEDBACK files. If blocked: writes ESCALATION in feedback. Commits code, CU frames, and feedback once per task.
 
-WORKFLOW.STEP6=ITERATE
-WORKFLOW.STEP6_DESC=Updated codebase is re-scanned by dtr-builder to produce a new baseline DTR. Cycle repeats.
+WORKFLOW.STEP8=ITERATE
+WORKFLOW.STEP8_DESC=Updated codebase is re-scanned by dtr-builder to produce a new baseline DTR. Cycle repeats.
 
 # ──────────────────────────────────────────────
 # CU — COMPUTATIONAL UNIT
