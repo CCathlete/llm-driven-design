@@ -1,6 +1,7 @@
 # CU-ID: cu-001-verification
-# TIMESTAMP: 2026-07-14T15:51:30.500898837Z
-# DTR-COORDINATES: 
+# CU-TYPE: RegularCU
+# TIMESTAMP: 2026-07-14T21:04:51.477372774Z
+# DTR-COORDINATES: system_tensors/llm-driven-design-sys-prompt.itr
 
 # Verification Tests for cu-001: System tensor v8 update
 
@@ -8,42 +9,42 @@
 #!/bin/bash
 set -e
 
-echo '=== Testing System Tensor v8 Update ==='
+echo "=== Testing System Tensor v8 Update ==="
 
 # Test 1: Version updated
-echo 'Test 1: Version updated to v8'
-grep -q 'SYS=LLMDDv8.0' system_tensors/llm-driven-design-sys-prompt.itr
+echo "Test 1: Version updated to v8"
+grep -q "SYS=LLMDDv8.0" system_tensors/llm-driven-design-sys-prompt.itr
 
 # Test 2: NODE.VER defined
-echo 'Test 2: NODE.VER defined'
-grep -q 'NODE.VER=CODE_LEAD' system_tensors/llm-driven-design-sys-prompt.itr
+echo "Test 2: NODE.VER defined"
+grep -q "NODE.VER=CODE_LEAD" system_tensors/llm-driven-design-sys-prompt.itr
 
 # Test 3: RULE.VER section exists
-echo 'Test 3: RULE.VER section exists'
-grep -q 'RULE.VER=' system_tensors/llm-driven-design-sys-prompt.itr
+echo "Test 3: RULE.VER section exists"
+grep -q "RULE.VER=" system_tensors/llm-driven-design-sys-prompt.itr
 
 # Test 4: CONVERGENCE section exists
-echo 'Test 4: CONVERGENCE section exists'
-grep -q 'CONVERGENCE.' system_tensors/llm-driven-design-sys-prompt.itr
+echo "Test 4: CONVERGENCE section exists"
+grep -q "CONVERGENCE." system_tensors/llm-driven-design-sys-prompt.itr
 
 # Test 5: Workflow steps updated
-echo 'Test 5: Workflow steps updated'
-grep -q 'WORKFLOW.STEP6=VERIFY_CUS' system_tensors/llm-driven-design-sys-prompt.itr
-grep -q 'WORKFLOW.STEP7=E2E_VERIFY' system_tensors/llm-driven-design-sys-prompt.itr
-grep -q 'WORKFLOW.STEP8=ITERATE' system_tensors/llm-driven-design-sys-prompt.itr
+echo "Test 5: Workflow steps updated"
+grep -q "WORKFLOW.STEP6=VERIFY_CUS" system_tensors/llm-driven-design-sys-prompt.itr
+grep -q "WORKFLOW.STEP7=E2E_VERIFY" system_tensors/llm-driven-design-sys-prompt.itr
+grep -q "WORKFLOW.STEP8=ITERATE" system_tensors/llm-driven-design-sys-prompt.itr
 
 # Test 6: Flow updated
-echo 'Test 6: Flow updated'
-grep -q 'FLOW.ESCALATION=' system_tensors/llm-driven-design-sys-prompt.itr
-grep -q 'FLOW.E2E=' system_tensors/llm-driven-design-sys-prompt.itr
+echo "Test 6: Flow updated"
+grep -q "FLOW.ESCALATION=" system_tensors/llm-driven-design-sys-prompt.itr
+grep -q "FLOW.E2E=" system_tensors/llm-driven-design-sys-prompt.itr
 
 # Test 7: Feedback fields updated
-echo 'Test 7: Feedback fields updated'
-grep -q 'STATUS' system_tensors/llm-driven-design-sys-prompt.itr
-grep -q 'ESCALATION_REASON' system_tensors/llm-driven-design-sys-prompt.itr
+echo "Test 7: Feedback fields updated"
+grep -q "STATUS" system_tensors/llm-driven-design-sys-prompt.itr
+grep -q "ESCALATION_REASON" system_tensors/llm-driven-design-sys-prompt.itr
 
 # Test 8: CU fields updated
-echo 'Test 8: CU fields updated'
-grep -q 'CU.FIELDS=ID,DTR_COORDINATES,CONTENT,TESTS,VERIFICATION,TIMESTAMP' system_tensors/llm-driven-design-sys-prompt.itr
+echo "Test 8: CU fields updated"
+grep -q "CU.FIELDS=ID,DTR_COORDINATES,CONTENT,TESTS,VERIFICATION,TIMESTAMP" system_tensors/llm-driven-design-sys-prompt.itr
 
-echo '=== All tests passed ==='
+echo "=== All tests passed ==="

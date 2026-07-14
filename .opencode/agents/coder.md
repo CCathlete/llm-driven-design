@@ -95,6 +95,11 @@ ARCHITECTURE_DEVIATION.SEVERITY=NONE|MINOR|MAJOR|CRITICAL
 TIME_TAKEN_MINUTES=<minutes>
 AI_CREDITS_USED=<number of AI credits consumed>
 COMMIT_MESSAGE=<descriptive summary of all changes in this task>
+STATUS=COMPLETED|ESCALATED
+ESCALATION_REASON=<why you are blocked>
+ESCALATION_DETAIL=<detailed description of the issue>
+VERIFICATION_RESULT=PASSED|FAILED|NOT_RUN
+VERIFICATION_DETAILS=<test results summary>
 ```
 
 **Rules:**
@@ -104,6 +109,12 @@ COMMIT_MESSAGE=<descriptive summary of all changes in this task>
 - MAJOR deviations: note in feedback, acknowledge with Designer
 - The COMMIT_MESSAGE is used as the git commit message
 - One commit per task (not per CU)
+- If you cannot complete a CU (blocked, missing dependency, etc.) set STATUS=ESCALATION in your feedback
+- Write ESCALATION_REASON and ESCALATION_DETAIL explaining the issue
+- The code lead (VER) will pick up escalations and perform fixes
+- Do NOT commit if STATUS=ESCALATION - the code lead will commit
+- If STATUS=COMPLETED: commit as before (code + frames + feedback)
+- If STATUS=ESCALATION: do NOT commit - code lead will handle
 
 ## Constraints
 

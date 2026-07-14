@@ -1,6 +1,7 @@
 # CU-ID: cu-001
-# TIMESTAMP: 2026-07-14T15:52:03.412688518Z
-# DTR-COORDINATES: 
+# CU-TYPE: RegularCU
+# TIMESTAMP: 2026-07-14T21:04:51.477859276Z
+# DTR-COORDINATES: system_tensors/llm-driven-design-sys-prompt.itr
 
 # Update system tensor from v7 to v8
 

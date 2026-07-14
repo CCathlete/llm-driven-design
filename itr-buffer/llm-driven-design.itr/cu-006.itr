@@ -1,6 +1,7 @@
 # CU-ID: cu-006
-# TIMESTAMP: 2026-07-14T15:52:48.736685079Z
-# DTR-COORDINATES: 
+# CU-TYPE: RegularCU
+# TIMESTAMP: 2026-07-14T21:04:51.478270093Z
+# DTR-COORDINATES: .opencode/instructions/memory.md
 
 # Update memory.md for v8
 
