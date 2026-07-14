@@ -113,6 +113,33 @@ class CompileTest extends AnyFunSpec {
       assert(results.isEmpty)
     }
 
+    it("should throw when batch is missing required parts") {
+      val dtrLoad = new DTRLoad {
+        def load(path: java.nio.file.Path): String = "TYPE.Foo"
+      }
+      val cuWrite = new CUWrite {
+        def write(cu: CU, outFolder: java.nio.file.Path, force: Boolean): Unit = ()
+      }
+      val contentRead = new ContentRead {
+        def readJson(path: java.nio.file.Path) = CUBatch(Seq(
+          CU(id = "cu-001", dtrCoordinates = Seq.empty, content = "just a regular CU")
+        ))
+        def readYaml(path: java.nio.file.Path) = CUBatch(Seq.empty)
+      }
+      val compile = new Compile(
+        dtrLoad, new CoordinateRules, new CUStore(cuWrite),
+        new ContentDeserialize(contentRead), new RequiredPartsValidation
+      )
+      val cmd = CompileCommand(
+        compile = true, dtr = None, outFolder = Paths.get("out"),
+        rawContent = None, cuId = None,
+        jsonContent = Some(Paths.get("batch.json")), yamlContent = None, force = false
+      )
+      intercept[IllegalStateException] {
+        compile.execute(cmd)
+      }
+    }
+
     it("should load DTR coordinates and validate them") {
       val compile = fixture
       val cmd = CompileCommand(

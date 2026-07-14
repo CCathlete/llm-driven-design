@@ -1,0 +1,148 @@
+Wave 3 Verification Report
+Date: 2026-07-14
+Reviewer: Code Lead (VER)
+
+== ESCALATION CHECK ==
+Feedback files reviewed: cu-001, cu-002, cu-003, cu-004, cu-005, cu-006,
+  cu-e2e-verification, cu-itr-002, cu-itr-003, cu-itr-004, cu-itr-006, cu-itr-007
+ESCALATED statuses found: 0
+Status: ALL CLEAR (no formal escalations)
+
+== IMPLEMENTATION SCOPE ==
+Wave 3 covers the itr-compiler required parts enforcement feature:
+  - CUType sealed trait with 5 variants (RegularCU, ArchCU, LegendCU,
+    VerificationCU, E2eVerificationCU) in domain/models/CU.scala
+  - RequiredPartsValidation service in application/services/
+  - Integration into Compile service (batch mode only)
+  - cu-type field support in JSON and YAML parsers
+  - Backward compatibility via ID-based type inference
+
+== ARCHITECTURE VERIFICATION ==
+
+Hexagonal Architecture:
+  PASS: RequiredPartsValidation in application/services (correct layer)
+  PASS: CU/CUType in domain/models (correct layer)
+  PASS: JSONFormat/YAMLFormat in infrastructure/parsers (correct layer)
+  PASS: Container in control/dependency_injection (correct layer)
+  PASS: No cross-layer violations detected
+
+Dependency Injection:
+  PASS: RequiredPartsValidation injected into Compile via constructor
+  PASS: Container wires all dependencies correctly
+  PASS: All ports owned by application layer
+
+FIX APPLIED: RequiredPartsValidation was missing "extends Service"
+  - Every other service (CoordinateRules, CUStore, ContentDeserialize, Compile)
+    extends the Service trait for consistency
+  - Severity: MINOR (layering inconsistency, no functional impact)
+  - Status: FIXED
+
+== IMPLEMENTATION FINDINGS ==
+
+FIX 1 (MAJOR): CUType.fromString missing hyphenated e2e-verification
+  File: domain/models/CU.scala:24
+  Problem: CUType.fromString("e2e-verification") returned RegularCU instead
+    of E2eVerificationCU. This was inconsistent with inferCuType() in
+    RequiredPartsValidation which correctly handled the hyphenated form.
+  Impact: Users writing cu-type: "e2e-verification" in JSON/YAML would get
+    a misleading "Missing required parts: E2EVERIFICATION" error.
+  Fix: Added "e2e-verification" and "e2e-verificationcu" to the match cases
+  Severity: MAJOR (incorrect behavior, would cause user-facing errors)
+  Status: FIXED
+
+FIX 2 (MINOR): RequiredPartsValidation missing extends Service
+  File: application/services/RequiredPartsValidation.scala:14
+  Problem: Class declared as "final class RequiredPartsValidation" without
+    extending the Service base trait. All other services extend Service.
+  Fix: Changed to "final class RequiredPartsValidation extends Service"
+  Severity: MINOR (cosmetic/consistency, no functional impact)
+  Status: FIXED
+
+== TEST COVERAGE FINDINGS ==
+
+BEFORE FIXES: 49/49 tests (itr-compiler), 232/232 total
+AFTER FIXES:  69/69 tests (itr-compiler), 252/252 total
+
+New tests added:
+
+1. RequiredPartsValidationTest.scala (11 tests):
+   - validateBatch: all parts present via cu-type
+   - validateBatch: ARCH missing (failure path)
+   - validateBatch: all parts missing
+   - validateBatch: parts inferred from ID
+   - validateBatch: E2eVerificationCU from hyphenated ID
+   - validateBatch: empty batch
+   - validateBatch: mixed cu-type and ID-inferred parts
+   - inferCuType: arch-prefixed ID
+   - inferCuType: legend-prefixed ID
+   - inferCuType: verification-containing ID
+   - inferCuType: regular CU ID (no inference)
+
+2. CompileTest.scala - 1 new test:
+   - should throw when batch is missing required parts (failure path)
+
+3. CUTest.scala - 8 new tests:
+   - isRequiredPart for all CU types
+   - fileName output per CU type
+   - requiredParts constant coverage
+   - CUType.fromString: standard names
+   - CUType.fromString: CU-suffixed names
+   - CUType.fromString: hyphenated e2e-verification
+   - CUType.fromString: case insensitivity
+   - CUType.fromString: unknown types default to RegularCU
+
+== NOTES ==
+
+Dead code identified (TRIVIAL, not fixed):
+  - RequiredPartsValidation.validateForSingleCU is defined but never called
+  - CUStore.listExistingFiles is defined but never called
+  These appear to be scaffolding for future single-CU validation.
+
+== FIX ITERATIONS REQUIRED: 1 ==
+All issues found and fixed in single iteration. No re-verification needed
+as fixes were surgical (one match case addition, one extends keyword, and
+new test files).
+
+== E2E TEST RESULTS ==
+
+itr-compiler:
+  Suites: 17/17 passed
+  Tests: 69/69 passed
+  Duration: <1s
+  Notable coverage:
+    - CUType parsing (standard, suffixed, hyphenated, case-insensitive)
+    - RequiredPartsValidation (batch valid, batch invalid, ID inference)
+    - Compile required parts failure path
+    - CU model (isRequiredPart, fileName, requiredParts)
+
+dtr-builder:
+  Suites: 16/16 passed
+  Tests: 161/161 passed
+  Duration: 2s
+
+commit-tool:
+  Suites: 5/5 passed
+  Tests: 22/22 passed
+  Duration: <1s
+
+Total: 252/252 tests passed across all projects.
+No regressions from code lead fixes.
+
+== SUMMARY ==
+
+Wave 3 implementation (itr-compiler required parts enforcement) is
+architecturally sound with correct hexagonal layering, DI wiring, and
+dependency inversion.
+
+No formal escalations were filed. Manual verification found 2 issues:
+  - CUType.fromString missing hyphenated e2e-verification (MAJOR, fixed)
+  - RequiredPartsValidation missing extends Service (MINOR, fixed)
+
+Test coverage increased from 49 to 69 tests (+41%) with new dedicated
+RequiredPartsValidation unit tests and expanded CUTest coverage.
+
+All 252 automated tests pass. Zero regressions.
+
+== VERDICT: PASS ==
+Wave 3 implementation complete after code lead fixes. Required parts
+enforcement works correctly for all CU types. 252/252 automated tests pass.

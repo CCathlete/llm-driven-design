@@ -21,7 +21,7 @@ object CUType {
     case "arch" | "archcu" => ArchCU
     case "legend" | "legendcu" => LegendCU
     case "verification" | "verificationcu" => VerificationCU
-    case "e2everification" | "e2everificationcu" => E2eVerificationCU
+    case "e2everification" | "e2everificationcu" | "e2e-verification" | "e2e-verificationcu" => E2eVerificationCU
     case _ => RegularCU
   }
 }
