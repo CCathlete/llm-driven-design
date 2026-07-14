@@ -11,7 +11,7 @@ import java.nio.file.Path
   *
   * Detection: cu-type field first, then fallback to ID matching.
   */
-final class RequiredPartsValidation {
+final class RequiredPartsValidation extends Service {
 
   case class ValidationResult(
     isValid: Boolean,
