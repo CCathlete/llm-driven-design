@@ -468,7 +468,7 @@ def _stream_process_json(cmd: list[str], log_fh, colour: str, prefix: str,
 
     _done = threading.Event()
     last_activity = [datetime.now()]  # mutable for thread access
-    warn_printed = [False]
+
 
     def _reader():
         assert proc.stdout is not None
@@ -479,7 +479,6 @@ def _stream_process_json(cmd: list[str], log_fh, colour: str, prefix: str,
 
             # Any output from the process counts as activity
             last_activity[0] = datetime.now()
-            warn_printed[0] = False
 
             try:
                 ev = json.loads(line)
@@ -515,11 +514,6 @@ def _stream_process_json(cmd: list[str], log_fh, colour: str, prefix: str,
 
     while not _done.is_set():
         idle_secs = (datetime.now() - last_activity[0]).total_seconds()
-        
-        # Warn at 80% of timeout
-        if idle_secs > timeout * 0.8 and not warn_printed[0]:
-            _warn(f"No activity for {int(idle_secs)}s (timeout at {timeout}s)")
-            warn_printed[0] = True
         
         # Kill if no activity for full timeout
         if idle_secs > timeout:
