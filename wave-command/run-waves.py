@@ -360,7 +360,7 @@ def _stream_process_json(cmd: list[str], log_fh, colour: str, prefix: str,
     try:
         proc = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            cwd=work_dir, bufsize=1,
+            cwd=work_dir,
         )
     except FileNotFoundError:
         _fail(f"Command not found: {cmd[0]}")
