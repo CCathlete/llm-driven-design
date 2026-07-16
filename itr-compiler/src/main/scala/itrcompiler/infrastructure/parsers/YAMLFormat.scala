@@ -33,7 +33,9 @@ final class YAMLFormat {
 
         val cuTypePattern = """cu-type:\s*"?([^"\s]*)"?""".r
         val coordsPattern = """dtr-coordinates:\s*\[([^\]]*)\]""".r
-        val contentPattern = """content:\s*"?([^"]*)"?""".r
+        // Try quoted content first, then fallback to unquoted
+        val contentQuoted = """content:\s*"([^"]*(?:\\.[^"]*)*)"""".r
+        val contentUnquoted = """content:\s*(.+)""".r
 
         val cuType = cuTypePattern.findFirstMatchIn(props).map(m =>
           CUType.fromString(m.group(1).trim)
@@ -45,7 +47,10 @@ final class YAMLFormat {
           else str.split(",").toSeq.map(_.trim.replaceAll("^\"|\"$", ""))
         }.getOrElse(Seq.empty)
 
-        val content = contentPattern.findFirstMatchIn(props).map(_.group(1).trim).getOrElse("")
+        val content = contentQuoted.findFirstMatchIn(props)
+          .map(_.group(1).trim)
+          .orElse(contentUnquoted.findFirstMatchIn(props).map(_.group(1).trim))
+          .getOrElse("")
 
         Some(CU(id = id, dtrCoordinates = coords, content = content, cuType = cuType))
       }
@@ -58,10 +63,8 @@ final class YAMLFormat {
   def serialize(batch: CUBatch): String = {
     batch.cus.map { cu =>
       val coords = cu.dtrCoordinates.map(c => s""""$c"""").mkString("[", ", ", "]")
-      s"""${cu.id}:
-        |  cu-type: ${cu.cuType}
-        |  dtr-coordinates: $coords
-        |  content: "${cu.content}"""".stripMargin
+      val escapedContent = cu.content.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+      s"""${cu.id}:\n  cu-type: ${cu.cuType}\n  dtr-coordinates: $coords\n  content: \"$escapedContent\""""
     }.mkString("\n")
   }
 }
