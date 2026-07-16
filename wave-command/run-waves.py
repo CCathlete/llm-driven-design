@@ -24,6 +24,90 @@ DEFAULT_CU_TIMEOUT = 180
 DEFAULT_LEAD_TIMEOUT = 600
 DEFAULT_MAX_FIX_ITERATIONS = 3
 
+# ── Fallback defaults ───────────────────────────────────────────────
+DEFAULT_CODER_FALLBACKS = [
+    "openrouter/google/gemini-2.5-flash",
+    "openrouter/google/gemma-4-31b-it",
+]
+
+# ── Refusal / Error Detection ───────────────────────────────────────
+
+_REFUSAL_PATTERNS = [
+    "I'm sorry, but I'm currently unable to assist",
+    "I'm sorry, but I cannot",
+    "I'm sorry, but I can't",
+    "I'm not able to assist with that",
+    "I'm unable to assist with",
+    "I cannot assist with that",
+    "I can't assist with that",
+    "I'm not able to help with",
+    "I cannot help with that",
+    "I'm sorry, but I don't have access",
+    "I don't have the tools needed",
+    "I'm not permitted to",
+    "I'm not allowed to",
+    "This request violates",
+    "I must decline",
+    "I'm afraid I cannot",
+]
+
+_ERROR_PATTERNS = [
+    "Error:",
+    "FATAL:",
+    "panic:",
+    "Traceback (most recent call last)",
+    "java.lang.",
+    "scala.",
+    "compilation failed",
+    "build failed",
+]
+
+# ── Model Fallback Chain ────────────────────────────────────────────
+
+class ModelFallbackChain:
+    """Manages fallback order for model attempts."""
+    
+    def __init__(self, primary_model: str, fallback_models: list[str] | None = None):
+        self.chain = [primary_model]
+        if fallback_models:
+            self.chain.extend(fallback_models)
+    
+    def __iter__(self):
+        return iter(self.chain)
+    
+    def __len__(self):
+        return len(self.chain)
+    
+    def __repr__(self):
+        return " → ".join(self.chain)
+
+
+def _detect_refusal(log_file: Path) -> bool:
+    """Check if the log contains refusal patterns."""
+    try:
+        text = log_file.read_text(errors="replace")
+        for pattern in _REFUSAL_PATTERNS:
+            if pattern.lower() in text.lower():
+                return True
+    except Exception:
+        pass
+    return False
+
+
+def _detect_error(log_file: Path) -> bool:
+    """Check if the log contains error patterns (but not tool output)."""
+    try:
+        lines = log_file.read_text(errors="replace").splitlines()
+        for line in lines:
+            if "toolResult" in line or "tool_result" in line:
+                continue
+            for pattern in _ERROR_PATTERNS:
+                if pattern in line:
+                    return True
+    except Exception:
+        pass
+    return False
+
 
 # ── Token / Cost tracking ─────────────────────────────────────────
 
@@ -217,9 +301,9 @@ def _print_credit_table(cu_usages: dict[str, TokenUsage], label: str,
 
     print(f"    {colour}{C.BOLD}{label}{C.RESET}")
     hdr = (f"    {C.DIM}{'CU':<22} {'Cost':>8}  "
-           f"{'In':>8} {'Out':>8} {'Reason':>8} {'CacheR':>8}{C.RESET}")
+           f"{'In':>8} {'Out':>8} {'Reason':>8} {'CacheR':>8} {'Model':<25}{C.RESET}")
     print(hdr)
-    print(f"    {C.DIM}{'─' * 72}{C.RESET}")
+    print(f"    {C.DIM}{'─' * 97}{C.RESET}")
 
     wt = TokenUsage()
     for cu_id, u in cu_usages.items():
@@ -227,12 +311,19 @@ def _print_credit_table(cu_usages: dict[str, TokenUsage], label: str,
             continue
         cost_str = _fmt_cost(u.cost)
         cost_col = C.BR_YELLOW if u.cost > 0 else C.DIM
+        model_str = u.model if u.model else "unknown"
+        # Shorten model name for display
+        if "/" in model_str:
+            model_str = model_str.split("/")[-1]
+        if len(model_str) > 24:
+            model_str = model_str[:21] + "..."
         print(f"    {colour}{cu_id:<22}{C.RESET}"
               f" {cost_col}{cost_str:>8}{C.RESET}  "
               f"{_fmt_tokens(u.input):>8}"
               f" {_fmt_tokens(u.output):>8}"
               f" {_fmt_tokens(u.reasoning):>8}"
-              f" {_fmt_tokens(u.cache_read):>8}")
+              f" {_fmt_tokens(u.cache_read):>8}"
+              f" {C.DIM}{model_str:<25}{C.RESET}")
         wt.input += u.input
         wt.output += u.output
         wt.reasoning += u.reasoning
@@ -242,7 +333,7 @@ def _print_credit_table(cu_usages: dict[str, TokenUsage], label: str,
         wt.cost += u.cost
 
     total_cost_col = C.BR_YELLOW if wt.cost > 0 else C.DIM
-    print(f"    {C.DIM}{'─' * 72}{C.RESET}")
+    print(f"    {C.DIM}{'─' * 97}{C.RESET}")
     print(f"    {C.BOLD}{'TOTAL':<22}{C.RESET}"
           f" {total_cost_col}{_fmt_cost(wt.cost):>8}{C.RESET}  "
           f"{_fmt_tokens(wt.input):>8}"
@@ -280,6 +371,8 @@ def parse_args(argv=None):
     p.add_argument("--app", required=True, help="Application name")
     p.add_argument("--waves", default=None, help="Wave definition JSON file")
     p.add_argument("--coder-model", default=DEFAULT_CODER_MODEL)
+    p.add_argument("--coder-fallbacks", nargs="*", default=DEFAULT_CODER_FALLBACKS,
+                   help="Fallback models if primary refuses/errors")
     p.add_argument("--lead-model", default=DEFAULT_LEAD_MODEL)
     p.add_argument("--max-fix-iterations", type=int, default=DEFAULT_MAX_FIX_ITERATIONS)
     p.add_argument("--cu-timeout", type=int, default=DEFAULT_CU_TIMEOUT)
@@ -508,14 +601,15 @@ def _usage_line(usage: TokenUsage, colour: str = "") -> str:
             f" cacheR={_fmt_tokens(usage.cache_read)}{C.RESET}")
 
 
-def run_coder(cu_file: Path, cu_id: str, model: str,
+def run_coder(cu_file: Path, cu_id: str, fallback_chain: ModelFallbackChain,
               feedback_dir: Path, log_dir: Path, timeout: int,
-              project_dir: Path, coder_colour: tuple[str, str]) -> tuple[int, list[str], TokenUsage]:
-    log_file = log_dir / f"{cu_id}.log"
+              project_dir: Path, coder_colour: tuple[str, str]) -> tuple[int, list[str], TokenUsage, str]:
+    """Run coder with model fallback. Returns (rc, files, usage, model_used)."""
     colour_code, colour_label = coder_colour
     prefix = f"[{cu_id}]"
-    usage = TokenUsage()
-
+    combined_usage = TokenUsage()
+    model_used = ""
+    
     prompt = (
         f"Implement CU {cu_id} from ITR. "
         f"Read the CU frame file at {cu_file}, "
@@ -524,32 +618,74 @@ def run_coder(cu_file: Path, cu_id: str, model: str,
         f"then commit."
     )
 
-    cmd = [
-        "opencode", "run",
-        "--dir", str(project_dir),
-        "--model", model,
-        "--agent", "coder",
-        "--format", "json",
-        "--auto",
-        prompt,
-    ]
-
     print(f"  {colour_code}{C.BOLD}▸{C.RESET} {colour_code}{C.BOLD}CU {cu_id}{C.RESET}"
           f" {C.DIM}→ {cu_file.name}{C.RESET}  {C.DIM}({colour_label}){C.RESET}")
     print(f"    {C.DIM}{'─' * 55}{C.RESET}")
 
-    with open(log_file, "w") as log_fh:
-        rc = _stream_process_json(cmd, log_fh, colour_code, prefix,
-                                  timeout, project_dir, usage)
+    for model_idx, model in enumerate(fallback_chain):
+        # Use a unique log file per attempt
+        log_file = log_dir / f"{cu_id}.attempt-{model_idx}.log"
+        attempt_usage = TokenUsage()
+        
+        if model_idx > 0:
+            _warn(f"Fallback attempt {model_idx}: trying {C.BOLD}{model}{C.RESET}")
+            # Reset git stash ref for each attempt
+            print(f"    {C.DIM}Trying fallback model: {model}{C.RESET}")
 
-    files_changed = git_diff_names(project_dir, git_stash_ref(project_dir))
+        cmd = [
+            "opencode", "run",
+            "--dir", str(project_dir),
+            "--model", model,
+            "--agent", "coder",
+            "--format", "json",
+            "--auto",
+            prompt,
+        ]
 
-    if rc == 0:
-        _success(f"CU {cu_id} completed {C.DIM}({len(files_changed)} files){C.RESET}")
-    else:
-        _fail(f"CU {cu_id} failed (exit {rc})")
+        with open(log_file, "w") as log_fh:
+            rc = _stream_process_json(cmd, log_fh, colour_code, prefix,
+                                      timeout, project_dir, attempt_usage)
 
-    line = _usage_line(usage)
+        # Check for issues
+        is_refusal = _detect_refusal(log_file)
+        is_error = _detect_error(log_file) if rc == 0 else False
+        is_timeout = rc == 124
+        
+        # Combine usage
+        combined_usage.input += attempt_usage.input
+        combined_usage.output += attempt_usage.output
+        combined_usage.reasoning += attempt_usage.reasoning
+        combined_usage.cache_read += attempt_usage.cache_read
+        combined_usage.cache_write += attempt_usage.cache_write
+        combined_usage.total += attempt_usage.total
+        combined_usage.cost += attempt_usage.cost
+        if attempt_usage.session_id:
+            combined_usage.session_id = attempt_usage.session_id
+        combined_usage.model = model
+
+        files_changed = git_diff_names(project_dir, git_stash_ref(project_dir))
+        
+        # Determine if this attempt succeeded
+        succeeded = (rc == 0 and not is_refusal and not is_error) or (files_changed and rc == 0)
+        
+        if succeeded:
+            model_used = model
+            if model_idx > 0:
+                _success(f"CU {cu_id} completed with fallback {C.BOLD}{model}{C.RESET}"
+                        f" {C.DIM}({len(files_changed)} files){C.RESET}")
+            else:
+                _success(f"CU {cu_id} completed {C.DIM}({len(files_changed)} files){C.RESET}")
+            break
+        else:
+            reason = "refused" if is_refusal else ("error" if is_error else ("timeout" if is_timeout else f"exit {rc}"))
+            _warn(f"Model {C.BOLD}{model}{C.RESET} failed: {reason}")
+            if model_idx == len(fallback_chain) - 1:
+                # Last model also failed
+                model_used = model
+                _fail(f"CU {cu_id} failed on all {len(fallback_chain)} model(s)")
+                break
+
+    line = _usage_line(combined_usage)
     if line:
         print(line)
 
@@ -557,8 +693,13 @@ def run_coder(cu_file: Path, cu_id: str, model: str,
         for fc in files_changed:
             print(f"    {colour_code}├{C.RESET} {fc}")
 
+    # Log model used
+    if model_used:
+        log_model_info = log_dir / f"{cu_id}.model-used.txt"
+        log_model_info.write_text(f"model={model_used}\nfallback_level={model_idx}\n")
+
     print()
-    return rc, files_changed, usage
+    return rc, files_changed, combined_usage, model_used
 
 
 def run_code_lead(wave: int, model: str, max_iterations: int,
@@ -760,8 +901,9 @@ def main(argv=None):
 
         for idx, (cu_id, cu_file) in enumerate(cu_files):
             coder_colour = CODER_COLOURS[idx % len(CODER_COLOURS)]
-            rc, files, usage = run_coder(
-                cu_file, cu_id, args.coder_model,
+            fallback_chain = ModelFallbackChain(args.coder_model, args.coder_fallbacks)
+            rc, files, usage, model_used = run_coder(
+                cu_file, cu_id, fallback_chain,
                 feedback_dir, log_dir, args.cu_timeout,
                 project_dir, coder_colour,
             )
