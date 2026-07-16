@@ -513,7 +513,7 @@ def run_coder(cu_file: Path, cu_id: str, model: str,
               project_dir: Path, coder_colour: tuple[str, str]) -> tuple[int, list[str], TokenUsage]:
     log_file = log_dir / f"{cu_id}.log"
     colour_code, colour_label = coder_colour
-    prefix = f"[{colour_label}:{cu_id}]"
+    prefix = f"[{cu_id}]"
     usage = TokenUsage()
 
     prompt = (
