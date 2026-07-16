@@ -26,8 +26,7 @@ DEFAULT_MAX_FIX_ITERATIONS = 3
 
 # ── Fallback defaults ───────────────────────────────────────────────
 DEFAULT_CODER_FALLBACKS = [
-    "openrouter/google/gemini-2.5-flash",
-    "openrouter/google/gemma-4-31b-it",
+    "google/gemma-4-31b-it",
 ]
 
 # ── Refusal / Error Detection ───────────────────────────────────────

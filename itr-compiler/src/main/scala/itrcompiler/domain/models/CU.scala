@@ -34,7 +34,7 @@ final case class CU(
   timestamp: Instant = Instant.now()
 ) extends Model {
   def isRequiredPart: Boolean = cuType match {
-    case ArchCU | LegendCU | VerificationCU | E2eVerificationCU => true
+    case ArchCU | LegendCU => true
     case _ => false
   }
 
@@ -49,6 +49,6 @@ final case class CU(
 
 object CU {
   val requiredParts: Set[CUType] = Set(
-    ArchCU, LegendCU, VerificationCU, E2eVerificationCU
+    ArchCU, LegendCU
   )
 }
