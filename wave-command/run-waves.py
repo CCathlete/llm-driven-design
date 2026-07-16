@@ -53,6 +53,10 @@ _REFUSAL_PATTERNS = [
     # Partial refusals / confusion
     "I couldn't find the file",
     "I'm sorry, but I couldn't find",
+    "I'm unable to find",
+    "I cannot find",
+    "I can't find",
+    "unable to find the specified",
     "Could you please double-check",
     "I'm not sure what you mean",
     "I don't understand what you're asking",
@@ -65,6 +69,8 @@ _REFUSAL_PATTERNS = [
     "I'm unable to locate",
     "I can't locate",
     "I'm not finding",
+    "must match exactly",
+    "text must match",
     # Capability denials
     "I don't have the capability to access or modify",
     "I currently don't have the capability",
