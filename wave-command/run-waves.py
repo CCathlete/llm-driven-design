@@ -750,9 +750,31 @@ def run_coder(cu_file: Path, cu_id: str, fallback_chain: ModelFallbackChain,
             reason = "refused" if is_refusal else ("error" if is_error else ("timeout" if is_timeout else f"exit {rc}"))
             _warn(f"Model {C.BOLD}{model}{C.RESET} failed: {reason}")
             if model_idx == len(fallback_chain) - 1:
-                # Last model also failed
+                # Last model also failed — write escalation feedback
                 model_used = model
                 _fail(f"CU {cu_id} failed on all {len(fallback_chain)} model(s)")
+                
+                # Write escalation feedback so code lead can pick it up
+                feedback_file = feedback_dir / f"{cu_id}.feedback.txt"
+                feedback_content = f"""CU_ID={cu_id}
+CODER_NAME=wave-runner
+DATE={datetime.now().isoformat()}
+CLARITY_RATING=1
+AMBIGUOUS_LINES=all
+MISSING_CONTEXT=all models failed
+TOO_MUCH_DETAIL=0
+ARCHITECTURE_DEVIATION=CU not implemented
+ARCHITECTURE_DEVIATION.SEVERITY=CRITICAL
+TIME_TAKEN_MINUTES=0
+AI_CREDITS_USED={combined_usage.cost:.4f}
+COMMIT_MESSAGE=N/A - CU not implemented
+STATUS=ESCALATION
+ESCALATION_REASON=all models failed to implement CU
+ESCALATION_DETAIL=codestral refused, gemini failed with exit 1, gemma timed out
+VERIFICATION_RESULT=NOT_RUN
+VERIFICATION_DETAILS=CU not implemented
+"""
+                feedback_file.write_text(feedback_content)
                 break
 
     line = _usage_line(combined_usage)
