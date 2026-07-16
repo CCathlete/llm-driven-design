@@ -7,7 +7,7 @@ import java.nio.file.{Files, Path}
 /** Service: validates that an ITR output folder contains all required parts
   * before allowing compilation to proceed.
   *
-  * Required parts: ARCH, LEGEND, VERIFICATION, E2EVERIFICATION.
+  * Required parts: ARCH, LEGEND.
   *
   * Detection: cu-type field first, then fallback to ID matching.
   */
