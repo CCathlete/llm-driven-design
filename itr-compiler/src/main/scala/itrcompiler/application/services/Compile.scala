@@ -9,7 +9,7 @@ import java.nio.file.Path
   * Flow:
   *   1. Optionally load DTR content (provides coordinate targets)
   *   2. Determine input mode: raw (single CU), JSON batch, or YAML batch
-  *   3. Validate required parts for batch mode (ARCH, LEGEND, VERIFICATION, E2EVERIFICATION)
+  *   3. Validate required parts for batch mode (ARCH, LEGEND)
   *   4. For each CU: validate coordinates via CoordinateRules
   *   5. Build deterministic CU frames with header (CU-ID, timestamp, coords)
   *   6. Write each frame to the output folder via CUStore
@@ -51,7 +51,7 @@ final class Compile(
     if (!validation.isValid) {
       throw new IllegalStateException(
         s"Missing required parts: ${validation.missingParts.mkString(", ")}. " +
-        s"ITR must contain ARCH, LEGEND, VERIFICATION, and E2EVERIFICATION."
+        s"ITR must contain ARCH and LEGEND."
       )
     }
 
