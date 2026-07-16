@@ -2,7 +2,7 @@ package itrcompiler.application.services
 
 import itrcompiler.domain.models.{CU, CUBatch, CUType, RegularCU, ArchCU, LegendCU, VerificationCU, E2eVerificationCU}
 
-import java.nio.file.Path
+import java.nio.file.{Files, Path}
 
 /** Service: validates that an ITR output folder contains all required parts
   * before allowing compilation to proceed.
@@ -12,6 +12,23 @@ import java.nio.file.Path
   * Detection: cu-type field first, then fallback to ID matching.
   */
 final class RequiredPartsValidation extends Service {
+
+  /** Scan an output folder on disk and return the set of required CU types
+    * whose corresponding ITR files already exist.
+    */
+  private def checkDiskParts(outFolder: Path): Set[CUType] = {
+    if (!Files.isDirectory(outFolder)) return Set.empty
+    val files = {
+      import scala.jdk.CollectionConverters._
+      Files.list(outFolder).iterator().asScala.map(_.getFileName.toString).toSet
+    }
+    var parts = Set.empty[CUType]
+    if (files.contains("ARCH.itr")) parts += ArchCU
+    if (files.contains("LEGEND.itr")) parts += LegendCU
+    if (files.exists(_.endsWith(".verification.itr"))) parts += VerificationCU
+    if (files.contains("E2EVERIFICATION.itr")) parts += E2eVerificationCU
+    parts
+  }
 
   case class ValidationResult(
     isValid: Boolean,
