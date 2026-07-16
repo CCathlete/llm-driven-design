@@ -65,6 +65,20 @@ _REFUSAL_PATTERNS = [
     "I'm unable to locate",
     "I can't locate",
     "I'm not finding",
+    # Capability denials
+    "I don't have the capability to access or modify",
+    "I currently don't have the capability",
+    "I don't have the ability to",
+    "I'm not able to access",
+    "I cannot access",
+    "I can't access",
+    "I'm unable to access",
+    "I don't have direct access",
+    "I don't have file system access",
+    "I'm here to help, but I currently",
+    "I don't have the tools",
+    "I'm not equipped to",
+    "I lack the capability",
 ]
 
 _ERROR_PATTERNS = [
@@ -696,7 +710,8 @@ def run_coder(cu_file: Path, cu_id: str, fallback_chain: ModelFallbackChain,
         files_changed = git_diff_names(project_dir, git_stash_ref(project_dir))
         
         # Determine if this attempt succeeded
-        succeeded = (rc == 0 and not is_refusal and not is_error) or (files_changed and rc == 0)
+        # Files changed alone isn't enough - coder might have modified wrong files
+        succeeded = rc == 0 and not is_refusal and not is_error
         
         if succeeded:
             model_used = model
