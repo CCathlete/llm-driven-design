@@ -99,6 +99,17 @@ _ERROR_PATTERNS = [
     "syntax error",
     "not found:",
     "value .* is not a member of",
+    # Context / resource errors
+    "context length",
+    "context window",
+    "token limit",
+    "maximum context",
+    "input is longer than",
+    "rate limit",
+    "429",
+    "503",
+    "overloaded",
+    "capacity",
 ]
 
 # ── Model Fallback Chain ────────────────────────────────────────────
