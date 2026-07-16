@@ -375,8 +375,10 @@ def parse_args(argv=None):
                    help="Fallback models if primary refuses/errors")
     p.add_argument("--lead-model", default=DEFAULT_LEAD_MODEL)
     p.add_argument("--max-fix-iterations", type=int, default=DEFAULT_MAX_FIX_ITERATIONS)
-    p.add_argument("--cu-timeout", type=int, default=DEFAULT_CU_TIMEOUT)
-    p.add_argument("--lead-timeout", type=int, default=DEFAULT_LEAD_TIMEOUT)
+    p.add_argument("--cu-timeout", type=int, default=DEFAULT_CU_TIMEOUT,
+                   help="Kill coder if no activity for N seconds (activity-based timeout)")
+    p.add_argument("--lead-timeout", type=int, default=DEFAULT_LEAD_TIMEOUT,
+                   help="Kill lead if no activity for N seconds (activity-based timeout)")
     p.add_argument("--project", default=None,
                    help="Project root directory (default: auto-detect from .opencode/agents/)")
     p.add_argument("--dry-run", action="store_true")
@@ -449,7 +451,12 @@ def git_stash_ref(work_dir: Path) -> str:
 def _stream_process_json(cmd: list[str], log_fh, colour: str, prefix: str,
                          timeout: int, work_dir: Path,
                          token_usage: TokenUsage) -> int:
-    start_ts = datetime.now()
+    """Stream JSON events with activity-based timeout.
+    
+    Timeout triggers when no activity (no events) for `timeout` seconds.
+    This means a long-running but active coder session won't be killed —
+    only stuck/idle sessions timeout.
+    """
     try:
         proc = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -460,6 +467,8 @@ def _stream_process_json(cmd: list[str], log_fh, colour: str, prefix: str,
         return 1
 
     _done = threading.Event()
+    last_activity = [datetime.now()]  # mutable for thread access
+    warn_printed = [False]
 
     def _reader():
         assert proc.stdout is not None
@@ -467,6 +476,10 @@ def _stream_process_json(cmd: list[str], log_fh, colour: str, prefix: str,
             line = raw.decode("utf-8", errors="replace").rstrip("\n")
             log_fh.write(line + "\n")
             log_fh.flush()
+
+            # Any output from the process counts as activity
+            last_activity[0] = datetime.now()
+            warn_printed[0] = False
 
             try:
                 ev = json.loads(line)
@@ -501,12 +514,19 @@ def _stream_process_json(cmd: list[str], log_fh, colour: str, prefix: str,
     t.start()
 
     while not _done.is_set():
-        elapsed = (datetime.now() - start_ts).total_seconds()
-        if elapsed > timeout:
+        idle_secs = (datetime.now() - last_activity[0]).total_seconds()
+        
+        # Warn at 80% of timeout
+        if idle_secs > timeout * 0.8 and not warn_printed[0]:
+            _warn(f"No activity for {int(idle_secs)}s (timeout at {timeout}s)")
+            warn_printed[0] = True
+        
+        # Kill if no activity for full timeout
+        if idle_secs > timeout:
             proc.kill()
             t.join(timeout=5)
-            _fail(f"Timed out after {timeout}s")
-            log_fh.write(f"\n[TIMED OUT after {timeout}s]\n")
+            _fail(f"Timed out — no activity for {timeout}s")
+            log_fh.write(f"\n[TIMED OUT — no activity for {timeout}s]\n")
             return 124
         _done.wait(timeout=0.5)
 
