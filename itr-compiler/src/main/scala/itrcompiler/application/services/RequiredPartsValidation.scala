@@ -31,13 +31,15 @@ final class RequiredPartsValidation extends Service {
     else RegularCU
   }
 
-  def validateBatch(batch: CUBatch): ValidationResult = {
+  def validateBatch(batch: CUBatch, outFolder: Option[java.nio.file.Path] = None): ValidationResult = {
     val batchTypes = batch.cus.map(inferCuType).toSet
-    val missing = CU.requiredParts -- batchTypes
+    val diskParts = outFolder.map(checkDiskParts).getOrElse(Set.empty)
+    val allParts = batchTypes ++ diskParts
+    val missing = CU.requiredParts -- allParts
     ValidationResult(
       isValid = missing.isEmpty,
       missingParts = missing,
-      existingParts = batchTypes.intersect(CU.requiredParts)
+      existingParts = allParts.intersect(CU.requiredParts)
     )
   }
 
