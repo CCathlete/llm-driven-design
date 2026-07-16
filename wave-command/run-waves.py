@@ -33,6 +33,7 @@ DEFAULT_CODER_FALLBACKS = [
 # ── Refusal / Error Detection ───────────────────────────────────────
 
 _REFUSAL_PATTERNS = [
+    # Hard refusals
     "I'm sorry, but I'm currently unable to assist",
     "I'm sorry, but I cannot",
     "I'm sorry, but I can't",
@@ -49,6 +50,21 @@ _REFUSAL_PATTERNS = [
     "This request violates",
     "I must decline",
     "I'm afraid I cannot",
+    # Partial refusals / confusion
+    "I couldn't find the file",
+    "I'm sorry, but I couldn't find",
+    "Could you please double-check",
+    "I'm not sure what you mean",
+    "I don't understand what you're asking",
+    "I'm not sure I understand",
+    "I'm confused about",
+    "I'm having trouble understanding",
+    "I'm not clear on what",
+    "I'm not sure how to",
+    "I don't know how to",
+    "I'm unable to locate",
+    "I can't locate",
+    "I'm not finding",
 ]
 
 _ERROR_PATTERNS = [
