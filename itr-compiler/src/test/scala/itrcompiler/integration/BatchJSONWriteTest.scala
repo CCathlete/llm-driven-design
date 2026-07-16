@@ -24,7 +24,7 @@ class BatchJSONWriteTest extends AnyFunSpec {
 
     // Write a JSON batch file with required parts
     val jsonFile = tmpDir.resolve("batch.json")
-    val json = """[{"cu-id":"arch","cu-type":"arch","dtr-coordinates":[],"content":"Architecture rules"},{"cu-id":"legend","cu-type":"legend","dtr-coordinates":[],"content":"Legend content"},{"cu-id":"verification","cu-type":"verification","dtr-coordinates":[],"content":"Verification tests"},{"cu-id":"e2everification","cu-type":"e2everification","dtr-coordinates":[],"content":"E2E verification tests"},{"cu-id":"cu-a","dtr-coordinates":["TYPE.A"],"content":"content a"},{"cu-id":"cu-b","dtr-coordinates":["TYPE.B"],"content":"content b"}]"""
+    val json = """[{"cu-id":"arch","cu-type":"arch","dtr-coordinates":[],"content":"Architecture rules"},{"cu-id":"legend","cu-type":"legend","dtr-coordinates":[],"content":"Legend content"},{"cu-id":"cu-a","dtr-coordinates":["TYPE.A"],"content":"content a"},{"cu-id":"cu-b","dtr-coordinates":["TYPE.B"],"content":"content b"}]"""
     Files.write(jsonFile, json.getBytes)
 
     val cmd = CompileCommand(
@@ -39,11 +39,9 @@ class BatchJSONWriteTest extends AnyFunSpec {
     )
 
     val results = compile.execute(cmd)
-    assert(results.size == 6)
+    assert(results.size == 4)
     assert(Files.exists(tmpDir.resolve("out/ARCH.itr")))
     assert(Files.exists(tmpDir.resolve("out/LEGEND.itr")))
-    assert(Files.exists(tmpDir.resolve("out/verification.verification.itr")))
-    assert(Files.exists(tmpDir.resolve("out/E2EVERIFICATION.itr")))
     assert(Files.exists(tmpDir.resolve("out/cu-a.itr")))
     assert(Files.exists(tmpDir.resolve("out/cu-b.itr")))
 

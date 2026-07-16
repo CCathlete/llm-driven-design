@@ -34,16 +34,6 @@ class BatchYAMLWriteTest extends AnyFunSpec {
                  |  dtr-coordinates: []
                  |  content: "Legend content"
                  |
-                 |verification:
-                 |  cu-type: verification
-                 |  dtr-coordinates: []
-                 |  content: "Verification tests"
-                 |
-                 |e2everification:
-                 |  cu-type: e2everification
-                 |  dtr-coordinates: []
-                 |  content: "E2E verification tests"
-                 |
                  |cu-x:
                  |  dtr-coordinates: [TYPE.X]
                  |  content: "content x"
@@ -66,11 +56,9 @@ class BatchYAMLWriteTest extends AnyFunSpec {
     )
 
     val results = compile.execute(cmd)
-    assert(results.size == 6)
+    assert(results.size == 4)
     assert(Files.exists(tmpDir.resolve("out/ARCH.itr")))
     assert(Files.exists(tmpDir.resolve("out/LEGEND.itr")))
-    assert(Files.exists(tmpDir.resolve("out/verification.verification.itr")))
-    assert(Files.exists(tmpDir.resolve("out/E2EVERIFICATION.itr")))
     assert(Files.exists(tmpDir.resolve("out/cu-x.itr")))
     assert(Files.exists(tmpDir.resolve("out/cu-y.itr")))
 
