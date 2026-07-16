@@ -21,7 +21,7 @@ from pathlib import Path
 DEFAULT_CODER_MODEL = "mistral/codestral-latest"
 DEFAULT_LEAD_MODEL = "opencode/big-pickle"
 DEFAULT_CU_TIMEOUT = 180
-DEFAULT_LEAD_TIMEOUT = 300
+DEFAULT_LEAD_TIMEOUT = 600
 DEFAULT_MAX_FIX_ITERATIONS = 3
 
 
