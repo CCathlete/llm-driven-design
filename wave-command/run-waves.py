@@ -284,6 +284,8 @@ def parse_args(argv=None):
     p.add_argument("--max-fix-iterations", type=int, default=DEFAULT_MAX_FIX_ITERATIONS)
     p.add_argument("--cu-timeout", type=int, default=DEFAULT_CU_TIMEOUT)
     p.add_argument("--lead-timeout", type=int, default=DEFAULT_LEAD_TIMEOUT)
+    p.add_argument("--project", default=None,
+                   help="Project root directory (default: auto-detect from .opencode/agents/)")
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--no-color", action="store_true")
     return p.parse_args(argv)
@@ -508,7 +510,7 @@ def _usage_line(usage: TokenUsage, colour: str = "") -> str:
 
 def run_coder(cu_file: Path, cu_id: str, model: str,
               feedback_dir: Path, log_dir: Path, timeout: int,
-              work_dir: Path, coder_colour: tuple[str, str]) -> tuple[int, list[str], TokenUsage]:
+              project_dir: Path, coder_colour: tuple[str, str]) -> tuple[int, list[str], TokenUsage]:
     log_file = log_dir / f"{cu_id}.log"
     colour_code, colour_label = coder_colour
     prefix = f"[{colour_label}:{cu_id}]"
@@ -537,9 +539,9 @@ def run_coder(cu_file: Path, cu_id: str, model: str,
 
     with open(log_file, "w") as log_fh:
         rc = _stream_process_json(cmd, log_fh, colour_code, prefix,
-                                  timeout, work_dir, usage)
+                                  timeout, project_dir, usage)
 
-    files_changed = git_diff_names(work_dir, git_stash_ref(work_dir))
+    files_changed = git_diff_names(project_dir, git_stash_ref(project_dir))
 
     if rc == 0:
         _success(f"CU {cu_id} completed {C.DIM}({len(files_changed)} files){C.RESET}")
@@ -560,7 +562,7 @@ def run_coder(cu_file: Path, cu_id: str, model: str,
 
 def run_code_lead(wave: int, model: str, max_iterations: int,
                   feedback_dir: Path, log_dir: Path, timeout: int,
-                  work_dir: Path) -> tuple[int, TokenUsage]:
+                  project_dir: Path) -> tuple[int, TokenUsage]:
     log_file = log_dir / f"lead-wave-{wave}.log"
     colour = C.BR_MAG
     prefix = "[LEAD]"
@@ -589,7 +591,7 @@ def run_code_lead(wave: int, model: str, max_iterations: int,
 
     with open(log_file, "w") as log_fh:
         rc = _stream_process_json(cmd, log_fh, colour, prefix,
-                                  timeout, work_dir, usage)
+                                  timeout, project_dir, usage)
 
     if rc == 0:
         _success(f"Lead review completed")
@@ -658,6 +660,29 @@ def main(argv=None):
 
     app_name = args.app
     work_dir = itr_path.parent
+
+    # Resolve project root: --project flag, or auto-detect from .opencode/agents/
+    if args.project:
+        project_dir = Path(args.project).resolve()
+    else:
+        # Walk up from cwd, then ITR parent, looking for .opencode/agents/
+        project_dir = None
+        for start in [Path.cwd(), work_dir.resolve()]:
+            search = start
+            for _ in range(10):
+                if (search / ".opencode" / "agents").is_dir():
+                    project_dir = search
+                    break
+                parent = search.parent
+                if parent == search:
+                    break
+                search = parent
+            if project_dir:
+                break
+        if project_dir is None:
+            _fail("Cannot find project root (.opencode/agents/ not found)")
+            _info("Use --project to specify the project root")
+            sys.exit(1)
     feedback_dir = work_dir / f"{app_name}.feedback"
     log_dir = work_dir / f"{app_name}.logs"
     convergence_file = work_dir / f"{app_name}.convergence.json"
@@ -673,6 +698,7 @@ def main(argv=None):
     print(_banner_line())
     print()
     _info(f"ITR:           {C.BOLD}{itr_path}{C.RESET}")
+    _info(f"Project:       {C.BOLD}{project_dir}{C.RESET}")
     _info(f"App:           {C.BOLD}{app_name}{C.RESET}")
     _info(f"CUs found:     {C.BOLD}{len(cu_map)}{C.RESET}")
     _info(f"Coder model:   {args.coder_model}")
@@ -735,7 +761,7 @@ def main(argv=None):
             rc, files, usage = run_coder(
                 cu_file, cu_id, args.coder_model,
                 feedback_dir, log_dir, args.cu_timeout,
-                work_dir, coder_colour,
+                project_dir, coder_colour,
             )
             wave_files_changed[cu_id] = files
             wc.coders[cu_id] = usage
@@ -766,7 +792,7 @@ def main(argv=None):
         lead_rc, lead_usage = run_code_lead(
             wave_num, args.lead_model, args.max_fix_iterations,
             feedback_dir, log_dir, args.lead_timeout,
-            work_dir,
+            project_dir,
         )
         tracker.accumulate(lead_usage)
         lead_ok = lead_rc == 0
