@@ -82,14 +82,17 @@ _REFUSAL_PATTERNS = [
 ]
 
 _ERROR_PATTERNS = [
+    # Actual errors (not file paths or tool output)
     "Error:",
     "FATAL:",
     "panic:",
     "Traceback (most recent call last)",
-    "java.lang.",
-    "scala.",
+    "Exception in thread",
     "compilation failed",
     "build failed",
+    "syntax error",
+    "not found:",
+    "value .* is not a member of",
 ]
 
 # ── Model Fallback Chain ────────────────────────────────────────────
