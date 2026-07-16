@@ -526,6 +526,7 @@ def run_coder(cu_file: Path, cu_id: str, model: str,
 
     cmd = [
         "opencode", "run",
+        "--project", str(project_dir),
         "--model", model,
         "--agent", "coder",
         "--format", "json",
@@ -579,6 +580,7 @@ def run_code_lead(wave: int, model: str, max_iterations: int,
 
     cmd = [
         "opencode", "run",
+        "--project", str(project_dir),
         "--model", model,
         "--agent", "verifier",
         "--format", "json",
