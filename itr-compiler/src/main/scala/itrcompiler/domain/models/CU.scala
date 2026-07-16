@@ -35,7 +35,7 @@ final case class CU(
 ) extends Model {
   def isRequiredPart: Boolean = cuType match {
     case ArchCU | LegendCU | VerificationCU | E2eVerificationCU => true
-    case RegularCU => false
+    case _ => false
   }
 
   def fileName: String = cuType match {
