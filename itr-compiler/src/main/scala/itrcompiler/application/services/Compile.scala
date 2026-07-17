@@ -38,7 +38,7 @@ final class Compile(
     // Validate required parts (batch mode only)
     val validation = cmd match {
       case _ if cmd.jsonContent.isDefined || cmd.yamlContent.isDefined =>
-        requiredPartsValidation.validateBatch(batch)
+        requiredPartsValidation.validateBatch(batch, Some(cmd.outFolder))
       case _ =>
         // Single CU mode or empty: skip required parts validation
         requiredPartsValidation.ValidationResult(
@@ -51,7 +51,7 @@ final class Compile(
     if (!validation.isValid) {
       throw new IllegalStateException(
         s"Missing required parts: ${validation.missingParts.mkString(", ")}. " +
-        s"ITR must contain ARCH and LEGEND."
+        s"ITR must contain ARCH and LEGEND. They can be created incrementally."
       )
     }
 
