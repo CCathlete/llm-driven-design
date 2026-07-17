@@ -1,23 +1,32 @@
 # CU-ID: cu-004
 # CU-TYPE: RegularCU
-# TIMESTAMP: 2026-07-14T21:04:51.478177191Z
-# DTR-COORDINATES: .opencode/instructions/architecture.md
+# TIMESTAMP: 2026-07-17T13:22:47.917601642Z
+# DTR-COORDINATES: .opencode/agents/coder.md
 
-# Update architecture.md for v8
+# Update coder.md with escalation + verification format
 
-Changes to .opencode/instructions/architecture.md:
+File: .opencode/agents/coder.md
 
-1. Update triad table to include Verifier (code lead):
-| Verifier | VER | AI agent | Code lead. Smarter model. Monitors Coder feedback, picks up escalations, runs e2e tests, repairs cross-CU issues. |
+Changes:
+1. In the feedback format example, add these fields after COMMIT_MESSAGE:
+   STATUS=COMPLETED|ESCALATED
+   (COMPLETED = CU done, ESCALATED = blocked, needs code lead)
 
-2. Update pipeline diagram to show VER running in parallel with COD:
+2. Add ESCALATION fields:
+   ESCALATION_REASON=<why you are blocked>
+   ESCALATION_DETAIL=<detailed description of the issue>
 
-3. Update workflow section to include new steps:
-5. Implement - Coder implements CUs in order, writes per-CU feedback
-6. Verify - Code lead monitors feedback, picks up escalations
-7. E2E Verify - Code lead runs e2e tests, repairs until convergence
-8. Iterate - Re-scan with dtr-builder, repeat
+3. Add VERIFICATION fields:
+   VERIFICATION_RESULT=PASSED|FAILED|NOT_RUN
+   VERIFICATION_DETAILS=<test results summary>
 
-4. Update node roles table to include VER
+4. Add escalation rules section:
+   - If you cannot complete a CU (blocked, missing dependency, etc.) set STATUS=ESCALATION in your feedback
+   - Write ESCALATION_REASON and ESCALATION_DETAIL explaining the issue
+   - The code lead (VER) will pick up escalations and perform fixes
+   - Do NOT commit if STATUS=ESCALATION - the code lead will commit
 
-5. Update version reference: LLMDDv7.0 -> LLMDDv8.0
+5. Update commit rules:
+   - RULE.COD.COMMIT_SCOPE=PREPARE_ONLY — when run by wave runner, prepare a COMMIT_MESSAGE in your feedback file but do NOT commit. The code lead will commit.
+   - If STATUS=COMPLETED: your work is done, code lead will commit
+   - If STATUS=ESCALATION: do NOT commit, code lead will implement and commit

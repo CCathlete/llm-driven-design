@@ -1,0 +1,62 @@
+# CU-ID: cu-011
+# CU-TYPE: RegularCU
+# TIMESTAMP: 2026-07-17T13:22:47.919120559Z
+# DTR-COORDINATES: system_tensors/llm-driven-design-sys-prompt.itr, .opencode/agents/*.md, .opencode/instructions/*.md
+
+# E2E: full pipeline verification
+
+CU-TESTS:
+
+#!/bin/bash
+set -e
+
+echo '=== E2E LLMDD v8 Pipeline ==='
+
+# Test 1: System tensor syntax valid
+echo 'Test 1: Tensor syntax valid'
+! grep -qP '^\s+[^#]' system_tensors/llm-driven-design-sys-prompt.itr
+
+# Test 2: All agents exist
+echo 'Test 2: All agents exist'
+test -f .opencode/agents/advisor.md
+test -f .opencode/agents/coder.md
+test -f .opencode/agents/verifier.md
+
+# Test 3: Verifier agent complete
+echo 'Test 3: Verifier complete'
+grep -q 'CODE_LEAD' .opencode/agents/verifier.md
+grep -q 'REPAIR_ESCALATIONS' .opencode/agents/verifier.md
+grep -q 'E2E_CONVERGENCE' .opencode/agents/verifier.md
+grep -q 'TEST_INTEGRITY' .opencode/agents/verifier.md
+grep -q 'NO_DESIGN_CHANGE' .opencode/agents/verifier.md
+
+# Test 4: Coder agent complete
+echo 'Test 4: Coder complete'
+grep -q 'STATUS=COMPLETED|ESCALATED' .opencode/agents/coder.md
+grep -q 'ESCALATION_REASON' .opencode/agents/coder.md
+grep -q 'VERIFICATION_RESULT' .opencode/agents/coder.md
+
+# Test 5: All docs reference verifier
+echo 'Test 5: Docs reference verifier'
+grep -q 'Verifier' .opencode/instructions/architecture.md
+grep -q 'verifier' .opencode/instructions/AGENTS.md
+grep -q 'verifier.md' .opencode/instructions/memory.md
+
+# Test 6: Version consistency
+echo 'Test 6: Version consistency'
+grep -q 'LLMDDv8' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'LLMDDv8' .opencode/instructions/architecture.md
+grep -q 'LLMDDv8' .opencode/instructions/memory.md
+
+# Test 7: Tensor completeness
+echo 'Test 7: Tensor has all v8 sections'
+grep -q 'NODE.VER=' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'WORKFLOW.STEP6=' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'WORKFLOW.STEP7=' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'WORKFLOW.STEP8=' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'FLOW.ESCALATION=' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'FLOW.E2E=' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'RULE.VER=' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'CONVERGENCE.' system_tensors/llm-driven-design-sys-prompt.itr
+
+echo '=== All E2E tests passed ==='

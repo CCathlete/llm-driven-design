@@ -1,0 +1,2 @@
+model=mistral/codestral-latest
+fallback_level=0

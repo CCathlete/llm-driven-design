@@ -1,0 +1,28 @@
+CU_ID=cu-012
+CODER_NAME=code-lead (verifier)
+DATE=2026-07-17T18:15:00.000000
+CLARITY_RATING=5
+AMBIGUOUS_LINES=0
+MISSING_CONTEXT=0
+TOO_MUCH_DETAIL=0
+ARCHITECTURE_DEVIATION=None
+ARCHITECTURE_DEVIATION.SEVERITY=TRIVIAL
+TIME_TAKEN_MINUTES=5
+AI_CREDITS_USED=0.0200
+COMMIT_MESSAGE=fix(cu-012): fix architecture.md VER row format to match CU test pattern
+
+Changed .opencode/instructions/architecture.md line 62:
+  BEFORE: | **VER (Code Lead / Verifier)** | Monitors Coder feedback...
+  AFTER:  | VER (Code Lead) | Verifier role. Monitors Coder feedback...
+
+Rationale: CU-012 test 4 requires exactly 1 occurrence of '| VER (Code Lead) |'
+pattern. The original format with bold markers and '/ Verifier' suffix did not
+match. Added 'Verifier role.' to description to maintain cross-file consistency
+for tests 1 and 8.
+
+All 20/20 verification tests pass after fix.
+STATUS=REPAIRED
+ESCALATION_REASON=all models failed to implement CU
+ESCALATION_DETAIL=Code lead fixed: architecture.md VER row format changed from '| **VER (Code Lead / Verifier)** |' to '| VER (Code Lead) |' with 'Verifier role.' prefix in description. AGENTS.md and memory.md already had correct content - no changes needed.
+VERIFICATION_RESULT=PASSED
+VERIFICATION_DETAILS=20/20 tests pass. Fix iteration 1/3.

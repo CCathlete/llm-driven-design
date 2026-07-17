@@ -1,50 +1,25 @@
 # CU-ID: cu-003
 # CU-TYPE: RegularCU
-# TIMESTAMP: 2026-07-14T21:04:51.478118270Z
-# DTR-COORDINATES: .opencode/agents/coder.md
+# TIMESTAMP: 2026-07-17T13:22:47.917430166Z
+# DTR-COORDINATES: system_tensors/llm-driven-design-sys-prompt.itr
 
-# Update coder.md with escalation format
+# System tensor v8: verifier rules + convergence
 
-Changes to .opencode/agents/coder.md:
+File: system_tensors/llm-driven-design-sys-prompt.itr
 
-1. Add STATUS field to feedback format:
-STATUS=COMPLETED|ESCALATED
-(COMPLETED = CU done, ESCALATED = blocked, needs code lead)
+IMPORTANT: This CU must run AFTER cu-002 (same file). Append these new sections at the end of the file.
 
-2. Add ESCALATION fields to feedback format:
-ESCALATION_REASON=<why you are blocked>
-ESCALATION_DETAIL=<detailed description of the issue>
+Changes:
+1. Add RULE.VER section (after RULE.COD section):
+   RULE.VER=CODE_LEAD,REPAIR_ESCALATIONS,E2E_CONVERGENCE
+   RULE.VER.MONITOR=Verifier monitors CU feedback files in real-time. On ESCALATED status: reads escalation detail, performs fix, commits. Never waits for all CUs to complete before acting.
+   RULE.VER.REPAIR=Verifier can modify any CU implementation. Never modifies test files - tests are written by ADV and are the contract. If a test appears wrong, Verifier notes it in report but does not modify it.
+   RULE.VER.E2E=After all CUs implemented: Verifier runs full e2e test suite. If FAIL: analyzes cross-CU failures, repairs, re-runs. Loop until convergence or max iterations.
+   RULE.VER.CONVERGENCE=Verifier tracks e2e repair iterations. On convergence: writes PASS report. On max iterations: writes DIAGNOSIS report. Report is informational - Designer is informed, not asked to act.
+   RULE.VER.REPORT=Final verification report includes: per-CU status (CONVERGED/REPAIRED/ESCALATED), e2e test results, repairs made, architecture compliance check, recommendation for next iteration.
 
-3. Add VERIFICATION fields to feedback format:
-VERIFICATION_RESULT=PASSED|FAILED|NOT_RUN
-VERIFICATION_DETAILS=<test results summary>
-
-4. Update the feedback format example to include new fields:
-
-CU_ID=cu-002
-CODER_NAME=cod-2
-DATE=2026-07-14
-CLARITY_RATING=4
-AMBIGUOUS_LINES=none
-MISSING_CONTEXT=none
-TOO_MUCH_DETAIL=none
-ARCHITECTURE_DEVIATION=none
-ARCHITECTURE_DEVIATION.SEVERITY=NONE
-TIME_TAKEN_MINUTES=15
-AI_CREDITS_USED=50
-COMMIT_MESSAGE=Implemented cu-002: verifier agent
-STATUS=COMPLETED
-ESCALATION_REASON=none
-ESCALATION_DETAIL=none
-VERIFICATION_RESULT=PASSED
-VERIFICATION_DETAILS=All tests pass
-
-5. Add escalation rules:
-- If you cannot complete a CU (blocked, missing dependency, etc.) set STATUS=ESCALATION in your feedback
-- Write ESCALATION_REASON and ESCALATION_DETAIL explaining the issue
-- The code lead (VER) will pick up escalations and perform fixes
-- Do NOT commit if STATUS=ESCALATION - the code lead will commit
-
-6. Update commit rules:
-- If STATUS=COMPLETED: commit as before (code + frames + feedback)
-- If STATUS=ESCALATION: do NOT commit - code lead will handle
+2. Add CONVERGENCE section at end of file:
+   CONVERGENCE.MAX_E2E_REPAIR_ITERATIONS=3
+   CONVERGENCE.DIVERGENCE_THRESHOLD=E2e tests get worse for 2 consecutive iterations -> STOP
+   CONVERGENCE.ESCALATION=On divergence or max iterations -> DIAGNOSIS report (informational, not actionable)
+   CONVERGENCE.STATE_FILE=<app>.convergence.json

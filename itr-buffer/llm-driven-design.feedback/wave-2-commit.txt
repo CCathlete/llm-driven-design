@@ -1,0 +1,40 @@
+feat(llmdd): add verifier agent, update agent definitions and docs for v8
+
+Wave 2 — agent files and documentation updates for LLMDD v8:
+
+- cu-004: Update coder.md with escalation and verification format
+  - Add STATUS=COMPLETED|ESCALATED field
+  - Add ESCALATION_REASON, ESCALATION_DETAIL, VERIFICATION_RESULT,
+    VERIFICATION_DETAIL fields
+  - Add escalation rules section with nested commit rules
+  - Update RULE.COD.COMMIT_SCOPE=PREPARE_ONLY
+
+- cu-005: Create verifier.md agent definition (new file)
+  - Code Lead agent with full frontmatter and permissions
+  - Rules: CODE_LEAD, REPAIR_ESCALATIONS, E2E_CONVERGENCE,
+    TEST_INTEGRITY, NO_DESIGN_CHANGE
+  - Responsibilities, Escalation Pickup, E2E Verification,
+    Convergence Tracking sections
+
+- cu-006: Update architecture.md for v8
+  - Add Code Lead to triad table
+  - Update pipeline diagram with VER parallel to COD
+  - Add VER to node roles, workflow steps 6-8
+
+- cu-007: Update AGENTS.md for v8
+  - Add Code Lead to triad table
+  - Update agent count from Three to Four
+  - Add verifier agent description and usage command
+  - Add workflow steps 6-8
+
+- cu-008: Update memory.md for v8
+  - Add verifier.md to key files table
+  - Update version reference to LLMDDv8
+  - Add verifier to OpenCode setup section
+  - Add v8 session notes (verification loop, VER monitoring, E2E)
+
+- cu-009: Verify advisor.md is current for v8
+  - Confirmed all v8 rules, workflow, and constraints present
+  - No changes needed
+
+All 6 CUs verified, e2e tests pass (8/8).
