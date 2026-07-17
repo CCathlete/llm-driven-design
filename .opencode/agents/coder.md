@@ -82,19 +82,25 @@ For each CU you implement, write a feedback file at:
 
 Format (ITR tensor format, `KEY=VALUE` per line):
 ```ini
-CU_ID=cu-001
-CODER_NAME=<your name>
-DATE=<date>
-CLARITY_RATING=1-5
-AMBIGUOUS_LINES=<lines that were unclear>
-MISSING_CONTEXT=<context you needed but wasn't provided>
-TOO_MUCH_DETAIL=<level of unnecessary detail>
-ARCHITECTURE_DEVIATION=<description of any deviation>
-ARCHITECTURE_DEVIATION.SEVERITY=NONE|MINOR|MAJOR|CRITICAL
-TIME_TAKEN_MINUTES=<minutes>
-AI_CREDITS_USED=<number of AI credits consumed>
-COMMIT_MESSAGE=<descriptive summary of all changes in this task>
+CU_ID=cu-002
+CODER_NAME=cod-2
+DATE=2026-07-14
+CLARITY_RATING=4
+AMBIGUOUS_LINES=none
+MISSING_CONTEXT=none
+TOO_MUCH_DETAIL=none
+ARCHITECTURE_DEVIATION=none
+ARCHITECTURE_DEVIATION.SEVERITY=NONE
+TIME_TAKEN_MINUTES=15
+AI_CREDITS_USED=50
+COMMIT_MESSAGE=Implemented cu-002: verifier agent
 STATUS=COMPLETED|ESCALATED
+# (COMPLETED = CU done, ESCALATED = blocked, needs code lead)
+ESCALATION_REASON=<why you are blocked>
+ESCALATION_DETAIL=<detailed description of the issue>
+VERIFICATION_RESULT=PASSED|FAILED|NOT_RUN
+VERIFICATION_DETAILS=<test results summary>
+# (COMPLETED = CU done, ESCALATED = blocked, needs code lead)
 ESCALATION_REASON=<why you are blocked>
 ESCALATION_DETAIL=<detailed description of the issue>
 VERIFICATION_RESULT=PASSED|FAILED|NOT_RUN
@@ -111,7 +117,9 @@ VERIFICATION_DETAILS=<test results summary>
 - If you cannot complete a CU (blocked, missing dependency, etc.) set STATUS=ESCALATION in your feedback
 - Write ESCALATION_REASON and ESCALATION_DETAIL explaining the issue
 - The code lead will pick up escalations and implement them
-- If STATUS=COMPLETED: your work is done, code lead will commit
+    - If STATUS=COMPLETED: your work is done, code lead will commit
+    - If STATUS=ESCALATION: do NOT commit, code lead will implement and commit
+    - The code lead will pick up escalations and implement them
 - If STATUS=ESCALATION: do NOT commit, code lead will implement and commit
 
 ## Constraints

@@ -20,7 +20,7 @@ from pathlib import Path
 
 DEFAULT_CODER_MODEL = "mistral/codestral-latest"
 DEFAULT_LEAD_MODEL = "opencode/big-pickle"
-DEFAULT_CU_TIMEOUT = 300
+DEFAULT_CU_TIMEOUT = 180
 DEFAULT_LEAD_TIMEOUT = 600
 DEFAULT_MAX_FIX_ITERATIONS = 3
 
@@ -437,8 +437,6 @@ def parse_args(argv=None):
     p.add_argument("--project", default=None,
                    help="Project root directory (default: auto-detect from .opencode/agents/)")
     p.add_argument("--dry-run", action="store_true")
-    p.add_argument("--no-per-cu-lead", action="store_true",
-                   help="Disable per-CU code lead (run wave-level lead instead)")
     p.add_argument("--no-color", action="store_true")
     return p.parse_args(argv)
 
@@ -682,16 +680,12 @@ def run_coder(cu_file: Path, cu_id: str, fallback_chain: ModelFallbackChain,
     model_used = ""
     
     prompt = (
-        f"Implement ONLY CU {cu_id}. Rules:\n"
-        f"1. Read the CU frame file: {cu_file}\n"
-        f"2. Implement ONLY the changes described in that frame\n"
-        f"3. Modify ONLY the files mentioned in that CU frame\n"
-        f"4. Do NOT read any other CU frame files\n"
-        f"5. Do NOT implement any other CUs\n"
-        f"6. Write feedback to {feedback_dir / f'{cu_id}.feedback.txt'}\n"
-        f"7. Include COMMIT_MESSAGE field in feedback\n"
-        f"8. Do NOT commit \u2014 the code lead will commit\n\n"
-        f"Your scope is EXACTLY one CU: {cu_id}. Nothing else."
+        f"Implement CU {cu_id} from ITR. "
+        f"Read the CU frame file at {cu_file}, "
+        f"implement the changes described, "
+        f"write feedback to {feedback_dir / f'{cu_id}.feedback.txt'}, "
+        f"including a COMMIT_MESSAGE field with a descriptive summary of changes. "
+        f"Do NOT commit \u2014 the code lead will commit."
     )
 
     print(f"  {colour_code}{C.BOLD}▸{C.RESET} {colour_code}{C.BOLD}CU {cu_id}{C.RESET}"
@@ -864,63 +858,6 @@ def run_code_lead(wave: int, num_waves: int, model: str, max_iterations: int,
     return rc, usage
 
 
-
-
-def run_per_cu_lead(cu_id: str, cu_file: Path, model: str, max_iterations: int,
-                    feedback_dir: Path, log_dir: Path, timeout: int,
-                    project_dir: Path) -> tuple[int, TokenUsage]:
-    """Run code lead for a single escalated CU immediately."""
-    log_file = log_dir / f"lead-{cu_id}.log"
-    colour = C.BR_MAG
-    prefix = f"[LEAD-{cu_id}]"
-    usage = TokenUsage()
-
-    prompt = (
-        f"You are the code lead. CU {cu_id} was escalated by the coder.\n\n"
-        f"1. Read the CU frame file at {cu_file}\n"
-        f"2. Read the escalation feedback at {feedback_dir / f'{cu_id}.feedback.txt'}\n"
-        f"3. Implement the CU yourself (the coder failed)\n"
-        f"4. Write updated feedback to {feedback_dir / f'{cu_id}.feedback.txt'}\n"
-        f"5. Do NOT commit \u2014 the final wave lead will commit\n\n"
-        f"Max fix iterations: {max_iterations}"
-    )
-
-    cmd = [
-        "opencode", "run",
-        "--dir", str(project_dir),
-        "--model", model,
-        "--agent", "verifier",
-        "--format", "json",
-        "--auto",
-        prompt,
-    ]
-
-    print(f"  {colour}{C.BOLD}▸{C.RESET} {colour}{C.BOLD}Lead — fixing {cu_id}{C.RESET}")
-    print(f"    {C.DIM}{'─' * 55}{C.RESET}")
-
-    with open(log_file, "w") as log_fh:
-        rc = _stream_process_json(cmd, log_fh, colour, prefix,
-                                  timeout, project_dir, usage)
-
-    if rc == 0:
-        _success(f"Lead fixed {cu_id}")
-    else:
-        _fail(f"Lead failed on {cu_id} (exit {rc})")
-
-    line = _usage_line(usage)
-    if line:
-        print(line)
-    print()
-    return rc, usage
-
-def _is_escalated(cu_id: str, feedback_dir: Path) -> bool:
-    """Check if a specific CU has ESCALATION status."""
-    fb = feedback_dir / f"{cu_id}.feedback.txt"
-    if fb.is_file():
-        return "STATUS=ESCALATION" in fb.read_text(errors="replace")
-    return False
-
-
 # ── Escalation check ───────────────────────────────────────────────
 
 def check_escalations(wave_cus: list[str], feedback_dir: Path) -> int:
@@ -1083,16 +1020,6 @@ def main(argv=None):
             wave_files_changed[cu_id] = files
             wc.coders[cu_id] = usage
             tracker.accumulate(usage)
-
-            # Per-CU lead: immediately fix escalations
-            if not args.no_per_cu_lead and _is_escalated(cu_id, feedback_dir):
-                lead_rc, lead_usage = run_per_cu_lead(
-                    cu_id, cu_file, args.lead_model, args.max_fix_iterations,
-                    feedback_dir, log_dir, args.lead_timeout, project_dir,
-                )
-                tracker.accumulate(lead_usage)
-                wc.coders[f"{cu_id}-lead"] = lead_usage
-
             if rc != 0:
                 all_passed = False
 

@@ -23,7 +23,7 @@ development. Uses system tensors (`.itr` files) to encode design workflows.
 - **Global pre-push hook**: blocks AI assistants from pushing (see
   `~/.config/opencode/skills/pre-push-hook/SKILL.md`)
 - **Project agent instructions**: loaded from `.opencode/instructions/AGENTS.md`
-- **Project agents**: `advisor` (design, read-only), `coder` (implementation), and `verifier` (code lead, smarter model) in `.opencode/agents/`
+- **Project agents**: advisor (design, read-only), coder (implementation), and verifier (code lead, smarter model) in .opencode/agents/
 - **Project skills**: scanned from `.opencode/skills/`
 
 ## Session notes

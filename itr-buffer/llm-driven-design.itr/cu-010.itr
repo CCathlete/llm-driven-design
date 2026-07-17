@@ -1,0 +1,74 @@
+# CU-ID: cu-010
+# CU-TYPE: RegularCU
+# TIMESTAMP: 2026-07-17T13:22:47.918623741Z
+# DTR-COORDINATES: system_tensors/llm-driven-design-sys-prompt.itr, .opencode/agents/*.md
+
+# Verification: tensor + agent files
+
+CU-TESTS:
+
+#!/bin/bash
+set -e
+
+echo '=== Tensor + Agent Verification ==='
+
+# Test 1: Version
+echo 'Test 1: Version updated to v8'
+grep -q 'SYS=LLMDDv8.0' system_tensors/llm-driven-design-sys-prompt.itr
+
+# Test 2: NODE.VER
+echo 'Test 2: NODE.VER defined'
+grep -q 'NODE.VER=CODE_LEAD' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'NODE.VER_DESC=' system_tensors/llm-driven-design-sys-prompt.itr
+
+# Test 3: NODE.COD_DESC escalation
+echo 'Test 3: NODE.COD_DESC has escalation'
+grep -q 'ESCALATION' system_tensors/llm-driven-design-sys-prompt.itr
+
+# Test 4: Workflow steps
+echo 'Test 4: Workflow steps'
+grep -q 'WORKFLOW.STEP6=VERIFY_CUS' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'WORKFLOW.STEP7=E2E_VERIFY' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'WORKFLOW.STEP8=ITERATE' system_tensors/llm-driven-design-sys-prompt.itr
+
+# Test 5: Flow
+echo 'Test 5: Flow definitions'
+grep -q 'FLOW.ESCALATION=' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'FLOW.E2E=' system_tensors/llm-driven-design-sys-prompt.itr
+
+# Test 6: RULE.VER
+echo 'Test 6: RULE.VER section'
+grep -q 'RULE.VER=' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'RULE.VER.MONITOR=' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'RULE.VER.REPAIR=' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'RULE.VER.E2E=' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'RULE.VER.CONVERGENCE=' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'RULE.VER.REPORT=' system_tensors/llm-driven-design-sys-prompt.itr
+
+# Test 7: CONVERGENCE
+echo 'Test 7: CONVERGENCE section'
+grep -q 'CONVERGENCE.MAX_E2E_REPAIR_ITERATIONS=3' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'CONVERGENCE.DIVERGENCE_THRESHOLD=' system_tensors/llm-driven-design-sys-prompt.itr
+
+# Test 8: Feedback fields
+echo 'Test 8: Feedback fields'
+grep -q 'ESCALATION_REASON' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'VERIFICATION_RESULT' system_tensors/llm-driven-design-sys-prompt.itr
+
+# Test 9: CU fields
+echo 'Test 9: CU fields'
+grep -q 'CU.FIELDS=ID,DTR_COORDINATES,CONTENT,TESTS,VERIFICATION,TIMESTAMP' system_tensors/llm-driven-design-sys-prompt.itr
+
+# Test 10: Verifier agent
+echo 'Test 10: Verifier agent exists'
+test -f .opencode/agents/verifier.md
+grep -q 'CODE_LEAD' .opencode/agents/verifier.md
+grep -q 'REPAIR_ESCALATIONS' .opencode/agents/verifier.md
+grep -q 'E2E_CONVERGENCE' .opencode/agents/verifier.md
+
+# Test 11: Coder agent
+echo 'Test 11: Coder agent updated'
+grep -q 'ESCALATION' .opencode/agents/coder.md
+grep -q 'VERIFICATION_RESULT' .opencode/agents/coder.md
+
+echo '=== Tensor + Agent verification passed ==='

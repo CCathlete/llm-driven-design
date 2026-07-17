@@ -1,0 +1,17 @@
+# CU-ID: cu-009
+# CU-TYPE: RegularCU
+# TIMESTAMP: 2026-07-17T13:22:47.918355625Z
+# DTR-COORDINATES: .opencode/agents/advisor.md
+
+# Verify advisor.md is current for v8
+
+File: .opencode/agents/advisor.md
+
+Action: Review and confirm the advisor agent definition is up to date for v8. The file should:
+- Reference system_tensors/llm-driven-design-sys-prompt.itr as source of truth
+- Have correct rules: ANALYZE_ONLY, NO_IMPLEMENTATION, RULE.ADV.DRAFT_CUS, RULE.ADV.SEVERITY_BASELINE
+- Have correct ARCH.SEVERITY and ARCH.HARD_FAIL references
+- Have correct workflow steps
+- Have correct constraints section referencing ARCH and RULE.ADV
+
+If any part references v7 or is missing v8 context, update it. Otherwise, write feedback noting no changes needed.

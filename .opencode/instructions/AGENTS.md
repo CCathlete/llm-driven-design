@@ -13,10 +13,9 @@ Every development task is a team of four:
 | Designer | Human           | Obtains baseline DTR, brainstorms, approves CU content, runs itr-compiler, assigns CUs |
 | Advisor  | AI agent        | Analyzes baseline DTR, discusses design, drafts CU content |
 | Coder    | AI agent        | Receives compiled CU frames, implements in order, writes per-CU feedback |
-| Code Lead | VER | AI agent | Monitors Coder feedback, picks up escalations, runs e2e tests, repairs cross-CU issues |
+| Code Lead | VER | AI agent | Monitors Coder feedback, handles ESCALATION status, picks up escalations, runs e2e tests, repairs cross-CU issues |
 
-The Designer opens an **Advisor session** for design work, a **Coder
-session** for implementation, and a **Verifier session** for verification and e2e testing. See `.opencode/agents/advisor.md`, `.opencode/agents/coder.md`, and `.opencode/agents/verifier.md`.
+The Designer opens an **Advisor session** for design work, a **Coder session** for implementation, and a **Verifier session** for verification and e2e testing. See `.opencode/agents/advisor.md`, `.opencode/agents/coder.md`, and `.opencode/agents/verifier.md`.
 
 ## Workflow
 
@@ -27,7 +26,7 @@ The LLMDD pipeline is defined in `system_tensors/llm-driven-design-sys-prompt.it
 3. **Draft CU Content** — On green light, Advisor drafts CU content (JSON/YAML format) with CU-ID, DTR coordinates, and implementation content
 4. **Compile ITR** — Designer runs `itr-compiler` to compile CU content + baseline DTR into per-CU `.itr` frame files
 5. **Implement** — Coder receives compiled CU frames, implements in dependency order, writes per-CU feedback, and commits
-6. **Verify** — Code lead monitors feedback, picks up escalations
+6. **Verify** — Code lead monitors feedback, picks up ESCALATION items
 7. **E2E Verify** — Code lead runs e2e tests, repairs until convergence
 8. **Iterate** — Re-scan with dtr-builder, repeat
 
@@ -46,7 +45,7 @@ Project-specific knowledge is stored in `.opencode/instructions/`:
 
 ## OpenCode agents
 
-Three primary agents are defined in `.opencode/agents/`:
+Four primary agents are defined in `.opencode/agents/`:
 
 - **advisor** — design partner; reads only, never edits; thinks and drafts
 - **coder** — implementation engine; reads and writes, never designs

@@ -1,0 +1,15 @@
+CU_ID=cu-009
+CODER_NAME=cod-2
+DATE=2026-07-17
+CLARITY_RATING=5
+AMBIGUOUS_LINES=none
+MISSING_CONTEXT=none
+TOO_MUCH_DETAIL=none
+ARCHITECTURE_DEVIATION=none
+ARCHITECTURE_DEVIATION.SEVERITY=NONE
+TIME_TAKEN_MINUTES=5
+AI_CREDITS_USED=10
+COMMIT_MESSAGE=Verified .opencode/agents/advisor.md for v8 compliance: no changes needed
+STATUS=COMPLETED
+VERIFICATION_RESULT=PASSED
+VERIFICATION_DETAILS=Reviewed .opencode/agents/advisor.md against system_tensors/llm-driven-design-sys-prompt.itr and confirmed all v8 rules, workflow, and constraints are correctly referenced.

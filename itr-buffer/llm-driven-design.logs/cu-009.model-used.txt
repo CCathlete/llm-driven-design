@@ -1,0 +1,2 @@
+model=google/gemma-4-31b-it
+fallback_level=1

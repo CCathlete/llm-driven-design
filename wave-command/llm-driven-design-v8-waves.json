@@ -1,0 +1,17 @@
+[
+  {
+    "wave": 1,
+    "description": "Update system tensor to v8 — foundation for all other changes",
+    "cus": ["cu-001"]
+  },
+  {
+    "wave": 2,
+    "description": "Update agent files and documentation — depend on system tensor",
+    "cus": ["cu-002", "cu-003", "cu-004", "cu-005", "cu-006"]
+  },
+  {
+    "wave": 3,
+    "description": "Verification and E2E tests — depend on all previous CUs",
+    "cus": ["cu-001-verification", "cu-e2e-verification"]
+  }
+]

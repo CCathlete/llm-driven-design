@@ -1,6 +1,6 @@
 # Architecture
 
-## The Team: Designer — Advisor — Coder — Code Lead
+## The Team: Designer - Advisor - Coder - Code Lead
 
 LLMDD models every development task as a team of four roles, not one:
 
@@ -9,7 +9,7 @@ LLMDD models every development task as a team of four roles, not one:
 | Designer  | DSG  | Human    | Obtains baseline DTR (via dtr-builder), brainstorms with Advisor, approves CU content, runs itr-compiler, assigns CUs to Coders. |
 | Advisor   | ADV  | AI agent | Receives baseline DTR, analyzes codebase structure, brainstorms with Designer. Never writes code — only drafts CU content for Designer approval. |
 | Coder     | COD  | AI agent | Receives compiled CU frames, implements them in dependency order, writes per-CU feedback. Never changes design. |
-| Code Lead | VER  | AI agent | Monitors Coder feedback, picks up escalations, runs e2e tests, repairs cross-CU issues. Smarter model. |
+| Code Lead | VER | AI agent | Monitors Coder feedback, picks up escalations, runs e2e tests, repairs cross-CU issues. Smarter model. |
 
 The Designer works in the role of a tech lead: they obtain a baseline DTR
 (either by extracting from existing code or creating a greenfield skeleton),
@@ -18,26 +18,29 @@ brief the Advisor, and together they decompose work into Computational Units
 assigns the resulting CU frames to Coders.
 
 ```
-┌──────────┐   DTR    ┌──────────┐  CU content  ┌──────────────┐   frames   ┌──────────┐
-│ Designer │ ───────→ │ Advisor  │ ────────────→ │ ITR Compiler │ ─────────→ │  Coder   │
-│  (human) │ ←─────── │ (AI)     │ brainstorm    │   (tool)     │            │  (AI)    │
-└──────────┘ discuss  └──────────┘               └──────────────┘            └────┬─────┘
-    │                                                                                │
-    │ runs dtr-builder                                                               │ implements +
-    ▼                                                                                ▼ per-CU feedback
-  Codebase                                                                    ┌──────────────┐
-                                                                               │  Code Lead   │
-                                                                               │  (VER, AI)   │
-                                                                               │ monitors,    │
-                                                                               │ escalations, │
-                                                                               │ e2e verify   │
-                                                                               └──────────────┘
+┌──────────┐   DTR    ┌──────────┐  CU content  ┌──────────────┐   frames
+│ Designer │ ───────→ │ Advisor  │ ────────────→ │ ITR Compiler │ ──────┬────→ ┌──────────┐
+│  (human) │ ←─────── │ (AI)     │ brainstorm    │   (tool)     │       │     │  Coder   │
+└──────────┘ discuss  └──────────┘               └──────────────┘       │     │  (AI)    │
+    │                                                                    │     └────┬─────┘
+    │ runs dtr-builder                                                   │          │ per-CU
+    ▼                                                                    │          │ feedback
+  Codebase                                                         ┌─────┘          ▼
+                                                                   │         ┌──────────────┐
+                                                                   └────────→│  Code Lead   │
+                                                                             │  (VER, AI)   │
+                                                                             │ monitors,    │
+                                                                             │ escalations, │
+                                                                             │ e2e verify   │
+                                                                             │ (parallel    │
+                                                                             │  with COD)   │
+                                                                             └──────────────┘
 ```
 
 ## LLMDD Tensor Pipeline
 
 ```
-X (dtr-builder) → DTR (baseline) → ADV (advisor) ↔ DSG (designer) → CU content → ITR COMPILER → ITR (frames) → COD (coder) → OUT (code + feedback) → DTR (next iteration)
+X (dtr-builder) → DTR (baseline) → ADV (advisor) ↔ DSG (designer) → CU content → ITR COMPILER → ITR (frames) → COD (coder) + VER (code lead) → OUT (code + feedback) → DTR (next iteration)
 ```
 
 The pipeline loops: output feeds back into the design tensor for iterative
@@ -56,7 +59,7 @@ Each node in the pipeline has strict rules:
 | **ITR COMPILER** | Tool that takes baseline DTR + CU content (JSON/YAML/JSONL/raw) and produces per-CU .itr frame files in `<app>.itr/` directory. |
 | **ITR (Implementation Tensor)** | Directory of compiled CU frame files (cu-001.itr, cu-002.itr, ...) plus LEGEND.itr and ARCH.itr. |
 | **COD (Coder)** | Implements CUs in dependency order. Writes per-CU feedback. Commits once per task. No design changes. |
-| **VER (Code Lead)** | Monitors Coder feedback. Picks up escalations and performs fixes. Runs e2e tests. Repairs cross-CU issues until convergence. Writes verification report. |
+| VER (Code Lead) | Verifier role. Monitors Coder feedback. Picks up escalations and performs fixes. Runs e2e tests. Repairs cross-CU issues until convergence. Writes verification report. |
 | **OUT (Output)** | Produced code + per-CU FEEDBACK files. Feeds back into the next DTR cycle. |
 
 ## Tensor format
