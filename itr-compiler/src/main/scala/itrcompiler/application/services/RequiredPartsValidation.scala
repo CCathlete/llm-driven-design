@@ -16,18 +16,13 @@ final class RequiredPartsValidation extends Service {
   /** Scan an output folder on disk and return the set of required CU types
     * whose corresponding ITR files already exist.
     */
-  private def checkDiskParts(outFolder: Path): Set[CUType] = {
-    if (!Files.isDirectory(outFolder)) return Set.empty
-    val files = {
-      import scala.jdk.CollectionConverters._
-      Files.list(outFolder).iterator().asScala.map(_.getFileName.toString).toSet
-    }
-    var parts = Set.empty[CUType]
-    if (files.contains("ARCH.itr")) parts += ArchCU
-    if (files.contains("LEGEND.itr")) parts += LegendCU
-    if (files.exists(_.endsWith(".verification.itr"))) parts += VerificationCU
-    if (files.contains("E2EVERIFICATION.itr")) parts += E2eVerificationCU
-    parts
+  private def checkDiskParts(folder: java.nio.file.Path): Set[CUType] = {
+    import java.nio.file.Files
+    if (!Files.exists(folder)) return Set.empty
+    val existing = Set.newBuilder[CUType]
+    if (Files.exists(folder.resolve("ARCH.itr"))) existing += ArchCU
+    if (Files.exists(folder.resolve("LEGEND.itr"))) existing += LegendCU
+    existing.result()
   }
 
   case class ValidationResult(

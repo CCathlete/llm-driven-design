@@ -36,8 +36,8 @@ class CUTest extends AnyFunSpec {
 
       assert(archCu.isRequiredPart)
       assert(legendCu.isRequiredPart)
-      assert(verifCu.isRequiredPart)
-      assert(e2eCu.isRequiredPart)
+      assert(!verifCu.isRequiredPart)
+      assert(!e2eCu.isRequiredPart)
       assert(!regularCu.isRequiredPart)
     }
 
@@ -49,8 +49,8 @@ class CUTest extends AnyFunSpec {
       assert(CU(id = "cu-001", dtrCoordinates = Seq.empty, content = "").fileName == "cu-001.itr")
     }
 
-    it("should contain all four required parts") {
-      assert(CU.requiredParts == Set(ArchCU, LegendCU, VerificationCU, E2eVerificationCU))
+    it("should contain only ARCH and LEGEND as required parts") {
+      assert(CU.requiredParts == Set(ArchCU, LegendCU))
     }
   }
 
