@@ -684,7 +684,8 @@ def run_coder(cu_file: Path, cu_id: str, fallback_chain: ModelFallbackChain,
         f"Read the CU frame file at {cu_file}, "
         f"implement the changes described, "
         f"write feedback to {feedback_dir / f'{cu_id}.feedback.txt'}, "
-        f"then commit."
+        f"including a COMMIT_MESSAGE field with a descriptive summary of changes. "
+        f"Do NOT commit \u2014 the code lead will commit."
     )
 
     print(f"  {colour_code}{C.BOLD}▸{C.RESET} {colour_code}{C.BOLD}CU {cu_id}{C.RESET}"
@@ -794,20 +795,37 @@ VERIFICATION_DETAILS=CU not implemented
     return rc, files_changed, combined_usage, model_used
 
 
-def run_code_lead(wave: int, model: str, max_iterations: int,
+def run_code_lead(wave: int, num_waves: int, model: str, max_iterations: int,
                   feedback_dir: Path, log_dir: Path, timeout: int,
-                  project_dir: Path) -> tuple[int, TokenUsage]:
+                  project_dir: Path, wave_cus: list[str]) -> tuple[int, TokenUsage]:
     log_file = log_dir / f"lead-wave-{wave}.log"
     colour = C.BR_MAG
     prefix = "[LEAD]"
     usage = TokenUsage()
 
+    is_final = (wave == num_waves)
+
+    if is_final:
+        commit_instruction = (
+            f"\n7. Read COMMIT_MESSAGE fields from all feedback files across all waves\n"
+            f"8. Consolidate into a single commit message\n"
+            f"9. Stage all changes and commit with the consolidated message\n"
+        )
+    else:
+        commit_instruction = (
+            f"\n7. Prepare a COMMIT_MESSAGE for this wave in {feedback_dir}/wave-{wave}-commit.txt\n"
+            f"8. Do NOT commit \u2014 the final wave lead will commit\n"
+        )
+
     prompt = (
-        f"You are the code lead. Review wave {wave} implementation.\n\n"
-        f"1. Check feedback files in {feedback_dir} for ESCALATED status\n"
-        f"2. Fix any escalations\n"
-        f"3. Run verification tests for implemented CUs\n"
-        f"4. Write verification report to {feedback_dir}/wave-{wave}-verification.txt\n\n"
+        f"You are the code lead for wave {wave}.\n\n"
+        f"1. Read feedback files for this wave\u2019s CUs: {', '.join(wave_cus)}\n"
+        f"2. For any CU with STATUS=ESCALATION: read the CU frame file and implement it yourself\n"
+        f"3. Write a feedback file for each escalated CU you implement\n"
+        f"4. Run verification tests for all implemented CUs\n"
+        f"5. Fix any test failures\n"
+        f"6. Write verification report to {feedback_dir}/wave-{wave}-verification.txt\n"
+        f"{commit_instruction}\n"
         f"Max fix iterations: {max_iterations}"
     )
 
@@ -1026,9 +1044,9 @@ def main(argv=None):
 
         # Code lead review
         lead_rc, lead_usage = run_code_lead(
-            wave_num, args.lead_model, args.max_fix_iterations,
+            wave_num, num_waves, args.lead_model, args.max_fix_iterations,
             feedback_dir, log_dir, args.lead_timeout,
-            project_dir,
+            project_dir, wave_cus,
         )
         tracker.accumulate(lead_usage)
         lead_ok = lead_rc == 0
