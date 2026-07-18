@@ -1,0 +1,67 @@
+# CU-ID: cu-012
+# CU-TYPE: RegularCU
+# TIMESTAMP: 2026-07-17T13:22:47.918887503Z
+# DTR-COORDINATES: .opencode/instructions/architecture.md, .opencode/instructions/AGENTS.md, .opencode/instructions/memory.md
+
+# Verification: documentation files
+
+CU-TESTS:
+
+#!/bin/bash
+set -e
+
+echo '=== Documentation Verification ==='
+
+# Test 1: Architecture - Verifier in team table
+echo 'Test 1: Architecture has Verifier'
+grep -q 'Verifier' .opencode/instructions/architecture.md
+grep -q 'LLMDDv8' .opencode/instructions/architecture.md
+
+# Test 2: Architecture - workflow steps
+echo 'Test 2: Architecture workflow steps'
+grep -q 'VERIFY' .opencode/instructions/architecture.md
+grep -q 'E2E_VERIFY' .opencode/instructions/architecture.md
+
+# Test 3: Architecture - no duplicate Code Lead rows
+echo 'Test 3: No duplicate Code Lead rows'
+dupes=$(grep -c '| Code Lead |' .opencode/instructions/architecture.md)
+test "$dupes" -eq 1
+
+# Test 4: Architecture - no duplicate VER rows
+echo 'Test 4: No duplicate VER rows'
+dupes=$(grep -c '| VER (Code Lead) |' .opencode/instructions/architecture.md)
+test "$dupes" -eq 1
+
+# Test 5: AGENTS.md - verifier listed
+echo 'Test 5: AGENTS.md has verifier'
+grep -q 'verifier' .opencode/instructions/AGENTS.md
+grep -q 'ESCALATION' .opencode/instructions/AGENTS.md
+grep -q 'E2E' .opencode/instructions/AGENTS.md
+
+# Test 6: AGENTS.md - four agents
+echo 'Test 6: AGENTS.md says four agents'
+grep -q 'Four primary agents' .opencode/instructions/AGENTS.md
+
+# Test 7: Memory.md
+echo 'Test 7: Memory.md updated'
+grep -q 'verifier.md' .opencode/instructions/memory.md
+grep -q 'LLMDDv8' .opencode/instructions/memory.md
+
+# Test 8: Cross-file consistency
+echo 'Test 8: Cross-file consistency'
+grep -q 'NODE.VER' system_tensors/llm-driven-design-sys-prompt.itr
+grep -q 'Verifier' .opencode/instructions/architecture.md
+grep -q 'verifier' .opencode/instructions/AGENTS.md
+grep -q 'verifier.md' .opencode/instructions/memory.md
+
+# Test 9: No stale STEP6=ITERATE
+echo 'Test 9: No stale workflow references'
+! grep -q 'WORKFLOW.STEP6=ITERATE' system_tensors/llm-driven-design-sys-prompt.itr
+
+# Test 10: Advisor agent valid
+echo 'Test 10: Advisor agent valid'
+test -f .opencode/agents/advisor.md
+grep -q 'system_tensors/llm-driven-design-sys-prompt.itr' .opencode/agents/advisor.md
+grep -q 'ANALYZE_ONLY' .opencode/agents/advisor.md
+
+echo '=== Documentation verification passed ==='

@@ -1,0 +1,45 @@
+# CU-ID: cu-itr-005
+# TIMESTAMP: 2026-07-14T16:14:01.680842670Z
+# DTR-COORDINATES: 
+
+# Update CUStore and FileSystem for file naming per type
+
+File: itr-compiler/src/main/scala/itrcompiler/application/services/CUStore.scala
+
+Changes:
+1. Add listExistingFiles method:
+   def listExistingFiles(outFolder: Path): Set[String] = {
+     if (!Files.exists(outFolder)) Set.empty
+     else {
+       import scala.jdk.CollectionConverters._
+       Files.list(outFolder)
+         .iterator()
+         .asScala
+         .filter(_.toString.endsWith(".itr"))
+         .map(_.getFileName.toString)
+         .toSet
+     }
+   }
+
+File: itr-compiler/src/main/scala/itrcompiler/infrastructure/filesystem/FileSystem.scala
+
+Changes:
+1. Update write method to use CU.fileName:
+   override def write(cu: CU, outFolder: Path, force: Boolean): Unit = {
+     Files.createDirectories(outFolder)
+     val cuFile = outFolder.resolve(cu.fileName)
+
+     if (!force && Files.exists(cuFile)) return
+
+     val header = Seq(
+       s"# CU-ID: ${cu.id}",
+       s"# CU-TYPE: ${cu.cuType}",
+       s"# TIMESTAMP: ${cu.timestamp}",
+       s"# DTR-COORDINATES: ${cu.dtrCoordinates.mkString(", ")}"
+     ).mkString("\n")
+
+     val frame = s"$header\n\n${cu.content}\n"
+     Files.write(cuFile, frame.getBytes(StandardCharsets.UTF_8))
+   }
+
+2. Add import for CUType if needed

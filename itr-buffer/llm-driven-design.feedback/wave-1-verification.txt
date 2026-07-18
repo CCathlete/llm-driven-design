@@ -1,0 +1,105 @@
+WAVE=1
+DATE=2026-07-17T18:37:00
+VERIFIER=code-lead (verifier)
+STATUS=CONVERGED
+APP=llm-driven-design
+
+# ──────────────────────────────────────────────
+# WAVE 1 SUMMARY
+# ──────────────────────────────────────────────
+WAVE.DESCRIPTION=System tensor v8 — sequential edits to same file (3 CUs, serial)
+WAVE.CUS=cu-001,cu-002,cu-003
+TARGET_FILE=system_tensors/llm-driven-design-sys-prompt.itr
+
+# ──────────────────────────────────────────────
+# PER-CU STATUS
+# ──────────────────────────────────────────────
+CU-001.STATUS=REPAIRED
+CU-001.DESCRIPTION=Version bump + NODE.VER + WORKFLOW steps 6-8 + FLOW updates (10 changes)
+CU-001.VERIFICATION=All 10 changes verified present in system tensor file. File reduced from 250 to 224 lines after duplicate cleanup.
+CU-001.ARCHITECTURE_DEVIATION=Duplicates in system tensor file (pre-existing from failed coder attempts)
+CU-001.ARCHITECTURE_DEVIATION.SEVERITY=MAJOR
+CU-001.REPAIR_ACTION=Code lead cleaned up duplicate entries (NODE.VER, FLOW.ESCALATION, FLOW.E2E, WORKFLOW.STEP6/STEP8, VERIFIER rules, CONVERGENCE sections)
+
+CU-002.STATUS=CONVERGED
+CU-002.DESCRIPTION=Feedback fields + CU fields updates (4 changes)
+CU-002.VERIFICATION=All 4 changes verified present. Changes applied during CU-001 repair cycle since both target same file.
+CU-002.ARCHITECTURE_DEVIATION=none
+CU-002.ARCHITECTURE_DEVIATION.SEVERITY=TRIVIAL
+
+CU-003.STATUS=CONVERGED
+CU-003.DESCRIPTION=RULE.VER section + CONVERGENCE section (2 changes + sub-keys)
+CU-003.VERIFICATION=All changes verified present. Removed duplicate RULE.VER and CONVERGENCE sections (18 lines). File clean at 224 lines.
+CU-003.ARCHITECTURE_DEVIATION=Duplicate sections removed
+CU-003.ARCHITECTURE_DEVIATION.SEVERITY=TRIVIAL
+
+# ──────────────────────────────────────────────
+# DETAILED CHANGE VERIFICATION
+# ──────────────────────────────────────────────
+# CU-001 changes (12 items verified):
+CHANGE.CU001.01=SYS=LLMDDv8.0 — PRESENT (line 1)
+CHANGE.CU001.02=NODE.COD_DESC with escalation — PRESENT (line 26)
+CHANGE.CU001.03=NODE.VER=CODE_LEAD (Verifier) — PRESENT (line 27)
+CHANGE.CU001.04=NODE.VER_DESC — PRESENT (line 28)
+CHANGE.CU001.05=WORKFLOW.STEP5_DESC updated — PRESENT (line 56)
+CHANGE.CU001.06=WORKFLOW.STEP6=VERIFY_CUS — PRESENT (line 58)
+CHANGE.CU001.07=WORKFLOW.STEP6_DESC — PRESENT (line 59)
+CHANGE.CU001.08=WORKFLOW.STEP7=E2E_VERIFY — PRESENT (line 61)
+CHANGE.CU001.09=WORKFLOW.STEP8=ITERATE — PRESENT (line 64)
+CHANGE.CU001.10=FLOW with VER — PRESENT (line 35)
+CHANGE.CU001.11=FLOW.ESCALATION — PRESENT (line 37)
+CHANGE.CU001.12=FLOW.E2E — PRESENT (line 38)
+
+# CU-002 changes (4 items verified):
+CHANGE.CU002.01=ARCH.FEEDBACK.FIELDS updated — PRESENT (line 173)
+CHANGE.CU002.02=CU.FIELDS with TESTS,VERIFICATION — PRESENT (line 71)
+CHANGE.CU002.03=CU.TESTS added — PRESENT (line 77)
+CHANGE.CU002.04=CU.VERIFICATION added — PRESENT (line 78)
+
+# CU-003 changes (3 items verified):
+CHANGE.CU003.01=RULE.VER section — PRESENT (lines 210-215)
+CHANGE.CU003.02=RULE.VER sub-keys (MONITOR,REPAIR,E2E,CONVERGENCE,REPORT) — PRESENT
+CHANGE.CU003.03=CONVERGENCE section with MAX_E2E_REPAIR_ITERATIONS=3 — PRESENT (lines 217-223)
+
+CHANGE.TOTAL=19/19 PRESENT
+CHANGE.DUPLICATES=NONE — file is clean, 224 lines
+
+# ──────────────────────────────────────────────
+# E2E TEST RESULTS
+# ──────────────────────────────────────────────
+E2E.TEST1=PASS — System tensor syntax valid (no indented non-comment lines)
+E2E.TEST2=PASS — itr-compiler compiles (sbt compile success)
+E2E.TEST3=PASS — Verifier agent exists with CODE_LEAD reference
+E2E.TEST4=PASS (with regex fix) — Coder agent has escalation format
+E2E.TEST4.NOTE=Original script uses grep without -E flag, treating | as literal. Extended regex grep confirms STATUS=COMPLETED and ESCALATION both present in coder.md.
+E2E.TEST5=PASS — Architecture docs updated (Verifier + LLMDDv8)
+E2E.TEST6=PASS — AGENTS.md updated (verifier + ESCALATION)
+E2E.TEST7=PASS — Memory.md updated (verifier.md + LLMDDv8)
+E2E.TEST8=PASS — All files consistent (NODE.VER in tensor, Verifier in arch docs, verifier in AGENTS.md, verifier.md in memory.md)
+
+E2E.RESULT=ALL PASS (14/14 individual checks)
+E2E.ORIGINAL_SCRIPT=FAILS at Test 4 due to grep regex bug (basic grep vs extended regex). All tests pass when using grep -E.
+
+# ──────────────────────────────────────────────
+# ARCHITECTURE COMPLIANCE
+# ──────────────────────────────────────────────
+ARCH.HEX=COMPLIANT — no hex violations in system tensor
+ARCH.DI=COMPLIANT — no DI violations
+ARCH.DIP=COMPLIANT — no DIP violations
+ARCH.NO_CROSS_LAYER=COMPLIANT — no cross-layer dependencies
+ARCH.SEVERITY=COMPLIANT — severity taxonomy properly defined
+ARCH.HARD_FAIL=COMPLIANT — hard fail rules properly defined
+
+# ──────────────────────────────────────────────
+# TEST SCRIPT BUG (NOTED, NOT FIXED)
+# ──────────────────────────────────────────────
+BUG.SCRIPT=scripts/e2e-verification.sh
+BUG.TEST=Test 4: Coder agent has escalation format
+BUG.ISSUE=grep -q "STATUS=COMPLETED|ESCALATED" uses basic regex where | is literal, not alternation
+BUG.FIX=grep -qE "STATUS=COMPLETED|ESCALATED" (add -E flag for extended regex)
+BUG.STATUS=NOTED — per RULE.VER.REPAIR, test files are ADV contract and must not be modified
+
+# ──────────────────────────────────────────────
+# RECOMMENDATION
+# ──────────────────────────────────────────────
+RECOMMENDATION=Wave 1 CUs are fully converged. All 19 changes verified present. System tensor file is clean (224 lines, no duplicates). Ready for commit. Fix scripts/e2e-verification.sh Test 4 grep regex in a future maintenance pass.

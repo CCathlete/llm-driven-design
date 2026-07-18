@@ -1,6 +1,7 @@
 package itrcompiler.integration
 
-import itrcompiler.application.services.{Compile, ContentDeserialize, CoordinateRules, CUStore}
+import itrcompiler.application.services.{Compile, ContentDeserialize, CoordinateRules, CUStore, RequiredPartsValidation}
+import itrcompiler.application.ports.DTRLoad
 import itrcompiler.domain.models.CompileCommand
 import org.scalatest.funspec.AnyFunSpec
 import java.nio.file.{Files, Paths}
@@ -11,6 +12,12 @@ class AddToExistingFolderTest extends AnyFunSpec {
     val outDir = tmpDir.resolve("out")
     Files.createDirectories(outDir)
 
+    // Pre-create required part files
+    Files.write(outDir.resolve("ARCH.itr"), "ARCH".getBytes)
+    Files.write(outDir.resolve("LEGEND.itr"), "LEGEND".getBytes)
+    Files.write(outDir.resolve("verification.verification.itr"), "VERIFICATION".getBytes)
+    Files.write(outDir.resolve("E2EVERIFICATION.itr"), "E2E".getBytes)
+
     // Pre-create a CU file
     val existingFile = outDir.resolve("cu-existing.itr")
     Files.write(existingFile, "EXISTING".getBytes)
@@ -19,13 +26,13 @@ class AddToExistingFolderTest extends AnyFunSpec {
     val coordRules = new CoordinateRules
     val cuStore = new CUStore(fs)
     val contentDeser = new ContentDeserialize(fs)
+    val requiredPartsValidation = new RequiredPartsValidation
 
-    import itrcompiler.application.ports.DTRLoad
     val dtrLoad = new DTRLoad {
       def load(path: java.nio.file.Path): String = ""
     }
 
-    val compile = new Compile(dtrLoad, coordRules, cuStore, contentDeser)
+    val compile = new Compile(dtrLoad, coordRules, cuStore, contentDeser, requiredPartsValidation)
 
     val cmd = CompileCommand(
       compile = true,

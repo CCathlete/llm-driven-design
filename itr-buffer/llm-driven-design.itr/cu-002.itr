@@ -1,0 +1,23 @@
+# CU-ID: cu-002
+# CU-TYPE: RegularCU
+# TIMESTAMP: 2026-07-17T13:22:47.917243697Z
+# DTR-COORDINATES: system_tensors/llm-driven-design-sys-prompt.itr
+
+# System tensor v8: feedback fields + CU fields
+
+File: system_tensors/llm-driven-design-sys-prompt.itr
+
+IMPORTANT: This CU must run AFTER cu-001 (same file). Apply only the changes below to the sections cu-001 did NOT touch.
+
+Changes:
+1. Update ARCH.FEEDBACK.FIELDS:
+   ARCH.FEEDBACK.FIELDS=CU_ID,CODER_NAME,DATE,CLARITY_RATING,AMBIGUOUS_LINES,MISSING_CONTEXT,TOO_MUCH_DETAIL,ARCHITECTURE_DEVIATION,ARCHITECTURE_DEVIATION.SEVERITY,TIME_TAKEN_MINUTES,AI_CREDITS_USED,COMMIT_MESSAGE,STATUS,ESCALATION_REASON,ESCALATION_DETAIL,VERIFICATION_RESULT,VERIFICATION_DETAILS
+
+2. Update CU.FIELDS:
+   CU.FIELDS=ID,DTR_COORDINATES,CONTENT,TESTS,VERIFICATION,TIMESTAMP
+
+3. Add CU.TESTS:
+   CU.TESTS=Advisor-written test code for CU verification. Actual executable tests, not descriptions. Verifier runs these.
+
+4. Add CU.VERIFICATION:
+   CU.VERIFICATION=Verification metadata: unit_tests path, integration_points, smoke check command.

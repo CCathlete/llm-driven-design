@@ -1,6 +1,7 @@
 package itrcompiler.integration
 
-import itrcompiler.application.services.{Compile, ContentDeserialize, CoordinateRules, CUStore}
+import itrcompiler.application.services.{Compile, ContentDeserialize, CoordinateRules, CUStore, RequiredPartsValidation}
+import itrcompiler.application.ports.DTRLoad
 import itrcompiler.domain.models.CompileCommand
 import org.scalatest.funspec.AnyFunSpec
 import java.nio.file.{Files, Paths}
@@ -13,17 +14,17 @@ class BatchJSONWriteTest extends AnyFunSpec {
     val coordRules = new CoordinateRules
     val cuStore = new CUStore(fs)
     val contentDeser = new ContentDeserialize(fs)
+    val requiredPartsValidation = new RequiredPartsValidation
 
-    import itrcompiler.application.ports.DTRLoad
     val dtrLoad = new DTRLoad {
       def load(path: java.nio.file.Path): String = ""
     }
 
-    val compile = new Compile(dtrLoad, coordRules, cuStore, contentDeser)
+    val compile = new Compile(dtrLoad, coordRules, cuStore, contentDeser, requiredPartsValidation)
 
-    // Write a JSON batch file
+    // Write a JSON batch file with required parts
     val jsonFile = tmpDir.resolve("batch.json")
-    val json = """[{"cu-id":"cu-a","dtr-coordinates":["TYPE.A"],"content":"content a"},{"cu-id":"cu-b","dtr-coordinates":["TYPE.B"],"content":"content b"}]"""
+    val json = """[{"cu-id":"arch","cu-type":"arch","dtr-coordinates":[],"content":"Architecture rules"},{"cu-id":"legend","cu-type":"legend","dtr-coordinates":[],"content":"Legend content"},{"cu-id":"cu-a","dtr-coordinates":["TYPE.A"],"content":"content a"},{"cu-id":"cu-b","dtr-coordinates":["TYPE.B"],"content":"content b"}]"""
     Files.write(jsonFile, json.getBytes)
 
     val cmd = CompileCommand(
@@ -38,7 +39,9 @@ class BatchJSONWriteTest extends AnyFunSpec {
     )
 
     val results = compile.execute(cmd)
-    assert(results.size == 2)
+    assert(results.size == 4)
+    assert(Files.exists(tmpDir.resolve("out/ARCH.itr")))
+    assert(Files.exists(tmpDir.resolve("out/LEGEND.itr")))
     assert(Files.exists(tmpDir.resolve("out/cu-a.itr")))
     assert(Files.exists(tmpDir.resolve("out/cu-b.itr")))
 

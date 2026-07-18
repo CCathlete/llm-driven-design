@@ -1,0 +1,22 @@
+feat(system-tensors): upgrade LLMDD v7 to v8 with verifier pipeline
+
+Wave 1 applies all system tensor structural changes for the v8
+verification pipeline to system_tensors/llm-driven-design-sys-prompt.itr:
+
+- Bump SYS=LLMDDv7.0 to SYS=LLMDDv8.0
+- Add NODE.VER (Code Lead/Verifier) node definition
+- Update NODE.COD_DESC with escalation capability
+- Add WORKFLOW.STEP6 (VERIFY_CUS), STEP7 (E2E_VERIFY), renumber STEP8
+- Update FLOW to include VER in pipeline: COD(s)+VER X VER>E2E>DTR
+- Add FLOW.ESCALATION and FLOW.E2E flow definitions
+- Update CU.FIELDS with TESTS and VERIFICATION fields
+- Add CU.TESTS and CU.VERIFICATION definitions
+- Update ARCH.FEEDBACK.FIELDS with STATUS, ESCALATION_REASON, ESCALATION_DETAIL,
+  VERIFICATION_RESULT, VERIFICATION_DETAILS
+- Add RULE.VER section (CODE_LEAD, REPAIR_ESCALATIONS, E2E_CONVERGENCE)
+  with MONITOR, REPAIR, E2E, CONVERGENCE, and REPORT sub-rules
+- Add CONVERGENCE section (MAX_E2E_REPAIR_ITERATIONS=3, DIVERGENCE_THRESHOLD,
+  ESCALATION, STATE_FILE)
+
+All 19 changes verified present. File reduced from 250 to 224 lines
+after cleanup of duplicate entries from failed coder attempts.

@@ -1,0 +1,81 @@
+WAVE=2
+VERIFIER=code-lead (verifier agent)
+DATE=2026-07-17T17:25:00
+CU_RANGE=cu-004,cu-005,cu-006,cu-007,cu-008,cu-009
+TOTAL_CUS=6
+ESCALATIONS_FOUND=0
+ESCALATIONS_PICKED_UP=0
+
+# ──────────────────────────────────────────────
+# PER-CU STATUS
+# ──────────────────────────────────────────────
+CU-004.STATUS=CONVERGED
+CU-004.TARGET=.opencode/agents/coder.md
+CU-004.REQUIREMENTS=5/5 PASS
+CU-004.DETAIL=STATUS=COMPLETED|ESCALATED field, ESCALATION_REASON/DETAIL fields, VERIFICATION_RESULT/DETAILS fields, escalation rules section, PREPARE_ONLY commit scope — all present
+
+CU-005.STATUS=CONVERGED
+CU-005.TARGET=.opencode/agents/verifier.md
+CU-005.REQUIREMENTS=6/6 PASS
+CU-005.DETAIL=Frontmatter (description, mode=primary, permissions), Rules (CODE_LEAD, REPAIR_ESCALATIONS, E2E_CONVERGENCE, TEST_INTEGRITY, NO_DESIGN_CHANGE), Responsibilities (5 items), Escalation Pickup (6 steps), E2E Verification (6 steps), Convergence Tracking — all present
+
+CU-006.STATUS=CONVERGED
+CU-006.TARGET=.opencode/instructions/architecture.md
+CU-006.REQUIREMENTS=8/8 PASS
+CU-006.DETAIL=Triad table title, Code Lead row, no duplicate rows, pipeline diagram VER parallel with COD, VER in node roles, no duplicate VER rows, workflow steps 6-8, LLMDDv8.0 reference — all present
+
+CU-007.STATUS=CONVERGED
+CU-007.TARGET=.opencode/instructions/AGENTS.md
+CU-007.REQUIREMENTS=5/5 PASS
+CU-007.DETAIL=Code Lead row in triad table, workflow steps 6-8, Four primary agents (not Three), verifier description, opencode --agent verifier command — all present
+
+CU-008.STATUS=CONVERGED
+CU-008.TARGET=.opencode/instructions/memory.md
+CU-008.REQUIREMENTS=4/4 PASS
+CU-008.DETAIL=verifier.md in key files table, LLMDDv8 version reference, verifier in OpenCode setup, session notes with v8 changes — all present
+
+CU-009.STATUS=CONVERGED
+CU-009.TARGET=.opencode/agents/advisor.md
+CU-009.REQUIREMENTS=5/5 PASS
+CU-009.DETAIL=System tensor reference, ANALYZE_ONLY/NO_IMPLEMENTATION rules, DRAFT_CUS/SEVERITY_BASELINE rules, ARCH.SEVERITY/HARD_FAIL references, v8 workflow — all present
+
+# ──────────────────────────────────────────────
+# E2E TEST RESULTS
+# ──────────────────────────────────────────────
+E2E ITERATION=1
+E2E RESULT=ALL_PASS
+E2E TESTS=8/8 PASS
+
+TEST_1=PASS — System tensor syntax valid (no indented non-comment lines)
+TEST_2=PASS — itr-compiler compiles (sbt compile success)
+TEST_3=PASS — Verifier agent exists (CODE_LEAD found in verifier.md)
+TEST_4=PASS — Coder agent has escalation format (STATUS=COMPLETED|ESCALATED, ESCALATION_REASON found)
+TEST_5=PASS — Architecture docs updated (Verifier, LLMDDv8 found)
+TEST_6=PASS — AGENTS.md updated (verifier, ESCALATION found)
+TEST_7=PASS — Memory.md updated (verifier.md, LLMDDv8 found)
+TEST_8=PASS — All files consistent (NODE.VER in sys tensor, Verifier in arch, verifier in AGENTS, verifier.md in memory)
+
+# ──────────────────────────────────────────────
+# REPAIRS
+# ──────────────────────────────────────────────
+REPAIRS_NEEDED=0
+REPAIR_ITERATIONS=0
+
+# ──────────────────────────────────────────────
+# ARCHITECTURE COMPLIANCE
+# ──────────────────────────────────────────────
+ARCH.COMPLIANCE=COMPLIANT
+ARCH.CHECK_1=Agent files (coder.md, verifier.md, advisor.md) follow .opencode/agents/ location convention
+ARCH.CHECK_2=Instruction files (architecture.md, AGENTS.md, memory.md) follow .opencode/instructions/ convention
+ARCH.CHECK_3=System tensor maintains KEY=VALUE flat format with no tree nesting
+ARCH.CHECK_4=All documentation references LLMDDv8 consistently
+ARCH.CHECK_5=No cross-layer documentation dependencies
+ARCH.CHECK_6=CU frame files properly stored in itr-buffer/llm-driven-design.itr/
+
+# ──────────────────────────────────────────────
+# SUMMARY
+# ──────────────────────────────────────────────
+WAVE_2_STATUS=CONVERGED
+CONVERGENCE_ITERATION=1
+FINAL_VERDICT=PASS
+RECOMMENDATION=Wave 2 fully converged on first iteration. All 6 CUs verified present in target files. E2E tests all pass. Ready for commit.

@@ -1,0 +1,23 @@
+# CU-ID: cu-006
+# CU-TYPE: RegularCU
+# TIMESTAMP: 2026-07-17T13:22:47.917971206Z
+# DTR-COORDINATES: .opencode/instructions/architecture.md
+
+# Update architecture.md for v8
+
+File: .opencode/instructions/architecture.md
+
+Changes:
+1. Ensure triad table title is 'The Team: Designer - Advisor - Coder - Code Lead'
+2. Verify Code Lead row exists in team table:
+   | Code Lead | VER | AI agent | Monitors Coder feedback, picks up escalations, runs e2e tests, repairs cross-CU issues. Smarter model. |
+3. REMOVE any duplicate Code Lead rows (there are currently 2 duplicates)
+4. Update pipeline diagram to show VER running in parallel with COD
+5. Verify VER exists in node roles table:
+   | VER (Code Lead) | Monitors Coder feedback. Picks up escalations and performs fixes. Runs e2e tests. Repairs cross-CU issues until convergence. Writes verification report. |
+6. REMOVE any duplicate VER rows in node roles table (there are currently 2 duplicates)
+7. Verify workflow section includes steps 6-8:
+   6. VERIFY - Code lead monitors feedback, picks up escalations
+   7. E2E_VERIFY - Code lead runs e2e tests, repairs until convergence
+   8. ITERATE - Re-scan with dtr-builder, repeat
+8. Version reference should already say LLMDDv8.0 — confirm it does

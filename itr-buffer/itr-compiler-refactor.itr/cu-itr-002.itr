@@ -1,0 +1,56 @@
+# CU-ID: cu-itr-002
+# TIMESTAMP: 2026-07-14T16:13:08.438594595Z
+# DTR-COORDINATES: 
+
+# Add CUType model and extend CU case class
+
+File: itr-compiler/src/main/scala/itrcompiler/domain/models/CU.scala
+
+Changes:
+1. Add CUType sealed trait and case objects:
+   sealed trait CUType
+   case object RegularCU extends CUType
+   case object ArchCU extends CUType
+   case object LegendCU extends CUType
+   case object VerificationCU extends CUType
+   case object E2eVerificationCU extends CUType
+
+   object CUType {
+     def fromString(s: String): CUType = s.toLowerCase match {
+       case "arch" | "archcu" => ArchCU
+       case "legend" | "legendcu" => LegendCU
+       case "verification" | "verificationcu" => VerificationCU
+       case "e2everification" | "e2everificationcu" => E2eVerificationCU
+       case _ => RegularCU
+     }
+   }
+
+2. Extend CU case class with cuType field:
+   final case class CU(
+     id: String,
+     dtrCoordinates: Seq[String],
+     content: String,
+     cuType: CUType = RegularCU,
+     timestamp: Instant = Instant.now()
+   ) extends Model
+
+3. Add helper methods to CU:
+   def isRequiredPart: Boolean = cuType match {
+     case ArchCU | LegendCU | VerificationCU | E2eVerificationCU => true
+     case RegularCU => false
+   }
+
+   def fileName: String = cuType match {
+     case ArchCU => "ARCH.itr"
+     case LegendCU => "LEGEND.itr"
+     case VerificationCU => s"${id}.verification.itr"
+     case E2eVerificationCU => "E2EVERIFICATION.itr"
+     case RegularCU => s"${id}.itr"
+   }
+
+4. Add companion object with required parts set:
+   object CU {
+     val requiredParts: Set[CUType] = Set(
+       ArchCU, LegendCU, VerificationCU, E2eVerificationCU
+     )
+   }

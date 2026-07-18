@@ -1,0 +1,21 @@
+# CU-ID: cu-007
+# CU-TYPE: RegularCU
+# TIMESTAMP: 2026-07-17T13:22:47.918135073Z
+# DTR-COORDINATES: .opencode/instructions/AGENTS.md
+
+# Update AGENTS.md for v8
+
+File: .opencode/instructions/AGENTS.md
+
+Changes:
+1. Verify triad table has Code Lead row (it already does — confirm correctness)
+2. Verify workflow section includes steps 6-8:
+   6. Verify - Code lead monitors feedback, picks up escalations
+   7. E2E Verify - Code lead runs e2e tests, repairs until convergence
+   8. Iterate - Re-scan with dtr-builder, repeat
+3. Update OpenCode agents section — change 'Three primary agents' to 'Four primary agents':
+   - advisor - design partner; reads only, never edits; thinks and drafts
+   - coder - implementation engine; reads and writes, never designs
+   - verifier - code lead; monitors feedback, picks up escalations, runs e2e tests; smarter model
+4. Verify the use command section includes:
+   Use opencode --agent verifier for verification and e2e sessions

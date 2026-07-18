@@ -1,0 +1,38 @@
+[
+  {
+    "wave": 1,
+    "description": "System tensor v8 \u2014 sequential edits to same file (3 CUs, serial)",
+    "cus": [
+      "cu-001",
+      "cu-002",
+      "cu-003"
+    ]
+  },
+  {
+    "wave": 2,
+    "description": "Agent files + documentation \u2014 all independent files, full parallel (6 coders)",
+    "cus": [
+      "cu-004",
+      "cu-005",
+      "cu-006",
+      "cu-007",
+      "cu-008",
+      "cu-009"
+    ]
+  },
+  {
+    "wave": 3,
+    "description": "Verification \u2014 tensor+agent tests + doc tests in parallel (2 coders)",
+    "cus": [
+      "cu-010",
+      "cu-012"
+    ]
+  },
+  {
+    "wave": 4,
+    "description": "E2E \u2014 full pipeline cross-file verification",
+    "cus": [
+      "cu-011"
+    ]
+  }
+]
