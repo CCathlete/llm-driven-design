@@ -1,0 +1,64 @@
+# CU-ID: cu-itr-004
+# TIMESTAMP: 2026-07-14T16:13:38.495601074Z
+# DTR-COORDINATES: 
+
+# Update Compile service with validation
+
+File: itr-compiler/src/main/scala/itrcompiler/application/services/Compile.scala
+
+Changes:
+1. Inject RequiredPartsValidation into Compile class:
+   final class Compile(
+     dtrLoad: DTRLoad,
+     coordinateRules: CoordinateRules,
+     cuStore: CUStore,
+     contentDeserialize: ContentDeserialize,
+     requiredPartsValidation: RequiredPartsValidation
+   ) extends Service
+
+2. Add validation step in execute() method:
+   def execute(cmd: CompileCommand): Seq[CU] = {
+     val batch = buildBatch(cmd)
+
+     // Validate required parts
+     val validation = cmd match {
+       case _ if cmd.jsonContent.isDefined || cmd.yamlContent.isDefined =>
+         requiredPartsValidation.validateBatch(batch)
+       case _ if cmd.rawContent.isDefined =>
+         val existingFiles = cuStore.listExistingFiles(cmd.outFolder)
+         val currentCU = batch.cus.headOption.getOrElse(
+           throw new IllegalStateException("No CU to compile")
+         )
+         requiredPartsValidation.validateForSingleCU(
+           cmd.outFolder,
+           currentCU,
+           existingFiles
+         )
+       case _ =>
+         ValidationResult(isValid = true, missingParts = Set.empty, existingParts = Set.empty)
+     }
+
+     if (!validation.isValid) {
+       throw new IllegalStateException(
+         s"Missing required parts: ${validation.missingParts.mkString(", ")}. " +
+         s"ITR must contain ARCH, LEGEND, VERIFICATION, and E2EVERIFICATION."
+       )
+     }
+
+     // Continue with existing logic...
+     val validated = batch.cus.map { cu =>
+       val coords = coordinateRules.validate(cu.dtrCoordinates)
+       cu.copy(dtrCoordinates = coords)
+     }
+     validated.foreach { cu =>
+       try {
+         cuStore.store(cu, cmd.outFolder, cmd.force)
+       } catch {
+         case e: Exception =>
+           System.err.println(s"Warning: failed to write CU \'${cu.id}\': ${e.getMessage}")
+       }
+     }
+     validated
+   }
+
+3. Import RequiredPartsValidation and ValidationResult

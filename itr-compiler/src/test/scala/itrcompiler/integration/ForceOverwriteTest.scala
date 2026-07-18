@@ -1,6 +1,7 @@
 package itrcompiler.integration
 
-import itrcompiler.application.services.{Compile, ContentDeserialize, CoordinateRules, CUStore}
+import itrcompiler.application.services.{Compile, ContentDeserialize, CoordinateRules, CUStore, RequiredPartsValidation}
+import itrcompiler.application.ports.DTRLoad
 import itrcompiler.domain.models.CompileCommand
 import org.scalatest.funspec.AnyFunSpec
 import java.nio.file.{Files, Paths}
@@ -10,6 +11,13 @@ class ForceOverwriteTest extends AnyFunSpec {
     val tmpDir = Files.createTempDirectory("int-force-")
     val outDir = tmpDir.resolve("out")
     Files.createDirectories(outDir)
+
+    // Pre-create required parts so validation passes
+    Files.write(outDir.resolve("ARCH.itr"), "ARCH".getBytes)
+    Files.write(outDir.resolve("LEGEND.itr"), "LEGEND".getBytes)
+    Files.write(outDir.resolve("verification.verification.itr"), "VERIFICATION".getBytes)
+    Files.write(outDir.resolve("E2EVERIFICATION.itr"), "E2E".getBytes)
+
     val existing = outDir.resolve("cu-force.itr")
     Files.write(existing, "ORIGINAL".getBytes)
 
@@ -17,13 +25,13 @@ class ForceOverwriteTest extends AnyFunSpec {
     val coordRules = new CoordinateRules
     val cuStore = new CUStore(fs)
     val contentDeser = new ContentDeserialize(fs)
+    val requiredPartsValidation = new RequiredPartsValidation
 
-    import itrcompiler.application.ports.DTRLoad
     val dtrLoad = new DTRLoad {
       def load(path: java.nio.file.Path): String = ""
     }
 
-    val compile = new Compile(dtrLoad, coordRules, cuStore, contentDeser)
+    val compile = new Compile(dtrLoad, coordRules, cuStore, contentDeser, requiredPartsValidation)
 
     val cmd = CompileCommand(
       compile = true,
@@ -46,6 +54,13 @@ class ForceOverwriteTest extends AnyFunSpec {
     val tmpDir = Files.createTempDirectory("int-skip-")
     val outDir = tmpDir.resolve("out")
     Files.createDirectories(outDir)
+
+    // Pre-create required parts so validation passes
+    Files.write(outDir.resolve("ARCH.itr"), "ARCH".getBytes)
+    Files.write(outDir.resolve("LEGEND.itr"), "LEGEND".getBytes)
+    Files.write(outDir.resolve("verification.verification.itr"), "VERIFICATION".getBytes)
+    Files.write(outDir.resolve("E2EVERIFICATION.itr"), "E2E".getBytes)
+
     val existing = outDir.resolve("cu-skip.itr")
     Files.write(existing, "ORIGINAL".getBytes)
 
@@ -53,13 +68,13 @@ class ForceOverwriteTest extends AnyFunSpec {
     val coordRules = new CoordinateRules
     val cuStore = new CUStore(fs)
     val contentDeser = new ContentDeserialize(fs)
+    val requiredPartsValidation = new RequiredPartsValidation
 
-    import itrcompiler.application.ports.DTRLoad
     val dtrLoad = new DTRLoad {
       def load(path: java.nio.file.Path): String = ""
     }
 
-    val compile = new Compile(dtrLoad, coordRules, cuStore, contentDeser)
+    val compile = new Compile(dtrLoad, coordRules, cuStore, contentDeser, requiredPartsValidation)
 
     val cmd = CompileCommand(
       compile = true,

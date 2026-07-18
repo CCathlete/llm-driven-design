@@ -1,0 +1,14 @@
+{
+  "waves": [
+    {
+      "wave": 1,
+      "cus": [
+        "cu-itr-001"
+      ],
+      "escalations": 0,
+      "coder_status": 0,
+      "lead_status": 0
+    }
+  ],
+  "status": "RUNNING"
+}

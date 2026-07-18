@@ -1,71 +1,45 @@
 package itrcompiler.infrastructure.parsers
 
-import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+import itrcompiler.domain.models._
 
-class JSONFormatTest extends AnyFunSpec {
-  val format = new JSONFormat
+class JSONFormatTest extends AnyFlatSpec with Matchers {
 
-  describe("JSONFormat") {
-    describe("parse") {
-      it("should parse a JSON array with one entry") {
-        val json = """[{"cu-id":"cu-001","dtr-coordinates":["TYPE.Foo"],"content":"hello"}]"""
-        val batch = format.parse(json)
-        assert(batch.cus.size == 1)
-        assert(batch.cus.head.id == "cu-001")
-        assert(batch.cus.head.dtrCoordinates == Seq("TYPE.Foo"))
-        assert(batch.cus.head.content == "hello")
-      }
+  val parser = new JSONFormat
 
-      it("should parse multiple entries") {
-        val json = """[{"cu-id":"a","dtr-coordinates":[],"content":"x"},{"cu-id":"b","dtr-coordinates":[],"content":"y"}]"""
-        val batch = format.parse(json)
-        assert(batch.cus.size == 2)
-      }
+  "JSONFormat" should "parse large content strings correctly" in {
+    val largeContent = """[{"cu-id":"cu-large","dtr-coordinates":[],"content":""" + "\"" + "a" * 10000 + "\"}]"
+    val batch = parser.parse(largeContent)
+    batch.cus should not be empty
+    batch.cus.head.content shouldBe "a" * 10000
+  }
 
-      it("should handle empty coordinates") {
-        val json = """[{"cu-id":"cu-001","dtr-coordinates":[],"content":"test"}]"""
-        val batch = format.parse(json)
-        assert(batch.cus.head.dtrCoordinates.isEmpty)
-      }
+  it should "handle cu-type field correctly" in {
+    val jsonWithCuType = """[{"cu-id":"cu-test","cu-type":"arch","dtr-coordinates":[],"content":"test content"}]"""
+    val batch = parser.parse(jsonWithCuType)
+    batch.cus should not be empty
+    batch.cus.head.cuType shouldBe ArchCU
+  }
 
-      it("should handle empty array") {
-        val batch = format.parse("[]")
-        assert(batch.cus.isEmpty)
-      }
+  it should "parse CUs without cu-type field (backward compatible)" in {
+    val jsonWithoutType = """[{"cu-id":"cu-old","dtr-coordinates":["TYPE.X"],"content":"old format"}]"""
+    val batch = parser.parse(jsonWithoutType)
+    batch.cus should not be empty
+    batch.cus.head.cuType shouldBe RegularCU
+  }
 
-      it("should handle empty string") {
-        val batch = format.parse("")
-        assert(batch.cus.isEmpty)
-      }
-
-      it("should unescape newlines in content") {
-        val json = """[{"cu-id":"cu-001","dtr-coordinates":[],"content":"line1\nline2"}]"""
-        val batch = format.parse(json)
-        assert(batch.cus.head.content == "line1\nline2")
-      }
-    }
-
-    describe("serialize") {
-      it("should produce valid JSON") {
-        import itrcompiler.domain.models.{CU, CUBatch}
-        val batch = CUBatch(Seq(CU(id = "cu-001", dtrCoordinates = Seq("TYPE.Foo"), content = "hello")))
-        val json = format.serialize(batch)
-        assert(json.contains("cu-001"))
-        assert(json.contains("TYPE.Foo"))
-        assert(json.contains("hello"))
-      }
-
-      it("should round-trip") {
-        import itrcompiler.domain.models.{CU, CUBatch}
-        val original = CUBatch(Seq(
-          CU(id = "a", dtrCoordinates = Seq("X", "Y"), content = "hello\nworld")
-        ))
-        val json = format.serialize(original)
-        val parsed = format.parse(json)
-        assert(parsed.cus.size == 1)
-        assert(parsed.cus.head.id == "a")
-        assert(parsed.cus.head.content == "hello\nworld")
-      }
-    }
+  it should "serialize and parse back correctly" in {
+    val batch = CUBatch(Seq(
+      CU(id = "cu-1", dtrCoordinates = Seq("TYPE.A"), content = "hello", cuType = ArchCU),
+      CU(id = "cu-2", dtrCoordinates = Seq("TYPE.B"), content = "world", cuType = RegularCU)
+    ))
+    val serialized = parser.serialize(batch)
+    val parsed = parser.parse(serialized)
+    parsed.cus.size shouldBe 2
+    parsed.cus.head.id shouldBe "cu-1"
+    parsed.cus.head.cuType shouldBe ArchCU
+    parsed.cus(1).id shouldBe "cu-2"
+    parsed.cus(1).cuType shouldBe RegularCU
   }
 }

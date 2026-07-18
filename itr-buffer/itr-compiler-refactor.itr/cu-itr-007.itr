@@ -1,0 +1,41 @@
+# CU-ID: cu-itr-007
+# TIMESTAMP: 2026-07-14T16:14:38.894522513Z
+# DTR-COORDINATES: 
+
+# Add comprehensive tests for required parts enforcement
+
+New test files:
+
+1. itr-compiler/src/test/scala/itrcompiler/application/services/RequiredPartsValidationTest.scala
+   - validateBatch should pass when all required parts present
+   - validateBatch should fail when ARCH missing
+   - validateBatch should fail when LEGEND missing
+   - validateBatch should fail when VERIFICATION missing
+   - validateBatch should fail when E2EVERIFICATION missing
+   - validateBatch should fail when multiple parts missing
+   - validateForSingleCU should pass when folder has all parts
+   - validateForSingleCU should pass when current CU creates missing part
+   - validateForSingleCU should fail when folder missing parts and CU does not create them
+   - validateForSingleCU should handle empty folder correctly
+
+2. itr-compiler/src/test/scala/itrcompiler/integration/RequiredPartsEnforcementTest.scala
+   - Batch compilation should fail without ARCH
+   - Batch compilation should fail without LEGEND
+   - Batch compilation should fail without VERIFICATION
+   - Batch compilation should fail without E2EVERIFICATION
+   - Batch compilation should succeed with all required parts
+   - Single CU compilation should fail if folder empty and CU is regular
+   - Single CU compilation should succeed if folder has all parts
+   - Single CU compilation should succeed if CU creates missing part
+
+3. itr-compiler/src/test/scala/itrcompiler/integration/BatchWithRequiredPartsTest.scala
+   - JSON batch with ARCH, LEGEND, VERIFICATION, E2EVERIFICATION
+   - YAML batch with ARCH, LEGEND, VERIFICATION, E2EVERIFICATION
+   - Verify all files created with correct names
+
+4. Update itr-compiler/src/test/scala/itrcompiler/infrastructure/parsers/JSONFormatTest.scala
+   - Test with large content strings (regression test for regex fix)
+   - Test with cu-type field
+
+5. Update itr-compiler/src/test/scala/itrcompiler/infrastructure/parsers/YAMLFormatTest.scala
+   - Test with cu-type field

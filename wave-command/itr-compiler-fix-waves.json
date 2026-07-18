@@ -1,0 +1,49 @@
+[
+  {
+    "wave": 1,
+    "description": "Fix critical JSON regex StackOverflow \u2014 foundation for all other changes",
+    "cus": [
+      "cu-001"
+    ]
+  },
+  {
+    "wave": 2,
+    "description": "Update CU model, fix YAML parser, add disk-or-batch validation \u2014 all independent",
+    "cus": [
+      "cu-002",
+      "cu-003",
+      "cu-004"
+    ]
+  },
+  {
+    "wave": 3,
+    "description": "Wire compile service + unit tests for parser and validation changes",
+    "cus": [
+      "cu-005",
+      "cu-006a",
+      "cu-006b",
+      "cu-007",
+      "cu-008"
+    ]
+  },
+  {
+    "wave": 4,
+    "description": "Update integration tests + TestHelper verification",
+    "cus": [
+      "cu-009a",
+      "cu-009b",
+      "cu-010a",
+      "cu-010b",
+      "cu-010c",
+      "cu-011",
+      "cu-011-verification"
+    ]
+  },
+  {
+    "wave": 5,
+    "description": "E2E verification \u2014 run full test suite, rebuild jar, verify end-to-end",
+    "cus": [
+      "cu-012"
+    ]
+  }
+]

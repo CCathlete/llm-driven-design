@@ -1,7 +1,7 @@
 package itrcompiler.control.dependency_injection
 
 import itrcompiler.application.ports.{ContentRead, CUWrite, DTRLoad}
-import itrcompiler.application.services.{Compile, ContentDeserialize, CoordinateRules, CUStore}
+import itrcompiler.application.services.{Compile, ContentDeserialize, CoordinateRules, CUStore, RequiredPartsValidation}
 import itrcompiler.infrastructure.filesystem.FileSystem
 import itrcompiler.infrastructure.parsers.{JSONFormat, YAMLFormat}
 
@@ -15,7 +15,8 @@ import itrcompiler.infrastructure.parsers.{JSONFormat, YAMLFormat}
   * All new wiring per cu-005:
   *   Container → DTRLoad, CUWrite, ContentRead, Compile,
   *               CoordinateRules, ContentDeserialize, CUStore,
-  *               FileSystem, JSONFormat, YAMLFormat
+  *               FileSystem, JSONFormat, YAMLFormat,
+  *               RequiredPartsValidation
   */
 final class Container {
 
@@ -30,8 +31,11 @@ final class Container {
   val contentRead: ContentRead   = fileSystem
 
   // ── Services ──────────────────────────────────────────────
-  val coordinateRules: CoordinateRules         = new CoordinateRules
-  val contentDeserialize: ContentDeserialize   = new ContentDeserialize(contentRead)
-  val cuStore: CUStore                         = new CUStore(cuWrite)
-  val compile: Compile                         = new Compile(dtrLoad, coordinateRules, cuStore, contentDeserialize)
+  val coordinateRules: CoordinateRules              = new CoordinateRules
+  val contentDeserialize: ContentDeserialize        = new ContentDeserialize(contentRead)
+  val cuStore: CUStore                              = new CUStore(cuWrite)
+  val requiredPartsValidation: RequiredPartsValidation = new RequiredPartsValidation
+  val compile: Compile = new Compile(
+    dtrLoad, coordinateRules, cuStore, contentDeserialize, requiredPartsValidation
+  )
 }

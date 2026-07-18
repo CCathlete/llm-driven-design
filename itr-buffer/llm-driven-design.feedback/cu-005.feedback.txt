@@ -1,0 +1,17 @@
+CU_ID=cu-005
+CODER_NAME=wave-runner
+DATE=2026-07-17T16:53:08.493015
+CLARITY_RATING=1
+AMBIGUOUS_LINES=all
+MISSING_CONTEXT=all models failed
+TOO_MUCH_DETAIL=0
+ARCHITECTURE_DEVIATION=CU not implemented
+ARCHITECTURE_DEVIATION.SEVERITY=CRITICAL
+TIME_TAKEN_MINUTES=0
+AI_CREDITS_USED=0.0089
+COMMIT_MESSAGE=N/A - CU not implemented
+STATUS=REPAIRED
+ESCALATION_REASON=all models failed to implement CU
+ESCALATION_DETAIL=codestral refused, gemini failed with exit 1, gemma timed out
+VERIFICATION_RESULT=PASSED
+VERIFICATION_DETAILS=File .opencode/agents/verifier.md already exists on disk and matches CU-005 spec exactly. Verified via diff: frontmatter (description, mode, permissions) and content (Rules, Responsibilities, Escalation Pickup, E2E Verification, Convergence Tracking sections) are correct per CU frame. No changes needed — file was correctly written by prior process.

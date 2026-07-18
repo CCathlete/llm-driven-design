@@ -1,0 +1,17 @@
+feat(llmdd): wave 3 verification — cu-010, cu-011, cu-012 all verified
+
+Wave 3 completes the LLMDD v8 upgrade verification. All three CUs in this
+wave pass their test suites with first-iteration convergence.
+
+Changes:
+  - Verified cu-010: tensor + agent file verification (11/11 tests pass)
+  - Verified cu-011: full E2E pipeline verification (7/7 tests pass)
+  - Verified cu-012: documentation verification (10/10 tests pass)
+  - Added missing cu-011.feedback.txt (written by verifier)
+  - Added wave-3-verification.txt with full test report
+
+Cross-wave status: all 12 CUs (cu-001 through cu-012) across waves 1-3
+are in terminal/safe status (COMPLETED, CONVERGED, or REPAIRED).
+28/28 wave-3 tests pass. No escalations, no repairs needed.
+
+LLMDD v8 upgrade is complete and fully verified.

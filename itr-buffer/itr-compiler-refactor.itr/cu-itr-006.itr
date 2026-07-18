@@ -1,0 +1,54 @@
+# CU-ID: cu-itr-006
+# TIMESTAMP: 2026-07-14T16:14:27.708926281Z
+# DTR-COORDINATES: 
+
+# Update JSON and YAML parsers for cu-type field
+
+File: itr-compiler/src/main/scala/itrcompiler/infrastructure/parsers/JSONFormat.scala
+
+Changes:
+1. Update regex to include optional cu-type field:
+   val cuPattern =
+     """\{\s*"cu-id"\s*:\s*"([^"]+)"\s*,\s*"cu-type"\s*:\s*"([^"]+)"\s*,\s*"dtr-coordinates"\s*:\s*\[([^\]]*)\]\s*,\s*"content"\s*:\s*"([^"]*(?:\\\\.[^"]*)*)"\s*\}""".r
+
+2. Extract cu-type in parse method:
+   val cus = cuPattern.findAllMatchIn(trimmed).map { m =>
+     val id = m.group(1)
+     val cuType = CUType.fromString(m.group(2))
+     val coordsStr = m.group(3).trim
+     val coords = if (coordsStr.isEmpty) Seq.empty
+       else coordsStr.split(",").toSeq.map(_.trim.replaceAll("^\"|\$\"", ""))
+     val rawContent = m.group(4)
+     val content = rawContent.replace("\\n", "\n").replace("\\t", "\t")
+       .replace("\\\"", "\"").replace("\\\\", "\\")
+     CU(id = id, dtrCoordinates = coords, content = content, cuType = cuType)
+   }.toSeq
+
+3. Update serialize to include cu-type:
+   def serialize(batch: CUBatch): String = {
+     val entries = batch.cus.map { cu =>
+       val coords = cu.dtrCoordinates.map(c => s"\"\$c\"").mkString("[", ", ", "]")
+       val escaped = cu.content.replace("\\", "\\\\").replace("\"", "\\\"")
+         .replace("\n", "\\n").replace("\t", "\\t")
+       s"""{"cu-id":"${cu.id}","cu-type":"${cu.cuType}","dtr-coordinates":$coords,"content":"$escaped"}"""
+     }
+     "[" + entries.mkString(",\n  ") + "]"
+   }
+
+File: itr-compiler/src/main/scala/itrcompiler/infrastructure/parsers/YAMLFormat.scala
+
+Changes:
+1. Update to extract cu-type:
+   val cuTypePattern = """cu-type:\s*"?([^"\s]*)"?""".r
+   val cuType = cuTypePattern.findFirstMatchIn(props).map(m =>
+     CUType.fromString(m.group(1).trim)
+   ).getOrElse(RegularCU)
+
+2. Add cu-type to parse result:
+   Some(CU(id = id, dtrCoordinates = coords, content = content, cuType = cuType))
+
+3. Update serialize to include cu-type:
+   s"""${cu.id}:
+     |  cu-type: ${cu.cuType}
+     |  dtr-coordinates: $coords
+     |  content: "${cu.content}"""".stripMargin

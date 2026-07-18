@@ -1,0 +1,19 @@
+# CU-ID: cu-008
+# CU-TYPE: RegularCU
+# TIMESTAMP: 2026-07-17T13:22:47.918256248Z
+# DTR-COORDINATES: .opencode/instructions/memory.md
+
+# Update memory.md for v8
+
+File: .opencode/instructions/memory.md
+
+Changes:
+1. Verify key files table includes verifier.md:
+   | .opencode/agents/verifier.md | Code lead agent (verification, e2e testing) |
+2. Version reference should say LLMDDv8 — confirm
+3. Verify OpenCode setup section lists verifier:
+   - Project agents: advisor (design, read-only), coder (implementation), and verifier (code lead, smarter model) in .opencode/agents/
+4. Verify session notes include v8 changes:
+   <!-- v8 changes: verification control loop added -->
+   <!-- VER (code lead) monitors COD feedback, picks up escalations -->
+   <!-- E2E verification runs after all CUs converge -->
