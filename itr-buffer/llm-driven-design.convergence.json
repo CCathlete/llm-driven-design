@@ -790,7 +790,89 @@
           "model": ""
         }
       }
+    },
+    {
+      "wave": 4,
+      "cus": [
+        "cu-011"
+      ],
+      "escalations": 0,
+      "coder_status": 0,
+      "lead_status": 0,
+      "files_changed": {
+        "cu-011": [
+          ".opencode/agents/advisor.md",
+          ".opencode/agents/coder.md",
+          ".opencode/agents/verifier.md",
+          ".opencode/instructions/AGENTS.md",
+          ".opencode/instructions/architecture.md",
+          ".opencode/instructions/memory.md",
+          "itr-buffer/llm-driven-design.convergence.json",
+          "itr-buffer/llm-driven-design.feedback/cu-001.feedback.txt",
+          "itr-buffer/llm-driven-design.feedback/cu-002.feedback.txt",
+          "itr-buffer/llm-driven-design.feedback/cu-003.feedback.txt",
+          "itr-buffer/llm-driven-design.feedback/cu-004.feedback.txt",
+          "itr-buffer/llm-driven-design.feedback/cu-005.feedback.txt",
+          "itr-buffer/llm-driven-design.feedback/cu-006.feedback.txt",
+          "itr-buffer/llm-driven-design.feedback/cu-e2e-verification.feedback.txt",
+          "itr-buffer/llm-driven-design.feedback/cu-itr-002.feedback.txt",
+          "itr-buffer/llm-driven-design.feedback/cu-itr-003.feedback.txt",
+          "itr-buffer/llm-driven-design.feedback/cu-itr-004.feedback.txt",
+          "itr-buffer/llm-driven-design.feedback/cu-itr-006.feedback.txt",
+          "itr-buffer/llm-driven-design.feedback/cu-itr-007.feedback.txt",
+          "itr-buffer/llm-driven-design.feedback/wave-1-verification.txt",
+          "itr-buffer/llm-driven-design.feedback/wave-2-verification.txt",
+          "itr-buffer/llm-driven-design.feedback/wave-3-verification.txt",
+          "itr-buffer/llm-driven-design.itr/ARCH.itr",
+          "itr-buffer/llm-driven-design.itr/LEGEND.itr",
+          "itr-buffer/llm-driven-design.itr/cu-001-verification.itr",
+          "itr-buffer/llm-driven-design.itr/cu-001.itr",
+          "itr-buffer/llm-driven-design.itr/cu-002.itr",
+          "itr-buffer/llm-driven-design.itr/cu-003.itr",
+          "itr-buffer/llm-driven-design.itr/cu-004.itr",
+          "itr-buffer/llm-driven-design.itr/cu-005.itr",
+          "itr-buffer/llm-driven-design.itr/cu-006.itr",
+          "itr-buffer/llm-driven-design.itr/cu-e2e-verification.itr",
+          "itr-buffer/llm-driven-design.logs/cu-itr-001.pid",
+          "itr-buffer/llm-driven-design.logs/cu-itr-002.pid",
+          "itr-buffer/llm-driven-design.logs/cu-itr-003.pid",
+          "itr-buffer/llm-driven-design.logs/cu-itr-004.pid",
+          "itr-buffer/llm-driven-design.logs/cu-itr-005.pid",
+          "itr-buffer/llm-driven-design.logs/cu-itr-006.pid",
+          "itr-buffer/llm-driven-design.logs/cu-itr-007.pid",
+          "itr-buffer/llm-driven-design.logs/lead-wave-1.pid",
+          "itr-buffer/llm-driven-design.logs/waves.json",
+          "system_tensors/llm-driven-design-sys-prompt.itr",
+          "wave-command/README.md",
+          "wave-command/llmdd-v8-waves.json",
+          "wave-command/run-waves.py"
+        ]
+      },
+      "credits": {
+        "cu-011": {
+          "input": 90365,
+          "output": 660,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write": 0,
+          "total": 91025,
+          "cost": 0.0277035,
+          "session_id": "ses_08f382fc0ffeWtt2QrFWkblMKF",
+          "model": "mistral/codestral-latest"
+        },
+        "lead": {
+          "input": 43451,
+          "output": 4945,
+          "reasoning": 1824,
+          "cache_read": 589312,
+          "cache_write": 0,
+          "total": 639532,
+          "cost": 0.0,
+          "session_id": "ses_08f380aceffePITltG7ISsMYiA",
+          "model": ""
+        }
+      }
     }
   ],
-  "status": "RUNNING"
+  "status": "NEEDS_ATTENTION"
 }

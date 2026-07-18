@@ -24,7 +24,7 @@ NODE.ITR_COMPILER=ITR_COMPILER
 NODE.ITR_COMPILER_DESC=Tool: itr-compiler --compile. Takes a baseline DTR and CU content (single/JSON/YAML/JSONL batch), produces a directory of per-CU .itr frame files.
 NODE.COD=CODER
 NODE.COD_DESC=Receives compiled CU frames. Implements CUs in dependency order. Produces per-CU FEEDBACK files. If blocked: writes ESCALATION in feedback for code lead pickup. Commits once per task.
-NODE.VER=CODE_LEAD
+NODE.VER=CODE_LEAD (Verifier)
 NODE.VER_DESC=Smarter model Coder acting as code lead. Runs in parallel with implementation Coders. Monitors CU feedback for escalations. Performs fixes on escalated CUs. After all CUs: runs e2e tests, repairs cross-CU issues until convergence.
 NODE.OUT=OUTPUT
 NODE.OUT_DESC=Produced code + per-CU FEEDBACK files. Updated DTR feeds the next iteration.
@@ -33,9 +33,6 @@ NODE.OUT_DESC=Produced code + per-CU FEEDBACK files. Updated DTR feeds the next 
 # PIPELINE FLOW
 # ──────────────────────────────────────────────
 FLOW=X>DTR>ADV X DSG>ITR_COMPILER>COD(s)+VER X VER>E2E>DTR
-FLOW.FEEDBACK=COD>PER_CU_FEEDBACK>ADV — per-CU feedback flows back to Advisor for ITR optimization
-FLOW.ESCALATION=COD>FEEDBACK(ESCALATED)>VER>REPAIR>COMMIT
-FLOW.E2E=COD(s)_DONE>VER>E2E_TESTS>VER(REPAIR_LOOP)>REPORT>DTR
 FLOW.FEEDBACK=COD>PER_CU_FEEDBACK>ADV — per-CU feedback flows back to Advisor for ITR optimization
 FLOW.ESCALATION=COD>FEEDBACK(ESCALATED)>VER>REPAIR>COMMIT
 FLOW.E2E=COD(s)_DONE>VER>E2E_TESTS>VER(REPAIR_LOOP)>REPORT>DTR
@@ -63,10 +60,8 @@ WORKFLOW.STEP7=E2E_VERIFY
 WORKFLOW.STEP8=ITERATE
 WORKFLOW.STEP6_DESC=VER (code lead) monitors CU feedback in real-time. On ESCALATED status: reads escalation detail, performs fix, commits. Runs in parallel with COD(s). Never waits for all CUs to complete.
 
-WORKFLOW.STEP7=E2E_VERIFY
 WORKFLOW.STEP7_DESC=After all CUs implemented: VER runs full e2e test suite (written by ADV). If FAIL: analyzes cross-CU failures, repairs, re-runs. Loop until convergence or max iterations. Writes final verification report.
 
-WORKFLOW.STEP8=ITERATE
 WORKFLOW.STEP8_DESC=Updated codebase is re-scanned by dtr-builder to produce a new baseline DTR. Cycle repeats.
 
 # ──────────────────────────────────────────────
@@ -176,8 +171,6 @@ ARCH.FEEDBACK.DIR=<app>.feedback/ — sibling directory to <app>.itr/ at the sam
 ARCH.FEEDBACK.FILE_PATTERN=cu-<id>.feedback.txt — same basename as the CU frame, .feedback.txt extension
 ARCH.FEEDBACK.DISCIPLINE=Codex OVERWRITES the feedback file on CU completion. Never appends. Git history preserves every version.
 ARCH.FEEDBACK.FIELDS=CU_ID,CODER_NAME,DATE,CLARITY_RATING,AMBIGUOUS_LINES,MISSING_CONTEXT,TOO_MUCH_DETAIL,ARCHITECTURE_DEVIATION,ARCHITECTURE_DEVIATION.SEVERITY,TIME_TAKEN_MINUTES,AI_CREDITS_USED,COMMIT_MESSAGE,STATUS,ESCALATION_REASON,ESCALATION_DETAIL,VERIFICATION_RESULT,VERIFICATION_DETAILS
-ESCALATION_REASON=<why you are blocked>
-VERIFICATION_RESULT=PASSED|FAILED|NOT_RUN
 ARCH.FEEDBACK.FORMAT=ITR tensor format: KEY=VALUE per line, one semantic unit per line
 ARCH.FEEDBACK.RATING_SCALE=1-5 — 1=impossible to follow, 5=crystal clear, no questions
 ARCH.FEEDBACK.TIME_TAKEN_MINUTES=Duration to implement the CU from start to feedback creation, in minutes.
@@ -207,19 +200,15 @@ RULE.DSG.APPROVE_CUS=Designer reviews and approves CU content before compilation
 RULE.COD=EXECUTE_ITR_ONLY,NO_DESIGN_CHANGE,STRICT_CU_ORDER,COMMIT_PER_TASK
 RULE.COD.IMPLEMENT=Codex implements assigned CUs in dependency order. Each CU frame file (cu-<id>.itr) contains: CU-ID, DTR-COORDINATES, TIMESTAMP, CONTENT.
 RULE.COD.FEEDBACK_MANDATORY=Codex MUST write a per-CU FEEDBACK file for every CU implemented. File pattern: <app>.feedback/cu-<id>.feedback.txt. Must overwrite, never append. Self-assess SEVERITY of each ARCHITECTURE_DEVIATION. Print full feedback content in final message.
-RULE.COD.COMMIT_SCOPE=TASK — one commit per coder task, regardless of CU count. Commit includes: application code + CU frame files + per-CU FEEDBACK files + updated sys tensor.
+RULE.COD.COMMIT_SCOPE=PREPARE_ONLY — one commit per coder task, regardless of CU count. Commit includes: application code + CU frame files + per-CU FEEDBACK files + updated sys tensor.
 RULE.COD.COMMIT_MESSAGE=Codex provides a descriptive COMMIT_MESSAGE in the feedback summarizing all changes in the task. The commit message MUST be this summary.
 RULE.COD.SEVERITY_BASELINE=Every CU deliverable is implicitly SEVERITY:CRITICAL unless Advisor marked otherwise. Codex may not downgrade without DSG approval.
+RULE.COD.HARD_FAIL=Any CRITICAL deviation MUST be reported to DSG before commit. MAJOR must be noted in feedback and acknowledged by DSG.
 
 # ──────────────────────────────────────────────
 # RULES: VERIFIER
 # ──────────────────────────────────────────────
 RULE.VER=CODE_LEAD,REPAIR_ESCALATIONS,E2E_CONVERGENCE
-RULE.VER.MONITOR=Verifier monitors CU feedback files in real-time. On ESCALATED status: reads escalation detail, performs fix, commits. Never waits for all CUs to complete before acting.
-RULE.VER.REPAIR=Verifier can modify any CU implementation. Never modifies test files - tests are written by ADV and are the contract. If a test appears wrong, Verifier notes it in report but does not modify it.
-RULE.VER.E2E=After all CUs implemented: Verifier runs full e2e test suite. If FAIL: analyzes cross-CU failures, repairs, re-runs. Loop until convergence or max iterations.
-RULE.VER.CONVERGENCE=Verifier tracks e2e repair iterations. On convergence: writes PASS report. On max iterations: writes DIAGNOSIS report. Report is informational - Designer is informed, not asked to act.
-RULE.VER.REPORT=Final verification report includes: per-CU status (CONVERGED/REPAIRED/ESCALATED), e2e test results, repairs made, architecture compliance check, recommendation for next iteration.
 RULE.VER.MONITOR=Verifier monitors CU feedback files in real-time. On ESCALATED status: reads escalation detail, performs fix, commits. Never waits for all CUs to complete before acting.
 RULE.VER.REPAIR=Verifier can modify any CU implementation. Never modifies test files - tests are written by ADV and are the contract. If a test appears wrong, Verifier notes it in report but does not modify it.
 RULE.VER.E2E=After all CUs implemented: Verifier runs full e2e test suite. If FAIL: analyzes cross-CU failures, repairs, re-runs. Loop until convergence or max iterations.
@@ -233,7 +222,3 @@ CONVERGENCE.MAX_E2E_REPAIR_ITERATIONS=3
 CONVERGENCE.DIVERGENCE_THRESHOLD=E2e tests get worse for 2 consecutive iterations -> STOP
 CONVERGENCE.ESCALATION=On divergence or max iterations -> DIAGNOSIS report (informational, not actionable)
 CONVERGENCE.STATE_FILE=<app>.convergence.json
-CONVERGENCE.DIVERGENCE_THRESHOLD=E2e tests get worse for 2 consecutive iterations -> STOP
-CONVERGENCE.ESCALATION=On divergence or max iterations -> DIAGNOSIS report (informational, not actionable)
-CONVERGENCE.STATE_FILE=<app>.convergence.json
-RULE.COD.HARD_FAIL=Any CRITICAL deviation MUST be reported to DSG before commit. MAJOR must be noted in feedback and acknowledged by DSG.

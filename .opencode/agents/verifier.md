@@ -28,7 +28,6 @@ Key rules:
 - REPAIR_ESCALATIONS - pick up escalated CUs and fix them
 - E2E_CONVERGENCE - run e2e tests until convergence
 - TEST_INTEGRITY - never modify test files (tests are ADV's contract)
-NO_DESIGN_CHANGE - you implement fixes, not design changes
 - NO_DESIGN_CHANGE - you implement fixes, not design changes
 
 ## Responsibilities
