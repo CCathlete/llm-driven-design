@@ -100,11 +100,6 @@ ESCALATION_REASON=<why you are blocked>
 ESCALATION_DETAIL=<detailed description of the issue>
 VERIFICATION_RESULT=PASSED|FAILED|NOT_RUN
 VERIFICATION_DETAILS=<test results summary>
-# (COMPLETED = CU done, ESCALATED = blocked, needs code lead)
-ESCALATION_REASON=<why you are blocked>
-ESCALATION_DETAIL=<detailed description of the issue>
-VERIFICATION_RESULT=PASSED|FAILED|NOT_RUN
-VERIFICATION_DETAILS=<test results summary>
 ```
 
 **Rules:**
@@ -119,8 +114,6 @@ VERIFICATION_DETAILS=<test results summary>
 - The code lead will pick up escalations and implement them
     - If STATUS=COMPLETED: your work is done, code lead will commit
     - If STATUS=ESCALATION: do NOT commit, code lead will implement and commit
-    - The code lead will pick up escalations and implement them
-- If STATUS=ESCALATION: do NOT commit, code lead will implement and commit
 
 ## Constraints
 
