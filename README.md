@@ -65,6 +65,8 @@ agent that reads this file at session start understands the LLMDD standard.
   Codebase                                                                     Codebase
 ```
 
+![LLMDD Team — The Triad](images/LLMDD-team-2.jpg)
+
 ---
 
 ## Pipeline Overview
@@ -113,6 +115,10 @@ produced by the **dtr-builder** tool in two modes:
 The DTR serves as a **coordinate system** — each CU can reference specific
 lines in the DTR for traceability.
 
+![DTR — Intuitive Overview](images/dtr-intuitive.jpg)
+
+![DTR — Technical Overview](images/dtr-technical.jpg)
+
 ---
 
 ### CU — Computational Unit
@@ -140,6 +146,12 @@ Create a sealed trait `Model` in `domain/models/Model.scala` with:
 - method `validate: Either[Error, Unit]`
 ```
 
+![CU — Intuitive Overview](images/cu-intuitive.jpg)
+
+![CU — Technical Overview](images/cu-technical.jpg)
+
+![CU — Technical Overview (continued)](images/cu-technical-2.jpg)
+
 ---
 
 ### ITR — Implementation Tensor
@@ -160,6 +172,10 @@ body (implementation content).
 
 **Feedback** lives in a parallel directory `itr-buffer/<app>.feedback/` with
 one `.feedback.txt` file per CU (see [Per-CU Feedback](#per-cu-feedback)).
+
+![ITR — Intuitive Overview](images/itr-intuitive.jpg)
+
+![ITR — Technical Overview](images/itr-technical.jpg)
 
 ---
 
