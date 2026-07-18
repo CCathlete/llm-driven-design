@@ -1,6 +1,6 @@
 name := "itr-compiler"
 organization := "itrcompiler"
-version := "0.1.0"
+version := "0.1.1"
 scalaVersion := "2.13.15"
 
 mainClass := Some("itrcompiler.control.entry_point.App")
