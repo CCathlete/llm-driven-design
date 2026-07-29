@@ -1,0 +1,29 @@
+CU_ID=cu-file-tracking-fix
+CODER_NAME=wave-runner
+DATE=2026-07-29T18:20:00.000000
+CLARITY_RATING=1
+AMBIGUOUS_LINES=all (frame had only "test" content)
+MISSING_CONTEXT=CU frame truncated — implemented based on code analysis
+TOO_MUCH_DETAIL=0
+ARCHITECTURE_DEVIATION=none
+ARCHITECTURE_DEVIATION.SEVERITY=NONE
+TIME_TAKEN_MINUTES=5
+AI_CREDITS_USED=0.0000
+COMMIT_MESSAGE=fix(wave-command): wire stash_ref through to run_coder for isolated per-CU file tracking in parallel execution
+STATUS=IMPLEMENTED
+ESCALATION_REASON=resolved by code lead
+ESCALATION_DETAIL=code lead analyzed the codebase, identified file tracking issues, and implemented the fix
+VERIFICATION_RESULT=PASS
+VERIFICATION_DETAILS=syntax OK, stash_ref now piped from run_wave_parallel to run_coder, git diff uses stash_ref for isolated tracking
+
+Implementation details:
+- Added `stash_ref: str = ""` parameter to `run_coder()` function signature
+- Updated `run_coder()` docstring to describe stash_ref usage
+- Changed `git diff --name-only` to conditionally use `git diff --name-only <stash_ref>` when stash_ref is provided, isolating per-CU file changes from other parallel CUs
+- In `run_wave_parallel()`, passed the captured `stash_ref` (git HEAD before dispatch) to `run_coder()` via `loop.run_in_executor()`
+
+Changes made to wave-command/run-waves.py:
+1. Line 768-769: Added `stash_ref` parameter to `run_coder()` signature
+2. Lines 770-774: Extended docstring explaining stash_ref isolation
+3. Lines 860-864: Conditional git diff args using stash_ref when available
+4. Line 1171: Passed `stash_ref` to `run_coder()` in `run_wave_parallel()`

@@ -1,5 +1,5 @@
 WAVE=1
-DATE=2026-07-29T18:00:00
+DATE=2026-07-29T18:20:00
 VERIFIER=code-lead (verifier)
 STATUS=CONVERGED
 APP=wave-command
@@ -7,8 +7,8 @@ APP=wave-command
 # ──────────────────────────────────────────────
 # WAVE 1 SUMMARY
 # ──────────────────────────────────────────────
-WAVE.DESCRIPTION=Parallel Wave Execution with ThreadPoolExecutor + asyncio + Monadic Result
-WAVE.CUS=cu-parallel-fix
+WAVE.DESCRIPTION=Parallel Wave Execution + Per-CU File Tracking Fix
+WAVE.CUS=cu-parallel-fix, cu-file-tracking-fix
 TARGET_FILE=wave-command/run-waves.py
 
 # ──────────────────────────────────────────────
@@ -20,6 +20,12 @@ CU-PARALLEL-FIX.VERIFICATION=All 7 operations verified: imports, monad types, _s
 CU-PARALLEL-FIX.ARCHITECTURE_DEVIATION=none
 CU-PARALLEL-FIX.ARCHITECTURE_DEVIATION.SEVERITY=NONE
 
+CU-FILE-TRACKING-FIX.STATUS=IMPLEMENTED
+CU-FILE-TRACKING-FIX.DESCRIPTION=Wire stash_ref through to run_coder for isolated per-CU file tracking in parallel execution
+CU-FILE-TRACKING-FIX.VERIFICATION=stash_ref parameter added to run_coder, git diff conditionally uses stash_ref, stash_ref captured before parallel dispatch and passed to run_coder
+CU-FILE-TRACKING-FIX.ARCHITECTURE_DEVIATION=none
+CU-FILE-TRACKING-FIX.ARCHITECTURE_DEVIATION.SEVERITY=NONE
+
 # ──────────────────────────────────────────────
 # VERIFICATION CHECKS
 # ──────────────────────────────────────────────
@@ -28,6 +34,8 @@ CHECK.DRY_RUN=PASS — dry-run executes correctly with 4 waves (14 CUs total)
 CHECK.NO_SEQ_FOR=PASS — no sequential for-loop over run_coder detected
 CHECK.THREADPOOL=PASS — ThreadPoolExecutor present in run_wave_parallel
 CHECK.ASYNCIO_RUN=PASS — asyncio.run drives main entry point
+CHECK.STASH_REF=PASS — stash_ref captured before parallel dispatch and passed to run_coder
+CHECK.ISOLATED_DIFF=PASS — git diff --name-only uses stash_ref when available to isolate per-CU changes
 
 # ──────────────────────────────────────────────
 # DETAILED CHANGE VERIFICATION
@@ -60,7 +68,11 @@ CHANGE.OP06.VERIFIED=PRESENT
 CHANGE.OP07=run_wave_parallel async coroutine with ThreadPoolExecutor parallel dispatch + per-CU lead checks; main_async async entry point; main delegates via asyncio.run (lines 1114-1403)
 CHANGE.OP07.VERIFIED=PRESENT
 
-CHANGE.TOTAL=7/7 PRESENT
+# Operation 8: Add stash_ref parameter to run_coder for per-CU file tracking
+CHANGE.OP08=Added stash_ref: str = "" parameter to run_coder; conditional git diff --name-only <stash_ref> when stash_ref provided; captured git HEAD before parallel dispatch and passed to run_coder
+CHANGE.OP08.VERIFIED=PRESENT
+
+CHANGE.TOTAL=8/8 PRESENT
 
 # ──────────────────────────────────────────────
 # E2E TEST RESULTS
@@ -70,8 +82,10 @@ E2E.TEST2=PASS — Dry run with 4 waves / 14 CUs
 E2E.TEST3=PASS — No sequential for-loop over run_coder
 E2E.TEST4=PASS — ThreadPoolExecutor present
 E2E.TEST5=PASS — asyncio.run present
+E2E.TEST6=PASS — stash_ref present for per-CU file tracking isolation
+E2E.TEST7=PASS — git diff conditionally uses stash_ref
 
-E2E.RESULT=ALL PASS (5/5 checks)
+E2E.RESULT=ALL PASS (7/7 checks)
 
 # ──────────────────────────────────────────────
 # ARCHITECTURE COMPLIANCE
@@ -84,4 +98,4 @@ ARCH.NO_CROSS_LAYER=COMPLIANT — no cross-layer dependencies
 # ──────────────────────────────────────────────
 # RECOMMENDATION
 # ──────────────────────────────────────────────
-RECOMMENDATION=cu-parallel-fix is fully converged. All 7 operations verified present. File compiles and dry-run succeeds. Ready for commit.
+RECOMMENDATION=Both CUs are fully converged. All 8 operations verified present. File compiles and dry-run succeeds. Ready for commit.
