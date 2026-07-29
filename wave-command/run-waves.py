@@ -765,8 +765,14 @@ def _usage_line(usage: TokenUsage, colour: str = "") -> str:
 
 def run_coder(cu_file: Path, cu_id: str, fallback_chain: ModelFallbackChain,
               feedback_dir: Path, log_dir: Path, timeout: int,
-              project_dir: Path, coder_colour: tuple[str, str]) -> Ok[CoderOutput] | Err[Exception]:
-    """Run coder with model fallback. Returns Ok(CoderOutput) or Err."""
+              project_dir: Path, coder_colour: tuple[str, str],
+              stash_ref: str = "") -> Ok[CoderOutput] | Err[Exception]:
+    """Run coder with model fallback. Returns Ok(CoderOutput) or Err.
+
+    If stash_ref is provided (git HEAD hash captured before parallel dispatch),
+    file tracking uses `git diff --name-only <stash_ref>` to isolate changes
+    made during this CU's execution from other parallel CUs.
+    """
     colour_code, colour_label = coder_colour
     prefix = f"[{cu_id}]"
     combined_usage = TokenUsage()
@@ -851,8 +857,12 @@ def run_coder(cu_file: Path, cu_id: str, fallback_chain: ModelFallbackChain,
             combined_usage.session_id = attempt_usage.session_id
         combined_usage.model = model
 
-        # Git diff from project root
-        match _git_run("diff", "--name-only", cwd=project_dir):
+        # Git diff from project root — use stash_ref to isolate per-CU changes
+        # when running in parallel (avoids capturing changes from other CUs)
+        diff_args = ["diff", "--name-only"]
+        if stash_ref:
+            diff_args.append(stash_ref)
+        match _git_run(*diff_args, cwd=project_dir):
             case Ok(diff_out):
                 files_changed = diff_out.splitlines() if diff_out else []
             case Err(_):
@@ -1158,6 +1168,7 @@ async def run_wave_parallel(
                 cu_file, cu_id, fallback_chain,
                 feedback_dir, log_dir, cu_timeout,
                 project_dir, coder_colour,
+                stash_ref,
             )
             coder_futures.append((cu_id, cu_file, future))
 
