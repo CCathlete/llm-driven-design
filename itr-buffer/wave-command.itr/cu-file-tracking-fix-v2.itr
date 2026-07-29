@@ -1,0 +1,118 @@
+# CU-ID: cu-file-tracking-fix-v2
+# CU-TYPE: RegularCU
+# TIMESTAMP: 2026-07-29T16:31:13.500519036Z
+# DTR-COORDINATES: FILE.wave-command/run-waves.py
+
+# CU: Post-lead file tracking — update files_changed after lead commits
+
+File: wave-command/run-waves.py
+
+## Bug
+
+After per-CU leads (inside run_wave_parallel) and the wave-level lead (run_code_lead
+in main_async) commit changes, `wave_files_changed` is never updated. The convergence
+file saves `files_changed: {}` even when the lead modified files.
+
+## Fix (2 operations, apply in order)
+
+### OPERATION 1: Update file lists after per-CU leads in run_wave_parallel
+
+Find this block (lines 1191–1210):
+```
+    # Per-CU lead checks (sequential after all coders done — avoids file conflicts)
+    for cu_id, cu_file, _ in coder_futures:
+        if no_per_cu_lead:
+            continue
+        match _read_file_text(feedback_dir / f"{cu_id}.feedback.txt"):
+            case Ok(text) if "STATUS=ESCALATION" in text:
+                _warn(f"Escalation detected: {cu_id}")
+                match run_per_cu_lead(
+                    cu_id, cu_file, lead_model, max_fix_iterations,
+                    feedback_dir, log_dir, lead_timeout, project_dir,
+                ):
+                    case Ok((lead_rc, lead_usage)):
+                        tracker.accumulate(lead_usage)
+                        wc.coders[f"{cu_id}-lead"] = lead_usage
+                    case Err(e):
+                        _fail(f"Lead failed on {cu_id}: {e}")
+            case _:
+                pass
+
+    return wave_files_changed, all_passed
+```
+
+Replace with:
+```
+    # Per-CU lead checks (sequential after all coders done — avoids file conflicts)
+    escalated_cus: list[str] = []
+    for cu_id, cu_file, _ in coder_futures:
+        if no_per_cu_lead:
+            continue
+        match _read_file_text(feedback_dir / f"{cu_id}.feedback.txt"):
+            case Ok(text) if "STATUS=ESCALATION" in text:
+                escalated_cus.append(cu_id)
+                _warn(f"Escalation detected: {cu_id}")
+                match run_per_cu_lead(
+                    cu_id, cu_file, lead_model, max_fix_iterations,
+                    feedback_dir, log_dir, lead_timeout, project_dir,
+                ):
+                    case Ok((lead_rc, lead_usage)):
+                        tracker.accumulate(lead_usage)
+                        wc.coders[f"{cu_id}-lead"] = lead_usage
+                    case Err(e):
+                        _fail(f"Lead failed on {cu_id}: {e}")
+            case _:
+                pass
+
+    # After all per-CU leads, recompute files changed from pre-wave ref.
+    # This captures files committed by leads (coders' files_changed is empty
+    # when the lead implements the CU instead of the coder).
+    if escalated_cus:
+        match _git_run("diff", "--name-only", stash_ref, cwd=project_dir):
+            case Ok(diff_out):
+                all_changed = diff_out.splitlines() if diff_out else []
+                for cu_id in escalated_cus:
+                    wave_files_changed[cu_id] = all_changed
+            case Err(_):
+                pass
+
+    return wave_files_changed, all_passed
+```
+
+### OPERATION 2: Capture pre-wave ref and update files after wave lead in main_async
+
+#### 2a: Capture pre-wave HEAD ref
+
+After line 1315 (`continue`) and BEFORE line 1317 (`_header(f"Running...")`), insert:
+```
+        # Capture pre-wave HEAD ref for accurate file tracking after wave lead commits
+        match _git_run("rev-parse", "HEAD", cwd=project_dir):
+            case Ok(ref):
+                pre_wave_ref = ref
+            case Err(_):
+                _warn(f"Wave {wave_num}: could not capture HEAD ref; file tracking may be inaccurate")
+                pre_wave_ref = None
+```
+
+#### 2b: Merge wave lead's files into wave_files_changed
+
+After line 1356 (`lead_ok = lead_rc == 0`) and BEFORE line 1358 (`escalations = ...`), insert:
+```
+        # After wave lead, merge files committed by wave lead into file tracking
+        if pre_wave_ref:
+            match _git_run("diff", "--name-only", pre_wave_ref, cwd=project_dir):
+                case Ok(diff_out):
+                    lead_files = set(diff_out.splitlines() if diff_out else [])
+                    if lead_files:
+                        for cu_id in wave_files_changed:
+                            existing = set(wave_files_changed[cu_id])
+                            wave_files_changed[cu_id] = list(existing | lead_files)
+                case Err(_):
+                    pass
+```
+
+## Verification
+
+1. Op 1: `escalated_cus` list tracks which CUs had leads; `git diff --name-only stash_ref` captures actual files after lead commits
+2. Op 2: `pre_wave_ref` captures HEAD before wave work; after wave lead, files are merged into tracking
+3. Convergence file saves accurate `files_changed` even when lead implements the CU

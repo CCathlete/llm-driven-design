@@ -1,0 +1,7 @@
+[
+  {
+    "wave": 1,
+    "description": "Fix post-lead file tracking — update files_changed after lead commits",
+    "cus": ["cu-file-tracking-fix-v2"]
+  }
+]
