@@ -14,6 +14,11 @@ import sys
 import threading
 from datetime import datetime
 from pathlib import Path
+import asyncio
+import concurrent.futures
+import typing
+from dataclasses import dataclass
+from typing import Generic, TypeVar, Any
 
 
 # ── Defaults ───────────────────────────────────────────────────────
@@ -28,6 +33,97 @@ DEFAULT_MAX_FIX_ITERATIONS = 3
 DEFAULT_CODER_FALLBACKS = [
     "google/gemma-4-31b-it",
 ]
+
+# ── Monadic Result Type ────────────────────────────────────────────
+
+T = TypeVar("T")
+E_co = TypeVar("E_co", bound=Exception, covariant=True)
+
+
+@dataclass(frozen=True)
+class Ok(Generic[T]):
+    """Success monad — contains a value."""
+    value: T
+
+
+@dataclass(frozen=True)
+class Err(Generic[E_co]):
+    """Failure monad — contains an exception."""
+    error: E_co
+
+
+@dataclass(frozen=True)
+class CoderOutput:
+    """Result of a single coder run."""
+    rc: int
+    files_changed: list[str]
+    usage: "TokenUsage"
+    model_used: str
+
+
+# ── I/O Boundary — Monadic Result Wrappers (only try/except in the tool) ──
+
+def _popen(cmd: list[str], cwd: Path) -> Ok[subprocess.Popen] | Err[Exception]:
+    """Spawn subprocess. Returns Ok(proc) or Err(FileNotFoundError|OSError)."""
+    try:
+        return Ok(subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=cwd
+        ))
+    except (FileNotFoundError, OSError) as e:
+        return Err(e)
+
+
+def _open_file(path: Path, mode: str = "r") -> Ok[typing.IO] | Err[Exception]:
+    """Open a file. Returns Ok(fh) or Err(OSError|IOError)."""
+    try:
+        return Ok(open(path, mode))
+    except (OSError, IOError) as e:
+        return Err(e)
+
+
+def _git_run(*args: str, cwd: Path) -> Ok[str] | Err[Exception]:
+    """Run a git command. Returns Ok(stdout) or Err."""
+    try:
+        r = subprocess.run(
+            ["git", *args], capture_output=True, text=True, cwd=cwd, timeout=30
+        )
+        return Ok(r.stdout.strip())
+    except (subprocess.TimeoutExpired, subprocess.CalledProcessError, OSError) as e:
+        return Err(e)
+
+
+def _read_file_text(path: Path) -> Ok[str] | Err[Exception]:
+    """Read file as text. Returns Ok(text) or Err."""
+    try:
+        return Ok(path.read_text(errors="replace"))
+    except (OSError, IOError) as e:
+        return Err(e)
+
+
+def _write_file_text(path: Path, text: str) -> Ok[None] | Err[Exception]:
+    """Write text to file. Returns Ok(None) or Err."""
+    try:
+        path.write_text(text)
+        return Ok(None)
+    except (OSError, IOError) as e:
+        return Err(e)
+
+
+# ── Future-safe Monadic Wrapper ───────────────────────────────────
+
+async def future_result(awaitable: typing.Awaitable) -> Ok | Err:
+    """Await an awaitable and wrap its result in Ok/Err.
+
+    This is the BRIDGE between asyncio Futures (which raise exceptions
+    on await when the wrapped callable fails) and the Result monad.
+    It contains the ONE try/except in the async orchestration layer.
+    Every caller uses match/case on the returned Ok|Err.
+    """
+    try:
+        return Ok(await awaitable)
+    except Exception as e:
+        return Err(e)
+
 
 # ── Refusal / Error Detection ───────────────────────────────────────
 
@@ -507,24 +603,19 @@ def git_stash_ref(work_dir: Path) -> str:
 
 def _stream_process_json(cmd: list[str], log_fh, colour: str, prefix: str,
                          timeout: int, work_dir: Path,
-                         token_usage: TokenUsage) -> int:
+                         token_usage: TokenUsage) -> Ok[int] | Err[Exception]:
     """Stream JSON events with activity-based timeout.
-    
-    Timeout triggers when no activity (no events) for `timeout` seconds.
-    This means a long-running but active coder session won't be killed —
-    only stuck/idle sessions timeout.
+    Returns Ok(exit_code) or Err(FileNotFoundError|OSError|TimeoutError).
     """
-    try:
-        proc = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            cwd=work_dir,
-        )
-    except FileNotFoundError:
-        _fail(f"Command not found: {cmd[0]}")
-        return 1
+    match _popen(cmd, cwd=work_dir):
+        case Ok(proc):
+            pass
+        case Err(e):
+            _fail(f"Command not found: {cmd[0]}")
+            return Err(e)
 
     _done = threading.Event()
-    last_activity = [datetime.now()]  # mutable for thread access
+    last_activity = [datetime.now()]
 
 
     def _reader():
@@ -571,18 +662,18 @@ def _stream_process_json(cmd: list[str], log_fh, colour: str, prefix: str,
 
     while not _done.is_set():
         idle_secs = (datetime.now() - last_activity[0]).total_seconds()
-        
+
         # Kill if no activity for full timeout
         if idle_secs > timeout:
             proc.kill()
             t.join(timeout=5)
             _fail(f"Timed out — no activity for {timeout}s")
             log_fh.write(f"\n[TIMED OUT — no activity for {timeout}s]\n")
-            return 124
+            return Err(TimeoutError(f"No activity for {timeout}s"))
         _done.wait(timeout=0.5)
 
     proc.wait()
-    return proc.returncode
+    return Ok(proc.returncode)
 
 
 def _format_event(ev: dict, colour: str) -> str | None:
@@ -674,13 +765,15 @@ def _usage_line(usage: TokenUsage, colour: str = "") -> str:
 
 def run_coder(cu_file: Path, cu_id: str, fallback_chain: ModelFallbackChain,
               feedback_dir: Path, log_dir: Path, timeout: int,
-              project_dir: Path, coder_colour: tuple[str, str]) -> tuple[int, list[str], TokenUsage, str]:
-    """Run coder with model fallback. Returns (rc, files, usage, model_used)."""
+              project_dir: Path, coder_colour: tuple[str, str]) -> Ok[CoderOutput] | Err[Exception]:
+    """Run coder with model fallback. Returns Ok(CoderOutput) or Err."""
     colour_code, colour_label = coder_colour
     prefix = f"[{cu_id}]"
     combined_usage = TokenUsage()
     model_used = ""
-    
+    files_changed: list[str] = []
+    stream_rc = 1
+
     prompt = (
         f"Implement ONLY CU {cu_id}. Rules:\n"
         f"1. Read the CU frame file: {cu_file}\n"
@@ -694,18 +787,16 @@ def run_coder(cu_file: Path, cu_id: str, fallback_chain: ModelFallbackChain,
         f"Your scope is EXACTLY one CU: {cu_id}. Nothing else."
     )
 
-    print(f"  {colour_code}{C.BOLD}▸{C.RESET} {colour_code}{C.BOLD}CU {cu_id}{C.RESET}"
-          f" {C.DIM}→ {cu_file.name}{C.RESET}  {C.DIM}({colour_label}){C.RESET}")
-    print(f"    {C.DIM}{'─' * 55}{C.RESET}")
+    print(f"  {colour_code}{C.BOLD}\u25b8 {colour_code}{C.BOLD}CU {cu_id}{C.RESET}"
+          f" {C.DIM}\u2192 {cu_file.name}{C.RESET}  {C.DIM}({colour_label}){C.RESET}")
+    print(f"    {C.DIM}{'\u2500' * 55}{C.RESET}")
 
     for model_idx, model in enumerate(fallback_chain):
-        # Use a unique log file per attempt
         log_file = log_dir / f"{cu_id}.attempt-{model_idx}.log"
         attempt_usage = TokenUsage()
-        
+
         if model_idx > 0:
             _warn(f"Fallback attempt {model_idx}: trying {C.BOLD}{model}{C.RESET}")
-            # Reset git stash ref for each attempt
             print(f"    {C.DIM}Trying fallback model: {model}{C.RESET}")
 
         cmd = [
@@ -718,15 +809,36 @@ def run_coder(cu_file: Path, cu_id: str, fallback_chain: ModelFallbackChain,
             prompt,
         ]
 
-        with open(log_file, "w") as log_fh:
-            rc = _stream_process_json(cmd, log_fh, colour_code, prefix,
-                                      timeout, project_dir, attempt_usage)
+        # Open log file via monadic wrapper
+        match _open_file(log_file, "w"):
+            case Ok(log_fh):
+                match _stream_process_json(cmd, log_fh, colour_code, prefix,
+                                           timeout, project_dir, attempt_usage):
+                    case Ok(rc):
+                        stream_rc = rc
+                    case Err(e):
+                        log_fh.close()
+                        return Err(e)
+                log_fh.close()
+            case Err(e):
+                return Err(e)
 
-        # Check for issues
-        is_refusal = _detect_refusal(log_file)
-        is_error = _detect_error(log_file) if rc == 0 else False
-        is_timeout = rc == 124
-        
+        # Check for issues via monadic file read
+        match _read_file_text(log_file):
+            case Ok(text):
+                is_refusal = any(p.lower() in text.lower() for p in _REFUSAL_PATTERNS)
+                is_error_lines = any(
+                    p in line for line in text.splitlines()
+                    for p in _ERROR_PATTERNS
+                    if "toolResult" not in line and "tool_result" not in line
+                )
+            case Err(_):
+                is_refusal = False
+                is_error_lines = False
+
+        is_error = is_error_lines if stream_rc == 0 else False
+        is_timeout = stream_rc == 124
+
         # Combine usage
         combined_usage.input += attempt_usage.input
         combined_usage.output += attempt_usage.output
@@ -739,12 +851,16 @@ def run_coder(cu_file: Path, cu_id: str, fallback_chain: ModelFallbackChain,
             combined_usage.session_id = attempt_usage.session_id
         combined_usage.model = model
 
-        files_changed = git_diff_names(project_dir, git_stash_ref(project_dir))
-        
+        # Git diff from project root
+        match _git_run("diff", "--name-only", cwd=project_dir):
+            case Ok(diff_out):
+                files_changed = diff_out.splitlines() if diff_out else []
+            case Err(_):
+                files_changed = []
+
         # Determine if this attempt succeeded
-        # Files changed alone isn't enough - coder might have modified wrong files
-        succeeded = rc == 0 and not is_refusal and not is_error
-        
+        succeeded = stream_rc == 0 and not is_refusal and not is_error
+
         if succeeded:
             model_used = model
             if model_idx > 0:
@@ -754,15 +870,12 @@ def run_coder(cu_file: Path, cu_id: str, fallback_chain: ModelFallbackChain,
                 _success(f"CU {cu_id} completed {C.DIM}({len(files_changed)} files){C.RESET}")
             break
         else:
-            reason = "refused" if is_refusal else ("error" if is_error else ("timeout" if is_timeout else f"exit {rc}"))
+            reason = "refused" if is_refusal else ("error" if is_error else ("timeout" if is_timeout else f"exit {stream_rc}"))
             _warn(f"Model {C.BOLD}{model}{C.RESET} failed: {reason}")
             if model_idx == len(fallback_chain) - 1:
-                # Last model also failed — write escalation feedback
                 model_used = model
                 _fail(f"CU {cu_id} failed on all {len(fallback_chain)} model(s)")
-                
-                # Write escalation feedback so code lead can pick it up
-                feedback_file = feedback_dir / f"{cu_id}.feedback.txt"
+
                 feedback_content = f"""CU_ID={cu_id}
 CODER_NAME=wave-runner
 DATE={datetime.now().isoformat()}
@@ -777,11 +890,15 @@ AI_CREDITS_USED={combined_usage.cost:.4f}
 COMMIT_MESSAGE=N/A - CU not implemented
 STATUS=ESCALATION
 ESCALATION_REASON=all models failed to implement CU
-ESCALATION_DETAIL=codestral refused, gemini failed with exit 1, gemma timed out
+ESCALATION_DETAIL=all {len(fallback_chain)} model(s) failed
 VERIFICATION_RESULT=NOT_RUN
 VERIFICATION_DETAILS=CU not implemented
 """
-                feedback_file.write_text(feedback_content)
+                match _write_file_text(feedback_dir / f"{cu_id}.feedback.txt", feedback_content):
+                    case Ok(_):
+                        pass
+                    case Err(e):
+                        _warn(f"Failed to write escalation feedback: {e}")
                 break
 
     line = _usage_line(combined_usage)
@@ -790,15 +907,23 @@ VERIFICATION_DETAILS=CU not implemented
 
     if files_changed:
         for fc in files_changed:
-            print(f"    {colour_code}├{C.RESET} {fc}")
+            print(f"    {colour_code}\u251c{C.RESET} {fc}")
 
-    # Log model used
     if model_used:
         log_model_info = log_dir / f"{cu_id}.model-used.txt"
-        log_model_info.write_text(f"model={model_used}\nfallback_level={model_idx}\n")
+        match _write_file_text(log_model_info, f"model={model_used}\nfallback_level={model_idx}\n"):
+            case Ok(_):
+                pass
+            case Err(e):
+                _warn(f"Failed to write model info: {e}")
 
     print()
-    return rc, files_changed, combined_usage, model_used
+    return Ok(CoderOutput(
+        rc=stream_rc,
+        files_changed=files_changed,
+        usage=combined_usage,
+        model_used=model_used,
+    ))
 
 
 def run_code_lead(wave: int, num_waves: int, model: str, max_iterations: int,
@@ -848,9 +973,20 @@ def run_code_lead(wave: int, num_waves: int, model: str, max_iterations: int,
     print(f"  {colour}{C.BOLD}▸{C.RESET} {colour}{C.BOLD}Code Lead — Wave {wave} review{C.RESET}")
     print(f"    {C.DIM}{'─' * 55}{C.RESET}")
 
-    with open(log_file, "w") as log_fh:
-        rc = _stream_process_json(cmd, log_fh, colour, prefix,
-                                  timeout, project_dir, usage)
+    match _open_file(log_file, "w"):
+        case Ok(log_fh):
+            match _stream_process_json(cmd, log_fh, colour, prefix,
+                                      timeout, project_dir, usage):
+                case Ok(rc):
+                    pass
+                case Err(e):
+                    log_fh.close()
+                    _fail(f"Lead review failed: {e}")
+                    return 1, usage
+            log_fh.close()
+        case Err(e):
+            _fail(f"Cannot open log: {e}")
+            return 1, usage
 
     if rc == 0:
         _success(f"Lead review completed")
@@ -868,8 +1004,9 @@ def run_code_lead(wave: int, num_waves: int, model: str, max_iterations: int,
 
 def run_per_cu_lead(cu_id: str, cu_file: Path, model: str, max_iterations: int,
                     feedback_dir: Path, log_dir: Path, timeout: int,
-                    project_dir: Path) -> tuple[int, TokenUsage]:
-    """Run code lead for a single escalated CU immediately."""
+                    project_dir: Path) -> Ok[tuple[int, TokenUsage]] | Err[Exception]:
+    """Run code lead for a single escalated CU immediately.
+    Returns Ok((rc, usage)) or Err."""
     log_file = log_dir / f"lead-{cu_id}.log"
     colour = C.BR_MAG
     prefix = f"[LEAD-{cu_id}]"
@@ -895,30 +1032,42 @@ def run_per_cu_lead(cu_id: str, cu_file: Path, model: str, max_iterations: int,
         prompt,
     ]
 
-    print(f"  {colour}{C.BOLD}▸{C.RESET} {colour}{C.BOLD}Lead — fixing {cu_id}{C.RESET}")
-    print(f"    {C.DIM}{'─' * 55}{C.RESET}")
+    print(f"  {colour}{C.BOLD}\u25b8 {colour}{C.BOLD}Lead \u2014 fixing {cu_id}{C.RESET}")
+    print(f"    {C.DIM}{'\u2500' * 55}{C.RESET}")
 
-    with open(log_file, "w") as log_fh:
-        rc = _stream_process_json(cmd, log_fh, colour, prefix,
-                                  timeout, project_dir, usage)
+    match _open_file(log_file, "w"):
+        case Ok(log_fh):
+            match _stream_process_json(cmd, log_fh, colour, prefix,
+                                      timeout, project_dir, usage):
+                case Ok(rc):
+                    pass
+                case Err(e):
+                    log_fh.close()
+                    return Err(e)
+            log_fh.close()
+        case Err(e):
+            return Err(e)
 
-    if rc == 0:
-        _success(f"Lead fixed {cu_id}")
-    else:
-        _fail(f"Lead failed on {cu_id} (exit {rc})")
+    match rc:
+        case 0:
+            _success(f"Lead fixed {cu_id}")
+        case _:
+            _fail(f"Lead failed on {cu_id} (exit {rc})")
 
     line = _usage_line(usage)
     if line:
         print(line)
     print()
-    return rc, usage
+    return Ok((rc, usage))
 
 def _is_escalated(cu_id: str, feedback_dir: Path) -> bool:
     """Check if a specific CU has ESCALATION status."""
     fb = feedback_dir / f"{cu_id}.feedback.txt"
-    if fb.is_file():
-        return "STATUS=ESCALATION" in fb.read_text(errors="replace")
-    return False
+    match _read_file_text(fb):
+        case Ok(text):
+            return "STATUS=ESCALATION" in text
+        case Err(_):
+            return False
 
 
 # ── Escalation check ───────────────────────────────────────────────
@@ -962,13 +1111,100 @@ def update_convergence(path: Path, wave_num: int, wave_cus: list[str],
     save_convergence(path, data)
 
 
-# ── Main ───────────────────────────────────────────────────────────
+# ── Parallel wave execution ──────────────────────────────────────
 
-def main(argv=None):
-    args = parse_args(argv)
-    if args.no_color:
-        C.disable()
+async def run_wave_parallel(
+    cu_files: list[tuple[str, Path]],
+    wc: WaveCredits,
+    tracker: CreditTracker,
+    feedback_dir: Path,
+    log_dir: Path,
+    project_dir: Path,
+    coder_model: str,
+    coder_fallbacks: list[str],
+    cu_timeout: int,
+    lead_model: str,
+    lead_timeout: int,
+    max_fix_iterations: int,
+    no_per_cu_lead: bool,
+) -> tuple[dict[str, list[str]], bool]:
+    """Run all CUs in a wave in parallel via ThreadPoolExecutor.
 
+    Returns (wave_files_changed, all_passed).
+    No try/except in this function — all error handling via Result monad + match/case.
+    """
+    wave_files_changed: dict[str, list[str]] = {}
+    all_passed = True
+    loop = asyncio.get_event_loop()
+
+    # Capture git HEAD reference ONCE before parallel dispatch
+    match _git_run("rev-parse", "HEAD", cwd=project_dir):
+        case Ok(stash_ref):
+            pass
+        case Err(e):
+            _fail(f"Cannot get git HEAD: {e}")
+            return {}, False
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(cu_files)) as pool:
+        # Dispatch all coders in parallel
+        coder_futures: list[tuple[str, Path, asyncio.Future]] = []
+        for idx, (cu_id, cu_file) in enumerate(cu_files):
+            coder_colour = CODER_COLOURS[idx % len(CODER_COLOURS)]
+            fallback_chain = ModelFallbackChain(coder_model, coder_fallbacks)
+
+            future = loop.run_in_executor(
+                pool,
+                run_coder,
+                cu_file, cu_id, fallback_chain,
+                feedback_dir, log_dir, cu_timeout,
+                project_dir, coder_colour,
+            )
+            coder_futures.append((cu_id, cu_file, future))
+
+        # Await all coders with monadic wrapping
+        for cu_id, cu_file, future in coder_futures:
+            match await future_result(future):
+                case Ok(CoderOutput(rc=rc, files_changed=files, usage=usage, model_used=model)):
+                    wave_files_changed[cu_id] = files
+                    wc.coders[cu_id] = usage
+                    tracker.accumulate(usage)
+
+                    if rc != 0:
+                        all_passed = False
+
+                case Err(e):
+                    _fail(f"CU {cu_id} crashed: {e}")
+                    wave_files_changed[cu_id] = []
+                    all_passed = False
+
+    # Per-CU lead checks (sequential after all coders done — avoids file conflicts)
+    for cu_id, cu_file, _ in coder_futures:
+        if no_per_cu_lead:
+            continue
+        match _read_file_text(feedback_dir / f"{cu_id}.feedback.txt"):
+            case Ok(text) if "STATUS=ESCALATION" in text:
+                _warn(f"Escalation detected: {cu_id}")
+                match run_per_cu_lead(
+                    cu_id, cu_file, lead_model, max_fix_iterations,
+                    feedback_dir, log_dir, lead_timeout, project_dir,
+                ):
+                    case Ok((lead_rc, lead_usage)):
+                        tracker.accumulate(lead_usage)
+                        wc.coders[f"{cu_id}-lead"] = lead_usage
+                    case Err(e):
+                        _fail(f"Lead failed on {cu_id}: {e}")
+            case _:
+                pass
+
+    return wave_files_changed, all_passed
+
+
+# ── Async entry point ────────────────────────────────────────────
+
+async def main_async(args: argparse.Namespace) -> None:
+    """Async entry point — drives wave execution.
+    No try/except in this function — all error handling via match/case on Result monad.
+    """
     itr_path = Path(args.itr).resolve()
     if not itr_path.is_dir():
         _fail(f"ITR path does not exist: {itr_path}")
@@ -977,11 +1213,10 @@ def main(argv=None):
     app_name = args.app
     work_dir = itr_path.parent
 
-    # Resolve project root: --project flag, or auto-detect from .opencode/agents/
+    # Resolve project root
     if args.project:
         project_dir = Path(args.project).resolve()
     else:
-        # Walk up from cwd, then ITR parent, looking for .opencode/agents/
         project_dir = None
         for start in [Path.cwd(), work_dir.resolve()]:
             search = start
@@ -999,6 +1234,7 @@ def main(argv=None):
             _fail("Cannot find project root (.opencode/agents/ not found)")
             _info("Use --project to specify the project root")
             sys.exit(1)
+
     feedback_dir = work_dir / f"{app_name}.feedback"
     log_dir = work_dir / f"{app_name}.logs"
     convergence_file = work_dir / f"{app_name}.convergence.json"
@@ -1063,38 +1299,22 @@ def main(argv=None):
         if args.dry_run:
             print(f"  {C.DIM}[dry-run] Would execute:{C.RESET}")
             for cu_id, f in cu_files:
-                print(f"    {C.DIM}·{C.RESET} {C.BR_CYAN}{cu_id}{C.RESET} → {C.DIM}{f.name}{C.RESET}")
+                print(f"    {C.DIM}·{C.RESET} {C.BR_CYAN}{cu_id}{C.RESET} {C.DIM}→ {f.name}{C.RESET}")
             print()
             continue
 
-        _header(f"Running {len(cu_files)} coder(s)...")
+        _header(f"Running {len(cu_files)} coder(s) in parallel...")
         print()
-        wave_files_changed: dict[str, list[str]] = {}
-        all_passed = True
 
-        for idx, (cu_id, cu_file) in enumerate(cu_files):
-            coder_colour = CODER_COLOURS[idx % len(CODER_COLOURS)]
-            fallback_chain = ModelFallbackChain(args.coder_model, args.coder_fallbacks)
-            rc, files, usage, model_used = run_coder(
-                cu_file, cu_id, fallback_chain,
-                feedback_dir, log_dir, args.cu_timeout,
-                project_dir, coder_colour,
-            )
-            wave_files_changed[cu_id] = files
-            wc.coders[cu_id] = usage
-            tracker.accumulate(usage)
-
-            # Per-CU lead: immediately fix escalations
-            if not args.no_per_cu_lead and _is_escalated(cu_id, feedback_dir):
-                lead_rc, lead_usage = run_per_cu_lead(
-                    cu_id, cu_file, args.lead_model, args.max_fix_iterations,
-                    feedback_dir, log_dir, args.lead_timeout, project_dir,
-                )
-                tracker.accumulate(lead_usage)
-                wc.coders[f"{cu_id}-lead"] = lead_usage
-
-            if rc != 0:
-                all_passed = False
+        wave_files_changed, all_passed = await run_wave_parallel(
+            cu_files, wc, tracker,
+            feedback_dir, log_dir, project_dir,
+            args.coder_model, args.coder_fallbacks,
+            args.cu_timeout,
+            args.lead_model, args.lead_timeout,
+            args.max_fix_iterations,
+            args.no_per_cu_lead,
+        )
 
         # Wave file summary
         print(f"  {C.BOLD}Wave {wave_num} files changed:{C.RESET}")
@@ -1169,6 +1389,14 @@ def main(argv=None):
     print()
     _print_accumulated(tracker)
     print(_banner_line())
+
+
+def main(argv=None):
+    """Entry point — parses args and delegates to async main."""
+    args = parse_args(argv)
+    if args.no_color:
+        C.disable()
+    sys.exit(asyncio.run(main_async(args)))
 
 
 if __name__ == "__main__":

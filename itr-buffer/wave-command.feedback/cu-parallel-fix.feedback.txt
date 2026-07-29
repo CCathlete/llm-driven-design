@@ -1,0 +1,29 @@
+CU_ID=cu-parallel-fix
+CODER_NAME=wave-runner
+DATE=2026-07-29T18:00:00.000000
+CLARITY_RATING=9
+AMBIGUOUS_LINES=0
+MISSING_CONTEXT=0
+TOO_MUCH_DETAIL=0
+ARCHITECTURE_DEVIATION=none
+ARCHITECTURE_DEVIATION.SEVERITY=NONE
+TIME_TAKEN_MINUTES=15
+AI_CREDITS_USED=0.0000
+COMMIT_MESSAGE=feat(cu-parallel-fix): parallel wave execution with ThreadPoolExecutor + asyncio + monadic Result
+
+- Added imports: asyncio, concurrent.futures, typing, dataclass, Generic, TypeVar
+- Added monadic Result types (Ok/Err), CoderOutput dataclass
+- Added I/O monadic wrappers: _popen, _open_file, _git_run, _read_file_text, _write_file_text
+- Added future_result async bridge wrapping awaitable in Ok/Err
+- Refactored _stream_process_json to return Ok[int] | Err[Exception] using _popen
+- Refactored run_coder to return Ok[CoderOutput] | Err[Exception] with match/case throughout
+- Refactored _is_escalated to use _read_file_text monadic wrapper
+- Refactored run_per_cu_lead to return Ok[tuple[int, TokenUsage]] | Err[Exception]
+- Added run_wave_parallel async coroutine with ThreadPoolExecutor parallel dispatch
+- Added main_async async entry point, main delegates via asyncio.run
+- Fixed run_code_lead to handle monadic _stream_process_json return type
+STATUS=IMPLEMENTED
+ESCALATION_REASON=resolved
+ESCALATION_DETAIL=code lead implemented all 7 operations; all verification checks pass
+VERIFICATION_RESULT=PASS
+VERIFICATION_DETAILS=syntax OK, dry-run OK, no sequential for-loop over run_coder, ThreadPoolExecutor present, asyncio.run present
