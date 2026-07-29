@@ -1189,11 +1189,13 @@ async def run_wave_parallel(
                     all_passed = False
 
     # Per-CU lead checks (sequential after all coders done — avoids file conflicts)
+    escalated_cus: list[str] = []
     for cu_id, cu_file, _ in coder_futures:
         if no_per_cu_lead:
             continue
         match _read_file_text(feedback_dir / f"{cu_id}.feedback.txt"):
             case Ok(text) if "STATUS=ESCALATION" in text:
+                escalated_cus.append(cu_id)
                 _warn(f"Escalation detected: {cu_id}")
                 match run_per_cu_lead(
                     cu_id, cu_file, lead_model, max_fix_iterations,
@@ -1205,6 +1207,18 @@ async def run_wave_parallel(
                     case Err(e):
                         _fail(f"Lead failed on {cu_id}: {e}")
             case _:
+                pass
+
+    # After all per-CU leads, recompute files changed from pre-wave ref.
+    # This captures files committed by leads (coders' files_changed is empty
+    # when the lead implements the CU instead of the coder).
+    if escalated_cus:
+        match _git_run("diff", "--name-only", stash_ref, cwd=project_dir):
+            case Ok(diff_out):
+                all_changed = diff_out.splitlines() if diff_out else []
+                for cu_id in escalated_cus:
+                    wave_files_changed[cu_id] = all_changed
+            case Err(_):
                 pass
 
     return wave_files_changed, all_passed
@@ -1314,6 +1328,14 @@ async def main_async(args: argparse.Namespace) -> None:
             print()
             continue
 
+        # Capture pre-wave HEAD ref for accurate file tracking after wave lead commits
+        match _git_run("rev-parse", "HEAD", cwd=project_dir):
+            case Ok(ref):
+                pre_wave_ref = ref
+            case Err(_):
+                _warn(f"Wave {wave_num}: could not capture HEAD ref; file tracking may be inaccurate")
+                pre_wave_ref = None
+
         _header(f"Running {len(cu_files)} coder(s) in parallel...")
         print()
 
@@ -1354,6 +1376,18 @@ async def main_async(args: argparse.Namespace) -> None:
         )
         tracker.accumulate(lead_usage)
         lead_ok = lead_rc == 0
+
+        # After wave lead, merge files committed by wave lead into file tracking
+        if pre_wave_ref:
+            match _git_run("diff", "--name-only", pre_wave_ref, cwd=project_dir):
+                case Ok(diff_out):
+                    lead_files = set(diff_out.splitlines() if diff_out else [])
+                    if lead_files:
+                        for cu_id in wave_files_changed:
+                            existing = set(wave_files_changed[cu_id])
+                            wave_files_changed[cu_id] = list(existing | lead_files)
+                case Err(_):
+                    pass
 
         escalations = check_escalations(wave_cus, feedback_dir)
         if escalations > 0:

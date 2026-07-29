@@ -1,5 +1,5 @@
 WAVE=1
-DATE=2026-07-29T18:20:00
+DATE=2026-07-29T18:45:00
 VERIFIER=code-lead (verifier)
 STATUS=CONVERGED
 APP=wave-command
@@ -7,8 +7,8 @@ APP=wave-command
 # ──────────────────────────────────────────────
 # WAVE 1 SUMMARY
 # ──────────────────────────────────────────────
-WAVE.DESCRIPTION=Parallel Wave Execution + Per-CU File Tracking Fix
-WAVE.CUS=cu-parallel-fix, cu-file-tracking-fix
+WAVE.DESCRIPTION=Parallel Wave Execution + Per-CU File Tracking Fix + Post-Lead File Tracking
+WAVE.CUS=cu-parallel-fix, cu-file-tracking-fix, cu-file-tracking-fix-v2
 TARGET_FILE=wave-command/run-waves.py
 
 # ──────────────────────────────────────────────
@@ -26,6 +26,12 @@ CU-FILE-TRACKING-FIX.VERIFICATION=stash_ref parameter added to run_coder, git di
 CU-FILE-TRACKING-FIX.ARCHITECTURE_DEVIATION=none
 CU-FILE-TRACKING-FIX.ARCHITECTURE_DEVIATION.SEVERITY=NONE
 
+CU-FILE-TRACKING-FIX-V2.STATUS=COMPLETED
+CU-FILE-TRACKING-FIX-V2.DESCRIPTION=Post-lead file tracking — update files_changed after lead commits
+CU-FILE-TRACKING-FIX-V2.VERIFICATION=escalated_cus list tracks which CUs had leads; git diff --name-only stash_ref captures files after lead commits; pre_wave_ref captures HEAD before wave work; wave lead files merged into tracking
+CU-FILE-TRACKING-FIX-V2.ARCHITECTURE_DEVIATION=none
+CU-FILE-TRACKING-FIX-V2.ARCHITECTURE_DEVIATION.SEVERITY=NONE
+
 # ──────────────────────────────────────────────
 # VERIFICATION CHECKS
 # ──────────────────────────────────────────────
@@ -36,6 +42,9 @@ CHECK.THREADPOOL=PASS — ThreadPoolExecutor present in run_wave_parallel
 CHECK.ASYNCIO_RUN=PASS — asyncio.run drives main entry point
 CHECK.STASH_REF=PASS — stash_ref captured before parallel dispatch and passed to run_coder
 CHECK.ISOLATED_DIFF=PASS — git diff --name-only uses stash_ref when available to isolate per-CU changes
+CHECK.ESCALATED_CUS=PASS — escalated_cus list tracks CUs with leads for post-lead file tracking
+CHECK.PRE_WAVE_REF=PASS — pre_wave_ref captured before wave execution via git rev-parse HEAD
+CHECK.POST_LEAD_MERGE=PASS — wave lead's committed files merged into files_changed after lead completes
 
 # ──────────────────────────────────────────────
 # DETAILED CHANGE VERIFICATION
@@ -72,7 +81,19 @@ CHANGE.OP07.VERIFIED=PRESENT
 CHANGE.OP08=Added stash_ref: str = "" parameter to run_coder; conditional git diff --name-only <stash_ref> when stash_ref provided; captured git HEAD before parallel dispatch and passed to run_coder
 CHANGE.OP08.VERIFIED=PRESENT
 
-CHANGE.TOTAL=8/8 PRESENT
+# Operation 9 (cu-file-tracking-fix-v2 Op1): escalated_cus tracking + git diff after per-CU leads
+CHANGE.OP09=Added escalated_cus: list[str] = [] before loop; escalated_cus.append(cu_id) for escalated CUs; after loop, git diff --name-only stash_ref captures files changed by leads and updates wave_files_changed
+CHANGE.OP09.VERIFIED=PRESENT (lines 1192, 1198, 1212-1222)
+
+# Operation 10 (cu-file-tracking-fix-v2 Op2a): Capture pre-wave HEAD ref
+CHANGE.OP10=Before wave execution, git rev-parse HEAD captures pre_wave_ref; if capture fails, warn and set pre_wave_ref = None
+CHANGE.OP10.VERIFIED=PRESENT (lines 1331-1337)
+
+# Operation 11 (cu-file-tracking-fix-v2 Op2b): Merge wave lead files into tracking
+CHANGE.OP11=After wave lead commits, if pre_wave_ref set, git diff --name-only pre_wave_ref captures files committed by lead; merged into wave_files_changed for all CUs
+CHANGE.OP11.VERIFIED=PRESENT (lines 1380-1390)
+
+CHANGE.TOTAL=11/11 PRESENT
 
 # ──────────────────────────────────────────────
 # E2E TEST RESULTS
@@ -84,8 +105,11 @@ E2E.TEST4=PASS — ThreadPoolExecutor present
 E2E.TEST5=PASS — asyncio.run present
 E2E.TEST6=PASS — stash_ref present for per-CU file tracking isolation
 E2E.TEST7=PASS — git diff conditionally uses stash_ref
+E2E.TEST8=PASS — escalated_cus list present for post-lead tracking
+E2E.TEST9=PASS — pre_wave_ref captured before wave execution
+E2E.TEST10=PASS — wave lead files merged post-lead commit
 
-E2E.RESULT=ALL PASS (7/7 checks)
+E2E.RESULT=ALL PASS (10/10 checks)
 
 # ──────────────────────────────────────────────
 # ARCHITECTURE COMPLIANCE
@@ -98,4 +122,4 @@ ARCH.NO_CROSS_LAYER=COMPLIANT — no cross-layer dependencies
 # ──────────────────────────────────────────────
 # RECOMMENDATION
 # ──────────────────────────────────────────────
-RECOMMENDATION=Both CUs are fully converged. All 8 operations verified present. File compiles and dry-run succeeds. Ready for commit.
+RECOMMENDATION=All 3 CUs are fully converged. All 11 operations verified present. File compiles and dry-run succeeds. Ready for commit.
