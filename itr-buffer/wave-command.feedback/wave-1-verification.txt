@@ -1,0 +1,87 @@
+WAVE=1
+DATE=2026-07-29T18:00:00
+VERIFIER=code-lead (verifier)
+STATUS=CONVERGED
+APP=wave-command
+
+# ──────────────────────────────────────────────
+# WAVE 1 SUMMARY
+# ──────────────────────────────────────────────
+WAVE.DESCRIPTION=Parallel Wave Execution with ThreadPoolExecutor + asyncio + Monadic Result
+WAVE.CUS=cu-parallel-fix
+TARGET_FILE=wave-command/run-waves.py
+
+# ──────────────────────────────────────────────
+# CU STATUS
+# ──────────────────────────────────────────────
+CU-PARALLEL-FIX.STATUS=IMPLEMENTED
+CU-PARALLEL-FIX.DESCRIPTION=Replace sequential for-loop with parallel dispatch via ThreadPoolExecutor + asyncio + monadic Result (Ok/Err) + match/case error handling
+CU-PARALLEL-FIX.VERIFICATION=All 7 operations verified: imports, monad types, _stream_process_json Result, run_coder Result, _is_escalated monadic, run_per_cu_lead Result, run_wave_parallel async + main_async
+CU-PARALLEL-FIX.ARCHITECTURE_DEVIATION=none
+CU-PARALLEL-FIX.ARCHITECTURE_DEVIATION.SEVERITY=NONE
+
+# ──────────────────────────────────────────────
+# VERIFICATION CHECKS
+# ──────────────────────────────────────────────
+CHECK.SYNTAX=PASS — python3 compile check OK
+CHECK.DRY_RUN=PASS — dry-run executes correctly with 4 waves (14 CUs total)
+CHECK.NO_SEQ_FOR=PASS — no sequential for-loop over run_coder detected
+CHECK.THREADPOOL=PASS — ThreadPoolExecutor present in run_wave_parallel
+CHECK.ASYNCIO_RUN=PASS — asyncio.run drives main entry point
+
+# ──────────────────────────────────────────────
+# DETAILED CHANGE VERIFICATION
+# ──────────────────────────────────────────────
+# Operation 1: Add imports
+CHANGE.OP01=Imports added — asyncio, concurrent.futures, typing, dataclass, Generic, TypeVar (lines 17-21 in run-waves.py)
+CHANGE.OP01.VERIFIED=PRESENT
+
+# Operation 2: Add monad types, CoderOutput, I/O wrappers, future_result
+CHANGE.OP02=Monadic Result types (Ok/Err), CoderOutput dataclass, _popen/_open_file/_git_run/_read_file_text/_write_file_text wrappers, future_result async bridge (lines 37-126)
+CHANGE.OP02.VERIFIED=PRESENT
+
+# Operation 3: Refactor _stream_process_json to return Result[int]
+CHANGE.OP03=_stream_process_json returns Ok[int] | Err[Exception], uses _popen monadic wrapper (lines 604-676)
+CHANGE.OP03.VERIFIED=PRESENT
+
+# Operation 4: Refactor run_coder to return Result[CoderOutput]
+CHANGE.OP04=run_coder returns Ok[CoderOutput] | Err[Exception], match/case throughout, monadic I/O wrappers (lines 766-926)
+CHANGE.OP04.VERIFIED=PRESENT
+
+# Operation 5: Refactor _is_escalated to use monadic wrapper
+CHANGE.OP05=_is_escalated uses _read_file_text monadic wrapper with match/case (lines 1063-1070)
+CHANGE.OP05.VERIFIED=PRESENT
+
+# Operation 6: Refactor run_per_cu_lead to return Result
+CHANGE.OP06=run_per_cu_lead returns Ok[tuple[int, TokenUsage]] | Err[Exception] (lines 1005-1061)
+CHANGE.OP06.VERIFIED=PRESENT
+
+# Operation 7: Add run_wave_parallel async coroutine + main_async + main entry
+CHANGE.OP07=run_wave_parallel async coroutine with ThreadPoolExecutor parallel dispatch + per-CU lead checks; main_async async entry point; main delegates via asyncio.run (lines 1114-1403)
+CHANGE.OP07.VERIFIED=PRESENT
+
+CHANGE.TOTAL=7/7 PRESENT
+
+# ──────────────────────────────────────────────
+# E2E TEST RESULTS
+# ──────────────────────────────────────────────
+E2E.TEST1=PASS — Python syntax compilation
+E2E.TEST2=PASS — Dry run with 4 waves / 14 CUs
+E2E.TEST3=PASS — No sequential for-loop over run_coder
+E2E.TEST4=PASS — ThreadPoolExecutor present
+E2E.TEST5=PASS — asyncio.run present
+
+E2E.RESULT=ALL PASS (5/5 checks)
+
+# ──────────────────────────────────────────────
+# ARCHITECTURE COMPLIANCE
+# ──────────────────────────────────────────────
+ARCH.HEX=COMPLIANT — no hex violations in wave-command
+ARCH.DI=COMPLIANT — no DI violations
+ARCH.DIP=COMPLIANT — no DIP violations
+ARCH.NO_CROSS_LAYER=COMPLIANT — no cross-layer dependencies
+
+# ──────────────────────────────────────────────
+# RECOMMENDATION
+# ──────────────────────────────────────────────
+RECOMMENDATION=cu-parallel-fix is fully converged. All 7 operations verified present. File compiles and dry-run succeeds. Ready for commit.

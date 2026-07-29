@@ -1,0 +1,31 @@
+# CU-ID: LEGEND
+# CU-TYPE: LegendCU
+# TIMESTAMP: 2026-07-29T15:44:04.434225263Z
+# DTR-COORDINATES: 
+
+# Symbol Definitions for wave-command
+SYS=LLMDDv8.0
+MODE=DTR_BASELINE_X_CU_COMPILE
+
+# Node Types
+NODE.X=EXTRACTOR
+NODE.DTR=DESIGN_TENSOR
+NODE.DSG=DESIGNER
+NODE.ADV=ADVISOR
+NODE.VER=CODE_LEAD
+NODE.COD=CODER
+NODE.OUT=OUTPUT
+
+# CU Types
+CU_TYPE.REGULAR=RegularCU
+CU_TYPE.ARCH=ArchCU
+CU_TYPE.LEGEND=LegendCU
+
+# Required Parts
+REQUIRED_PARTS=ARCH,LEGEND
+
+# Severity
+SEVERITY.CRITICAL=Stub instead of real implementation
+SEVERITY.MAJOR=Feature implemented but differs from spec
+SEVERITY.MINOR=Functional but differs in approach
+SEVERITY.TRIVIAL=Documentation, comments, formatting
