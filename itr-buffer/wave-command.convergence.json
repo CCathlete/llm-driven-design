@@ -1,4 +1,39 @@
 {
-  "waves": [],
-  "status": "RUNNING"
+  "waves": [
+    {
+      "wave": 1,
+      "cus": [
+        "cu-file-tracking-fix-v2"
+      ],
+      "escalations": 0,
+      "coder_status": 0,
+      "lead_status": 0,
+      "files_changed": {},
+      "credits": {
+        "cu-file-tracking-fix-v2-lead": {
+          "input": 20343,
+          "output": 5452,
+          "reasoning": 1402,
+          "cache_read": 448512,
+          "cache_write": 0,
+          "total": 475709,
+          "cost": 0.0,
+          "session_id": "ses_0514841bcffeyg5LMZqN725hDs",
+          "model": ""
+        },
+        "lead": {
+          "input": 28880,
+          "output": 7698,
+          "reasoning": 3033,
+          "cache_read": 676608,
+          "cache_write": 0,
+          "total": 716219,
+          "cost": 0.0,
+          "session_id": "ses_05146631effey7vAD8iDY7mH7f",
+          "model": ""
+        }
+      }
+    }
+  ],
+  "status": "CONVERGED"
 }
