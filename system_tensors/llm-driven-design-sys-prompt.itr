@@ -100,7 +100,7 @@ BASELINE.CREATE_DESC=Generates skeleton DTR from seed template for greenfield pr
 
 BASELINE.SECTION.ARCH="ARCH=..." and "LAYER.ORDER=..." — architecture constraints
 BASELINE.SECTION.META="META.GENERATOR=dtr-builder", "META.TIMESTAMP=...", etc. — extraction metadata
-BASELINE.SECTION.FILE="FILE.<relpath>=SIZE:<n>,MIME:<type>,ENCODING:<enc>,LANG:<lang>,EXT:<ext>" — file entries
+BASELINE.SECTION.FILE="FILE.<relpath>=SIZE:<n>,MIME:<type>,ENCODING:<enc>,LANG:<lang>,EXT:<ext>,LAYER:<layer>" — file entries; LAYER is required and is one of DOMAIN,APPLICATION,INFRASTRUCTURE,CONTROL,UNKNOWN
 BASELINE.SECTION.CODEX="CODEX.<relpath>=<SigType>:<signature>" — code element entries
 BASELINE.SECTION.TYPE="TYPE.<fqn>=KIND:<kind>,FILE:<relpath>" — type definitions
 BASELINE.SECTION.REL="REL.<from>-><to>=<relation>:<description>" — dependency edges

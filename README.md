@@ -107,7 +107,7 @@ produced by the **dtr-builder** tool in two modes:
 | `ARCH` | Architecture constraints | `ARCH=HEX,DI,DIP,NO_CROSS_LAYER` |
 | `LAYER` | Layer ordering | `LAYER.ORDER=DOMAIN,APPLICATION,INFRASTRUCTURE,CONTROL` |
 | `META.` | Extraction metadata | `META.GENERATOR=dtr-builder`, `META.TIMESTAMP=...` |
-| `FILE.` | Source files | `FILE.src/main/Foo.scala=SIZE:1234,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala` |
+| `FILE.` | Source files | `FILE.src/main/Foo.scala=SIZE:1234,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala,LAYER:APPLICATION` |
 | `CODEX.` | Code elements | `CODEX.src/main/Foo.scala=CLASS:Foo`, `CODEX.src/main/Foo.scala=DEF:doSomething` |
 | `TYPE.` | Type definitions | `TYPE.com.app.domain.Foo=KIND:CLASS,FILE:src/main/Foo.scala` |
 | `REL.` | Relations | `REL.com.app.domain.Foo->com.app.domain.Bar=USES:Foo uses Bar` |
