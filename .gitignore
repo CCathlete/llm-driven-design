@@ -17,4 +17,9 @@ hs_err_pid*
 **/output
 **/input
 
-# Build artifacts — assembled fat JARs are tracked (PREPEND_EXECUTION_SCRIPT)
+# Assembled fat JARs — published as GitHub Releases, not tracked in git.
+# Build with: cs launch sbt -- assembly   (then copy the binary to the module root)
+# Anchored to module roots so nested paths are unaffected.
+/dtr-builder/dtr-builder
+/commit-tool/commit-tool
+/itr-compiler/itr-compiler
