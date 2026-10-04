@@ -13,7 +13,7 @@ TENSOR.LEGEND=Every ITR directory must include a LEGEND file defining all symbol
 # NODE DEFINITIONS
 # ──────────────────────────────────────────────
 NODE.X=EXTRACTOR
-NODE.X_DESC=Runs dtr-builder to produce a baseline DTR from an existing codebase. Two modes: --root extracts FILES, CODEX, TYPE, REL, META sections; --create-baseline generates a skeleton DTR for greenfield projects.
+NODE.X_DESC=Runs dtr-builder to produce a baseline DTR from an existing codebase. Two modes: --root extracts FILES, CODEX, TYPE, REL, META sections; --create-baseline-dtr generates a skeleton DTR for greenfield projects.
 NODE.DTR=DESIGN_TENSOR (Baseline)
 NODE.DTR_DESC=Flat tensor file (KEY=VALUE) with sections: ARCH, META, FILE, CODEX, TYPE, REL. Produced by dtr-builder. Serves as the coordinate system for CUs.
 NODE.DSG=DESIGNER
@@ -41,7 +41,7 @@ FLOW.E2E=COD(s)_DONE>VER>E2E_TESTS>VER(REPAIR_LOOP)>REPORT>DTR
 # WORKFLOW STEPS
 # ──────────────────────────────────────────────
 WORKFLOW.STEP1=OBTAIN_BASELINE_DTR
-WORKFLOW.STEP1_DESC=DSG runs dtr-builder with --root for existing code or --create-baseline for greenfield. Result is a baseline DTR file.
+WORKFLOW.STEP1_DESC=DSG runs dtr-builder with --root for existing code or --create-baseline-dtr for greenfield. Result is a baseline DTR file.
 
 WORKFLOW.STEP2=ANALYZE_AND_DECOMPOSE
 WORKFLOW.STEP2_DESC=DSG shares baseline DTR with ADV. ADV analyzes structure (files, types, relations, layers), brainstorms with DSG. Together they decompose work into CUs.
@@ -95,8 +95,8 @@ CONTENT.YAML_STRUCTURE=cu-001:{dtr-coordinates:[str],content:str}\ncu-002:{dtr-c
 BASELINE.EXTRACT_CMD=dtr-builder --root <path> --out <file>
 BASELINE.EXTRACT_DESC=Scans existing codebase, extracts FILE, CODEX, TYPE, REL, META sections. File is flat KEY=VALUE tensor format; chunks automatically if >1MB.
 
-BASELINE.CREATE_CMD=dtr-builder --create-baseline --app <name> --lang <lang> --root <path> --out <file>
-BASELINE.CREATE_DESC=Generates skeleton DTR from seed template for greenfield projects. Includes hexagonal ARCH, placeholder FILE, CODEX, TYPE, REL entries for canonical domain/application/infrastructure/control layers.
+BASELINE.CREATE_CMD=dtr-builder --create-baseline-dtr --language <lang> --root <path> --out <file>
+BASELINE.CREATE_DESC=Generates skeleton DTR from seed template for greenfield projects. Includes hexagonal ARCH, placeholder FILE, CODEX, TYPE, REL entries for canonical domain/application/infrastructure/control layers. App name is derived from the root directory basename; there is no --app flag.
 
 BASELINE.SECTION.ARCH="ARCH=..." and "LAYER.ORDER=..." — architecture constraints
 BASELINE.SECTION.META="META.GENERATOR=dtr-builder", "META.TIMESTAMP=...", etc. — extraction metadata

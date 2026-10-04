@@ -98,7 +98,7 @@ produced by the **dtr-builder** tool in two modes:
 | Mode | Command | Use Case |
 |------|---------|----------|
 | Extract | `dtr-builder --root <path> --out <file>` | Existing codebase |
-| Create Baseline | `dtr-builder --create-baseline --app <name> --lang <lang> --root <path> --out <file>` | Greenfield project |
+| Create Baseline | `dtr-builder --create-baseline-dtr --language <lang> --root <path> --out <file>` | Greenfield project |
 
 **DTR Sections:**
 
@@ -280,7 +280,7 @@ dtr-builder --root . --out baseline.dtr --filter "test/" --filter "build/"
 ### Create Baseline for Greenfield
 
 ```bash
-dtr-builder --create-baseline --app my-app --lang Scala --root /path/to/project --out baseline.dtr
+dtr-builder --create-baseline-dtr --language Scala --root /path/to/my-app --out baseline.dtr
 ```
 
 Generates a skeleton DTR with hexagonal architecture placeholders
@@ -448,7 +448,7 @@ llm-driven-design/
 
 ```bash
 # 1. Generate a baseline DTR for a new app
-dtr-builder --create-baseline --app my-app --lang Scala --root ./my-app --out baseline.dtr
+dtr-builder --create-baseline-dtr --language Scala --root ./my-app --out baseline.dtr
 
 # 2. Draft CU content (cus.json) — work with an Advisor to decompose
 #    the design into Computational Units
