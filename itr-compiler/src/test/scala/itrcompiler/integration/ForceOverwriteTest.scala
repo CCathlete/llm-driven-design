@@ -18,7 +18,8 @@ class ForceOverwriteTest extends AnyFunSpec {
     Files.write(outDir.resolve("verification.verification.itr"), "VERIFICATION".getBytes)
     Files.write(outDir.resolve("E2EVERIFICATION.itr"), "E2E".getBytes)
 
-    val existing = outDir.resolve("cu-force.itr")
+    val existing = outDir.resolve("cu-force/cu-force.itr")
+    Files.createDirectories(existing.getParent)
     Files.write(existing, "ORIGINAL".getBytes)
 
     val fs = new itrcompiler.infrastructure.filesystem.FileSystem()
@@ -61,7 +62,8 @@ class ForceOverwriteTest extends AnyFunSpec {
     Files.write(outDir.resolve("verification.verification.itr"), "VERIFICATION".getBytes)
     Files.write(outDir.resolve("E2EVERIFICATION.itr"), "E2E".getBytes)
 
-    val existing = outDir.resolve("cu-skip.itr")
+    val existing = outDir.resolve("cu-skip/cu-skip.itr")
+    Files.createDirectories(existing.getParent)
     Files.write(existing, "ORIGINAL".getBytes)
 
     val fs = new itrcompiler.infrastructure.filesystem.FileSystem()

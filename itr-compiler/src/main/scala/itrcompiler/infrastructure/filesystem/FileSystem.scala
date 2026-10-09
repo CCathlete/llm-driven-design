@@ -1,7 +1,7 @@
 package itrcompiler.infrastructure.filesystem
 
 import itrcompiler.application.ports.{ContentRead, CUWrite, DTRLoad}
-import itrcompiler.domain.models.{CU, CUBatch}
+import itrcompiler.domain.models.{CU, CUBatch, RegularCU}
 import itrcompiler.infrastructure.parsers.{JSONFormat, YAMLFormat}
 
 import java.nio.charset.StandardCharsets
@@ -37,12 +37,18 @@ final class FileSystem(
     *   <blank line>
     *   <content>
     *
+    * Layout: regular CUs are written into a per-CU subdirectory
+    * `<outFolder>/<cu-id>/<cu-id>.itr` (no flat per-CU frames at the output
+    * root). ARCH.itr, LEGEND.itr and verification files stay at the root.
     * File name is determined by CU.fileName (e.g., ARCH.itr, LEGEND.itr).
     * If the file already exists and force=false, it is skipped.
     */
   override def write(cu: CU, outFolder: Path, force: Boolean): Unit = {
-    Files.createDirectories(outFolder)
-    val cuFile = outFolder.resolve(cu.fileName)
+    val cuDir =
+      if (cu.cuType == RegularCU) outFolder.resolve(cu.id)
+      else outFolder
+    Files.createDirectories(cuDir)
+    val cuFile = cuDir.resolve(cu.fileName)
 
     if (!force && Files.exists(cuFile)) return
 

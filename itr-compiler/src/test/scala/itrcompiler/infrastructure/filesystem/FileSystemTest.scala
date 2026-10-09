@@ -24,7 +24,7 @@ class FileSystemTest extends AnyFunSpec {
         val cu = CU(id = "cu-test", dtrCoordinates = Seq("TYPE.Test"), content = "frame content")
         fs.write(cu, outDir, force = false)
 
-        val written = new String(Files.readAllBytes(outDir.resolve("cu-test.itr")))
+        val written = new String(Files.readAllBytes(outDir.resolve("cu-test/cu-test.itr")))
         assert(written.contains("# CU-ID: cu-test"))
         assert(written.contains("# DTR-COORDINATES: TYPE.Test"))
         assert(written.contains("frame content"))
@@ -33,7 +33,8 @@ class FileSystemTest extends AnyFunSpec {
       it("should skip existing file when force=false") {
         val outDir = tmpDir.resolve("cuwrite-skip")
         Files.createDirectories(outDir)
-        val cuFile = outDir.resolve("cu-skip.itr")
+        val cuFile = outDir.resolve("cu-skip/cu-skip.itr")
+        Files.createDirectories(cuFile.getParent)
         Files.write(cuFile, "original".getBytes)
 
         val cu = CU(id = "cu-skip", dtrCoordinates = Seq.empty, content = "new content")
@@ -46,7 +47,8 @@ class FileSystemTest extends AnyFunSpec {
       it("should overwrite existing file when force=true") {
         val outDir = tmpDir.resolve("cuwrite-force")
         Files.createDirectories(outDir)
-        val cuFile = outDir.resolve("cu-force.itr")
+        val cuFile = outDir.resolve("cu-force/cu-force.itr")
+        Files.createDirectories(cuFile.getParent)
         Files.write(cuFile, "original".getBytes)
 
         val cu = CU(id = "cu-force", dtrCoordinates = Seq.empty, content = "new content")

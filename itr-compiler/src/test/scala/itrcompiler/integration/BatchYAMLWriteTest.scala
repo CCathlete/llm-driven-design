@@ -59,10 +59,10 @@ class BatchYAMLWriteTest extends AnyFunSpec {
     assert(results.size == 4)
     assert(Files.exists(tmpDir.resolve("out/ARCH.itr")))
     assert(Files.exists(tmpDir.resolve("out/LEGEND.itr")))
-    assert(Files.exists(tmpDir.resolve("out/cu-x.itr")))
-    assert(Files.exists(tmpDir.resolve("out/cu-y.itr")))
+    assert(Files.exists(tmpDir.resolve("out/cu-x/cu-x.itr")))
+    assert(Files.exists(tmpDir.resolve("out/cu-y/cu-y.itr")))
 
-    val contentX = new String(Files.readAllBytes(tmpDir.resolve("out/cu-x.itr")))
+    val contentX = new String(Files.readAllBytes(tmpDir.resolve("out/cu-x/cu-x.itr")))
     assert(contentX.contains("content x"))
   }
 }

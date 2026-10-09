@@ -545,17 +545,21 @@ _CUID_RE = re.compile(r"^#\s*CU-ID:\s*(.+)$")
 
 def build_cu_map(itr_path: Path) -> dict[str, Path]:
     cu_map = {}
-    for f in sorted(itr_path.iterdir()):
-        if f.suffix == ".itr" and f.is_file():
-            try:
-                with open(f) as fh:
-                    for line in fh:
-                        m = _CUID_RE.match(line)
-                        if m:
-                            cu_map[m.group(1).strip()] = f
-                            break
-            except Exception:
-                pass
+    # Root-level frames first, then per-CU subdirectories (cu-<id>/*.itr).
+    # Later entries win on duplicate CU-IDs, matching historic behavior.
+    bases = [itr_path] + sorted(p for p in itr_path.iterdir() if p.is_dir())
+    for base in bases:
+        for f in sorted(base.iterdir()):
+            if f.suffix == ".itr" and f.is_file():
+                try:
+                    with open(f) as fh:
+                        for line in fh:
+                            m = _CUID_RE.match(line)
+                            if m:
+                                cu_map[m.group(1).strip()] = f
+                                break
+                except Exception:
+                    pass
     return cu_map
 
 
@@ -563,7 +567,10 @@ def resolve_cu_file(cu_id: str, cu_map: dict[str, Path], itr_path: Path) -> Path
     if cu_id in cu_map:
         return cu_map[cu_id]
     direct = itr_path / f"{cu_id}.itr"
-    return direct if direct.is_file() else None
+    if direct.is_file():
+        return direct
+    subdir = itr_path / cu_id / f"{cu_id}.itr"
+    return subdir if subdir.is_file() else None
 
 
 # ── Wave detection ─────────────────────────────────────────────────

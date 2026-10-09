@@ -42,7 +42,7 @@ class SingleCUWriteTest extends AnyFunSpec {
     val results = compile.execute(cmd)
     assert(results.size == 1)
 
-    val written = new String(Files.readAllBytes(tmpDir.resolve("cu-hello.itr")))
+    val written = new String(Files.readAllBytes(tmpDir.resolve("cu-hello/cu-hello.itr")))
     assert(written.contains("# CU-ID: cu-hello"))
     assert(written.contains("# DTR-COORDINATES: TYPE.Foo, FILE.Bar"))
     assert(written.contains("hello"))

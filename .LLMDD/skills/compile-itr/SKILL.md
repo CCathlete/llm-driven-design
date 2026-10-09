@@ -114,11 +114,22 @@ coordinate does not resolve in the feature DTR. Vague verbs
    coordinate resolves in the feature DTR (`python3 -c` check over batch +
    `.dtr` keys — zero missing or no compile).
 2. Exit code is 0.
-3. Expected files exist: `ARCH.itr`, `LEGEND.itr`, `<id>.itr` per CU.
-4. Spot-check one frame header:
+3. Expected layout: `ARCH.itr`, `LEGEND.itr` (+ `SYNOPSIS.itr`) at root, one
+   `cu-<id>/` subdirectory per regular CU holding `<id>.itr`. No flat
+   `cu-*.itr` files at the root.
+4. Spot-check one frame header inside its folder:
   `# CU-ID`, `# CU-TYPE`, `# TIMESTAMP`, `# DTR-COORDINATES`, then content.
 
 ## Output
 
-A directory `.LLMDD/ITRS/<feature-name>/` containing the compiled frames.
-Hand this directory to the Coder for STEP5 (IMPLEMENT_CUS).
+A directory `.LLMDD/ITRS/<feature-name>/` with globals at the root and one
+`cu-<id>/` folder per regular CU. Hand this directory to the Coder for
+STEP5 (IMPLEMENT_CUS).
+
+## Rebuilding the binary
+
+`.LLMDD/tools/itr-compiler` is a build artifact (gitignored), not source.
+After changing `itr-compiler/src`, rebuild from the module dir with
+`cs launch sbt -- assembly` (or `sbt assembly` where installed) and copy
+the resulting `itr-compiler/itr-compiler` over `.LLMDD/tools/itr-compiler`.
+Verify with `sbt test` before rebuilding.
