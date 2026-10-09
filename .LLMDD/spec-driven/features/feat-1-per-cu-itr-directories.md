@@ -52,21 +52,27 @@ commit(s) and ITR directory to be recorded here.
    implements, defining the `MAX_ATTEMPTS` retry parameter, and carrying
    an implementation summary stating what the ITR builds.
 10. Compilation fails with a relevant error message when any of criteria
-    1–5, 7, or 9 is not met (missing component, missing subdirectory,
-    missing `SYNOPSIS.itr`/`MAX_ATTEMPTS`/implementation summary).
+    1–5, 7, 9, or 11 is not met (missing component, missing subdirectory,
+    missing `SYNOPSIS.itr`/`MAX_ATTEMPTS`/implementation summary, stray
+    flat frame).
+11. The writer emits no flat per-CU frames: a CU carrying components lives
+    only in its `cu-<id>/` folder. ITR-root `.itr` files are globals
+    (`ARCH.itr`, `LEGEND.itr`, `SYNOPSIS.itr`) only. (Component-less legacy
+    CUs keep flat frames for backward compatibility.)
 
 ## Tests
 
 Executable tests proving each criterion (Advisor-written, run by the code
 lead in E2E verify):
 
-- `T1` (criteria 1–5, 9): compile a batch with `arch`, `legend`, and two
+- `T1` (criteria 1–5, 9, 11): compile a batch with `arch`, `legend`, and two
   regular CUs via `.LLMDD/tools/itr-compiler --compile --json-content
   <batch> --out-folder <itr>/`; assert `<itr>/cu-<id>/` exists per CU and
   each holds `COORDINATES.itr`, `REQUIREMENTS.itr`,
   `IMPLEMENTATION_STEPS.itr`, `ACCEPTANCE.itr`, and `<itr>/SYNOPSIS.itr`
   exists with a `MAX_ATTEMPTS` entry. Command: `test -f` checks + `grep
-  MAX_ATTEMPTS <itr>/SYNOPSIS.itr`.
+  MAX_ATTEMPTS <itr>/SYNOPSIS.itr`. Also assert no flat `<itr>/cu-<id>.itr`
+  files exist for component-carrying CUs.
 - `T2` (criterion 10, missing component): compile a batch whose CU content
   omits one required component; assert exit code is non-zero and stderr
   names the missing component.

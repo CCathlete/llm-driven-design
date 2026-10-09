@@ -1,6 +1,0 @@
-# CU-ID: cu-003
-# CU-TYPE: RegularCU
-# TIMESTAMP: 2026-10-09T12:12:09.548099346Z
-# DTR-COORDINATES: TYPE.scala.itrcompiler.application.services.CUStore.scala.CUStore, TYPE.scala.itrcompiler.infrastructure.filesystem.FileSystem.scala.FileSystem
-
-REQUIREMENTS: the writer emits one subdirectory per regular CU holding its four component files, keeps ARCH.itr/LEGEND.itr and other globals at the ITR root, writes root SYNOPSIS.itr (features, MAX_ATTEMPTS, implementation summary), and keeps IMPLEMENTATION_STEPS.itr gitignored. COORDINATES: TYPE.scala.itrcompiler.application.services.CUStore.scala.CUStore + TYPE.scala.itrcompiler.infrastructure.filesystem.FileSystem.scala.FileSystem. IMPLEMENTATION_STEPS: (1) write cu-<id>/ subdirectories with COORDINATES.itr, REQUIREMENTS.itr, IMPLEMENTATION_STEPS.itr, ACCEPTANCE.itr; (2) keep ARCH.itr/LEGEND.itr at root; (3) write root SYNOPSIS.itr with implemented feature ids + MAX_ATTEMPTS; (4) ensure IMPLEMENTATION_STEPS.itr is gitignored (ITR-local or repo .gitignore entry); (5) preserve Advisor-placed override files on recompile. ACCEPTANCE: T1 — compiled layout matches the spec; SYNOPSIS.itr holds features, MAX_ATTEMPTS, and a non-empty implementation summary; T5 — git check-ignore passes for IMPLEMENTATION_STEPS.itr.
