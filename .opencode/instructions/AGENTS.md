@@ -66,3 +66,16 @@ standard.
 
 A global pre-push hook blocks AI assistants from pushing to remote (installed
 at `~/.config/git/hooks/pre-push`). Only interactive terminal users may push.
+
+## Commit protocol
+
+Every commit in this repo must be accompanied by a summary of the changes
+tracked in the `~/Repos/llmdd-book` repo:
+
+1. After committing here, record what changed in the book — typically a new
+   subsection under the current-version section of
+   `docs/building-llm-driven-design.md` (workspace, skills, features, ITR
+   layout, lessons learned).
+2. Commit the book change separately in `~/Repos/llmdd-book` with a `docs:`
+   message.
+3. Never push from either repo — the Designer pushes.
