@@ -1,0 +1,6 @@
+# REQUIREMENTS: cu-003
+# TIMESTAMP: 2026-10-09
+
+The writer emits one subdirectory per regular CU holding its four component
+files, keeps ARCH.itr/LEGEND.itr and other globals at the ITR root, writes
+root SYNOPSIS.itr, and keeps IMPLEMENTATION_STEPS.itr gitignored.

@@ -1,0 +1,8 @@
+# SYNOPSIS: feat-1-per-cu-itr-directories
+# TIMESTAMP: 2026-10-09
+
+FEATURES_IMPLEMENTED=feat-1-per-cu-itr-directories
+MAX_ATTEMPTS=3
+DTR=.LLMDD/DTRS/feat-1-per-cu-itr-directories/itr-compiler.dtr
+BATCH=batch.json
+CUS=cu-001,cu-002,cu-003,cu-004,cu-005

@@ -20,7 +20,7 @@ system every CU traces into. The builder is the prebuilt binary at
 Existing codebase — extract:
 
 ```sh
-.LLMDD/tools/dtr-builder --out .LLMDD/DTRS/<app>-baseline.dtr --root <path-to-code>
+.LLMDD/tools/dtr-builder --out .LLMDD/DTRS/<feature-name>/<app>.dtr --root <path-to-code>
 ```
 
 Greenfield — skeleton from seed template (hexagonal
@@ -28,11 +28,12 @@ domain/application/infrastructure/control layout; app name is derived from
 the `--root` basename, there is no `--app` flag):
 
 ```sh
-.LLMDD/tools/dtr-builder --create-baseline-dtr --language <lang> --root <path> --out .LLMDD/DTRS/<app>-baseline.dtr
+.LLMDD/tools/dtr-builder --create-baseline-dtr --language <lang> --root <path> --out .LLMDD/DTRS/<feature-name>/<app>.dtr
 ```
 
 `--root` defaults to the current directory; `--out` is required in extract
-mode. Store baselines under `.LLMDD/DTRS/`.
+mode. Always store DTRs under `.LLMDD/DTRS/<feature-name>/` (one folder per
+feature, holding that feature's DTRs).
 
 ## Options
 
@@ -59,5 +60,6 @@ mode. Store baselines under `.LLMDD/DTRS/`.
 
 ## Output
 
-A baseline `.dtr` file under `.LLMDD/DTRS/`. Hand it to the Advisor for
-STEP2 (ANALYZE_AND_DECOMPOSE).
+A `.dtr` file under `.LLMDD/DTRS/<feature-name>/`. Hand it to the Advisor for
+STEP2 (ANALYZE_AND_DECOMPOSE) — CU `dtr-coordinates` must reference keys
+from this DTR.
