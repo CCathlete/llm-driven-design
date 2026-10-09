@@ -44,15 +44,24 @@ Waves file (`.LLMDD/ITRS/<feature-name>/waves.json`):
 ]
 ```
 
-## Execution (Designer, in a terminal)
+## Dry-run (Advisor)
 
-The Designer — never the agent — runs the runner from the repo root:
+The Advisor runs the dry-run itself and verifies the plan — the Designer is
+only handed the operational command once the dry-run is valid:
 
 ```sh
-# Always dry-run first
 python3 .LLMDD/tools/run-waves.py --itr .LLMDD/ITRS/<feature-name> --app <app> --waves .LLMDD/ITRS/<feature-name>/waves.json --dry-run
+```
 
-# Execute
+Valid means: exit 0, wave count and CU assignments match `waves.json`, every
+CU resolves to a frame file. On success, commit `waves.json`, then hand off.
+
+## Execution (Designer, in a terminal)
+
+The Designer — never the agent — runs the operational command from the repo
+root (given verbatim by the agent after a valid dry-run):
+
+```sh
 python3 .LLMDD/tools/run-waves.py --itr .LLMDD/ITRS/<feature-name> --app <app> --waves .LLMDD/ITRS/<feature-name>/waves.json
 ```
 
@@ -91,17 +100,16 @@ otherwise the Advisor must write an explicit waves file.
 
 ## Handoff to Designer
 
-After writing `waves.json`, the agent prints the exact fish command for the
-Designer to paste (feature and app names filled in — no placeholders):
+After a valid dry-run and committing `waves.json`, the agent prints the
+exact operational fish command for the Designer to paste (feature and app
+names filled in — no placeholders, no `--dry-run`):
 
 ```fish
-python3 .LLMDD/tools/run-waves.py --itr .LLMDD/ITRS/<feature-name> --app <app> --waves .LLMDD/ITRS/<feature-name>/waves.json --dry-run
+python3 .LLMDD/tools/run-waves.py --itr .LLMDD/ITRS/<feature-name> --app <app> --waves .LLMDD/ITRS/<feature-name>/waves.json
 ```
 
-First the Designer runs the `--dry-run` variant and confirms the plan; only
-then does the agent give the execute variant (same command without
-`--dry-run`). Never print the execute command before the dry-run is
-confirmed.
+The execute command is given only after the dry-run is verified and
+`waves.json` is committed. Never print it beforehand.
 
 ## Output
 

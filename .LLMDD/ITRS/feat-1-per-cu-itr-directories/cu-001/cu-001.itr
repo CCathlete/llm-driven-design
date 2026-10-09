@@ -1,0 +1,6 @@
+# CU-ID: cu-001
+# CU-TYPE: RegularCU
+# TIMESTAMP: 2026-10-09T12:54:25.190254392Z
+# DTR-COORDINATES: TYPE.scala.itrcompiler.domain.models.CU.scala.CU, FILE.scala/itrcompiler/domain/models/CUBatch.scala, FILE.scala/itrcompiler/domain/models/CompileCommand.scala
+
+REQUIREMENTS: extend the domain model so a CU carries four named components (coordinates, requirements, implementation-steps, acceptance) plus CU-level metadata, and the batch carries synopsis data (implemented feature ids, MAX_ATTEMPTS). COORDINATES: TYPE.scala.itrcompiler.domain.models.CU.scala.CU + FILE.scala/itrcompiler/domain/models/CUBatch.scala + FILE.scala/itrcompiler/domain/models/CompileCommand.scala; a coordinates value may name a DTR area that does not exist yet, meaning the CU creates it. IMPLEMENTATION_STEPS: (1) add component fields to the CU model with a required-components set; (2) add synopsis fields (feature ids, MAX_ATTEMPTS with a sane default) to the batch model; (3) keep ARCH/LEGEND CU types and their root-level file names unchanged. ACCEPTANCE: unit tests construct CUs with all four components and a batch with synopsis data; missing-component construction is rejected at the model or validation layer (see cu-002).
