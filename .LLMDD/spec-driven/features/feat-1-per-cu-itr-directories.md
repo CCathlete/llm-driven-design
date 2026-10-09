@@ -55,10 +55,11 @@ commit(s) and ITR directory to be recorded here.
     1–5, 7, 9, or 11 is not met (missing component, missing subdirectory,
     missing `SYNOPSIS.itr`/`MAX_ATTEMPTS`/implementation summary, stray
     flat frame).
-11. The writer emits no flat per-CU frames: a CU carrying components lives
-    only in its `cu-<id>/` folder. ITR-root `.itr` files are globals
-    (`ARCH.itr`, `LEGEND.itr`, `SYNOPSIS.itr`) only. (Component-less legacy
-    CUs keep flat frames for backward compatibility.)
+11. The writer emits no per-CU `.itr` blob for a CU carrying components —
+    only its four component files. A component-less legacy CU keeps exactly
+    one `<cu-id>.itr` frame inside its own folder. No `.itr` file for a
+    regular CU ever lands at the ITR root; root holds globals
+    (`ARCH.itr`, `LEGEND.itr`, `SYNOPSIS.itr`) only.
 
 ## Tests
 
@@ -71,8 +72,9 @@ lead in E2E verify):
   each holds `COORDINATES.itr`, `REQUIREMENTS.itr`,
   `IMPLEMENTATION_STEPS.itr`, `ACCEPTANCE.itr`, and `<itr>/SYNOPSIS.itr`
   exists with a `MAX_ATTEMPTS` entry. Command: `test -f` checks + `grep
-  MAX_ATTEMPTS <itr>/SYNOPSIS.itr`. Also assert no flat `<itr>/cu-<id>.itr`
-  files exist for component-carrying CUs.
+  MAX_ATTEMPTS <itr>/SYNOPSIS.itr`. Also assert no `<itr>/cu-<id>.itr`
+  flat files and no `cu-<id>/cu-<id>.itr` blobs exist for
+  component-carrying CUs.
 - `T2` (criterion 10, missing component): compile a batch whose CU content
   omits one required component; assert exit code is non-zero and stderr
   names the missing component.

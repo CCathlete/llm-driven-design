@@ -115,8 +115,10 @@ coordinate does not resolve in the feature DTR. Vague verbs
    `.dtr` keys — zero missing or no compile).
 2. Exit code is 0.
 3. Expected layout: `ARCH.itr`, `LEGEND.itr` (+ `SYNOPSIS.itr`) at root, one
-   `cu-<id>/` subdirectory per regular CU holding `<id>.itr`. No flat
-   `cu-*.itr` files at the root.
+   `cu-<id>/` subdirectory per regular CU. Component-carrying CUs hold only
+   the four component files — no per-CU `.itr` blob anywhere, no `.itr` at
+   the root besides globals. (Component-less legacy batches keep one
+   `<id>.itr` inside their folder.)
 4. Spot-check one frame header inside its folder:
   `# CU-ID`, `# CU-TYPE`, `# TIMESTAMP`, `# DTR-COORDINATES`, then content.
 

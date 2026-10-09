@@ -27,11 +27,14 @@ hs_err_pid*
 CU_*_IMPLEMENTATION_STEPS*.itr
 **/IMPLEMENTATION_STEPS.itr
 
-# Wave-runner execution outputs (ephemeral per-run state; per-CU feedback IS tracked).
+# Wave-runner execution outputs: runtime-only per-run state, never tracked.
+# (Feedback is consumed during the run; the committed record is the code.)
 .LLMDD/ITRS/*.convergence.json
 .LLMDD/ITRS/*.logs/
+.LLMDD/ITRS/*.feedback/
 *.convergence.json
 *.logs/
+*.feedback/
 /.LLMDD/tools/*
 !/.LLMDD/tools/run-waves.py
 !/.LLMDD/tools/*README.md

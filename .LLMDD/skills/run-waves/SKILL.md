@@ -5,7 +5,7 @@ description: Implement compiled CUs in parallel waves with code-lead review usin
 
 # run-waves
 
-Executes compiled CU frames in waves: each wave launches one parallel Coder
+Executes compiled CUs from their `cu-<id>/` folders in waves: each wave launches one parallel Coder
 per CU, waits for all to finish, then the code lead reviews and fixes
 escalations before the next wave starts. Final wave: the lead commits
 everything. The runner is `python3 .LLMDD/tools/run-waves.py` (Python 3.8+,
@@ -93,9 +93,10 @@ otherwise the Advisor must write an explicit waves file.
 
 ## Verify
 
-1. Dry-run lists the expected waves and CUs, exit 0.
-2. After execution: `<app>.feedback/` holds one feedback file per CU,
-  `<app>.logs/` the execution logs, `<app>.convergence.json` the state.
+1. Dry-run lists the expected waves and CUs, exit 0, and writes nothing.
+2. Run outputs (`<app>.feedback/`, `<app>.logs/`, `<app>.convergence.json`)
+   live INSIDE the ITR folder and are gitignored runtime state — never
+   committed, never scattered beside it.
 3. No `ESCALATION` left unhandled in feedback before moving to E2E verify.
 
 ## Handoff to Designer
@@ -113,5 +114,6 @@ The execute command is given only after the dry-run is verified and
 
 ## Output
 
-Implemented code + per-CU feedback, committed by the code lead. Feeds
+Implemented code, committed by the code lead. Per-CU feedback is consumed
+during the run (untracked). Feeds
 STEP6 (VERIFY) and STEP7 (E2E_VERIFY).

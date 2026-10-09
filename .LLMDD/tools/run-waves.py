@@ -543,23 +543,60 @@ def parse_args(argv=None):
 
 _CUID_RE = re.compile(r"^#\s*CU-ID:\s*(.+)$")
 
+_COMPONENT_FILES = ("COORDINATES.itr", "REQUIREMENTS.itr",
+                    "IMPLEMENTATION_STEPS.itr", "ACCEPTANCE.itr")
+
+
+def _file_cu_id(f: Path) -> str | None:
+    """Return the CU-ID header of a frame file, or None."""
+    try:
+        with open(f) as fh:
+            for line in fh:
+                m = _CUID_RE.match(line)
+                if m:
+                    return m.group(1).strip()
+    except Exception:
+        pass
+    return None
+
+
+def _cu_folder_ref(subdir: Path) -> Path | None:
+    """Reference for a CU subdirectory: the folder itself when it holds
+    component files, else the CU-ID-bearing frame inside, else None."""
+    if not subdir.is_dir():
+        return None
+    if any((subdir / name).is_file() for name in _COMPONENT_FILES):
+        return subdir
+    for f in sorted(subdir.iterdir()):
+        if f.suffix == ".itr" and f.is_file() and _file_cu_id(f):
+            return f
+    return None
+
+
+def _cu_read_instructions(cu_ref: Path) -> str:
+    """How the agent reads this CU: folder components or single frame."""
+    if cu_ref.is_dir():
+        return (f"Read the CU folder: {cu_ref}\n"
+                f"  - COORDINATES.itr = DTR area this CU affects/creates\n"
+                f"  - REQUIREMENTS.itr = what part of the feature to build\n"
+                f"  - IMPLEMENTATION_STEPS.itr = your stepwise instructions, follow them exactly\n"
+                f"  - ACCEPTANCE.itr = your tests, all must pass")
+    return f"Read the CU frame file: {cu_ref}"
+
+
 def build_cu_map(itr_path: Path) -> dict[str, Path]:
     cu_map = {}
-    # Root-level frames first, then per-CU subdirectories (cu-<id>/*.itr).
-    # Later entries win on duplicate CU-IDs, matching historic behavior.
-    bases = [itr_path] + sorted(p for p in itr_path.iterdir() if p.is_dir())
-    for base in bases:
-        for f in sorted(base.iterdir()):
-            if f.suffix == ".itr" and f.is_file():
-                try:
-                    with open(f) as fh:
-                        for line in fh:
-                            m = _CUID_RE.match(line)
-                            if m:
-                                cu_map[m.group(1).strip()] = f
-                                break
-                except Exception:
-                    pass
+    # Legacy root-level frames first, then per-CU subdirectories (win).
+    for f in sorted(itr_path.iterdir()):
+        if f.suffix == ".itr" and f.is_file():
+            cu_id = _file_cu_id(f)
+            if cu_id:
+                cu_map[cu_id] = f
+    for sub in sorted(p for p in itr_path.iterdir() if p.is_dir()):
+        ref = _cu_folder_ref(sub)
+        if ref is not None:
+            cu_id = sub.name if ref.is_dir() else (_file_cu_id(ref) or sub.name)
+            cu_map[cu_id] = ref
     return cu_map
 
 
@@ -569,8 +606,12 @@ def resolve_cu_file(cu_id: str, cu_map: dict[str, Path], itr_path: Path) -> Path
     direct = itr_path / f"{cu_id}.itr"
     if direct.is_file():
         return direct
-    subdir = itr_path / cu_id / f"{cu_id}.itr"
-    return subdir if subdir.is_file() else None
+    subdir = itr_path / cu_id
+    ref = _cu_folder_ref(subdir)
+    if ref is not None:
+        return ref
+    nested = subdir / f"{cu_id}.itr"
+    return nested if nested.is_file() else None
 
 
 # ── Wave detection ─────────────────────────────────────────────────
@@ -789,10 +830,10 @@ def run_coder(cu_file: Path, cu_id: str, fallback_chain: ModelFallbackChain,
 
     prompt = (
         f"Implement ONLY CU {cu_id}. Rules:\n"
-        f"1. Read the CU frame file: {cu_file}\n"
-        f"2. Implement ONLY the changes described in that frame\n"
-        f"3. Modify ONLY the files mentioned in that CU frame\n"
-        f"4. Do NOT read any other CU frame files\n"
+        f"1. {_cu_read_instructions(cu_file)}\n"
+        f"2. Implement ONLY the changes described in that CU\n"
+        f"3. Modify ONLY the files mentioned in that CU\n"
+        f"4. Do NOT read any other CU folders or frame files\n"
         f"5. Do NOT implement any other CUs\n"
         f"6. Write feedback to {feedback_dir / f'{cu_id}.feedback.txt'}\n"
         f"7. Include COMMIT_MESSAGE field in feedback\n"
@@ -1031,7 +1072,7 @@ def run_per_cu_lead(cu_id: str, cu_file: Path, model: str, max_iterations: int,
 
     prompt = (
         f"You are the code lead. CU {cu_id} was escalated by the coder.\n\n"
-        f"1. Read the CU frame file at {cu_file}\n"
+        f"1. {_cu_read_instructions(cu_file)}\n"
         f"2. Read the escalation feedback at {feedback_dir / f'{cu_id}.feedback.txt'}\n"
         f"3. Implement the CU yourself (the coder failed)\n"
         f"4. Write updated feedback to {feedback_dir / f'{cu_id}.feedback.txt'}\n"
@@ -1243,7 +1284,8 @@ async def main_async(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     app_name = args.app
-    work_dir = itr_path.parent
+    # Run outputs live INSIDE the ITR folder, never scattered next to it.
+    work_dir = itr_path
 
     # Resolve project root
     if args.project:
@@ -1271,8 +1313,10 @@ async def main_async(args: argparse.Namespace) -> None:
     log_dir = work_dir / f"{app_name}.logs"
     convergence_file = work_dir / f"{app_name}.convergence.json"
 
-    feedback_dir.mkdir(parents=True, exist_ok=True)
-    log_dir.mkdir(parents=True, exist_ok=True)
+    # A dry-run prints the plan and touches nothing on disk.
+    if not args.dry_run:
+        feedback_dir.mkdir(parents=True, exist_ok=True)
+        log_dir.mkdir(parents=True, exist_ok=True)
 
     cu_map = build_cu_map(itr_path)
 
@@ -1293,13 +1337,15 @@ async def main_async(args: argparse.Namespace) -> None:
 
     _header("Loading waves...")
     waves = detect_waves(itr_path, args.waves)
-    log_dir.joinpath("waves.json").write_text(json.dumps(waves, indent=2) + "\n")
+    if not args.dry_run:
+        log_dir.joinpath("waves.json").write_text(json.dumps(waves, indent=2) + "\n")
 
     num_waves = len(waves)
     _success(f"Found {num_waves} waves")
     print()
 
-    save_convergence(convergence_file, {"waves": [], "status": "RUNNING"})
+    if not args.dry_run:
+        save_convergence(convergence_file, {"waves": [], "status": "RUNNING"})
     tracker = CreditTracker()
 
     for wave_def in waves:
@@ -1411,7 +1457,17 @@ async def main_async(args: argparse.Namespace) -> None:
             wave_files_changed, credits_data,
         )
 
-    # Final summary
+    # Final summary — dry-run reports the plan from memory and writes nothing.
+    if args.dry_run:
+        print(_banner_line())
+        print(f"  {C.BOLD}Summary (dry-run, nothing written){C.RESET}")
+        print(_banner_line())
+        _info(f"Waves:       {C.BOLD}{num_waves}{C.RESET}")
+        print()
+        _print_accumulated(tracker)
+        print(_banner_line())
+        return
+
     convergence = load_convergence(convergence_file)
     total_escalations = sum(w["escalations"] for w in convergence["waves"])
     failed_waves = sum(

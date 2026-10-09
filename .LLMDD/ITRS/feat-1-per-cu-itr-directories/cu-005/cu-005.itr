@@ -1,6 +1,0 @@
-# CU-ID: cu-005
-# CU-TYPE: RegularCU
-# TIMESTAMP: 2026-10-09T12:54:25.191282135Z
-# DTR-COORDINATES: 
-
-REQUIREMENTS: executable proof for every feat-1 acceptance criterion (T1-T6 from the feature spec), runnable by the code lead in E2E verify. COORDINATES: none (test-only CU, runs after cu-001..cu-004). IMPLEMENTATION_STEPS: (1) add integration tests for layout output (T1), missing-component failure (T2), missing-MAX_ATTEMPTS failure (T3), override preservation (T4), gitignore check (T5); (2) add creation-semantics test (coordinates referencing a nonexistent DTR area compile cleanly) and a runner-level test that retry-then-escalate honors MAX_ATTEMPTS from SYNOPSIS.itr (T6); (3) run the full suite green. ACCEPTANCE: all new tests pass; full existing suite still passes (no regressions).

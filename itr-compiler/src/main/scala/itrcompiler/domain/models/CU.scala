@@ -31,7 +31,8 @@ final case class CU(
   dtrCoordinates: Seq[String],
   content: String,
   cuType: CUType = RegularCU,
-  timestamp: Instant = Instant.now()
+  timestamp: Instant = Instant.now(),
+  components: Map[String, String] = Map.empty
 ) extends Model {
   def isRequiredPart: Boolean = cuType match {
     case ArchCU | LegendCU => true
@@ -50,5 +51,16 @@ final case class CU(
 object CU {
   val requiredParts: Set[CUType] = Set(
     ArchCU, LegendCU
+  )
+
+  val requiredComponents: Set[String] = Set(
+    "coordinates", "requirements", "implementation-steps", "acceptance"
+  )
+
+  val componentFileNames: Map[String, String] = Map(
+    "coordinates" -> "COORDINATES.itr",
+    "requirements" -> "REQUIREMENTS.itr",
+    "implementation-steps" -> "IMPLEMENTATION_STEPS.itr",
+    "acceptance" -> "ACCEPTANCE.itr"
   )
 }

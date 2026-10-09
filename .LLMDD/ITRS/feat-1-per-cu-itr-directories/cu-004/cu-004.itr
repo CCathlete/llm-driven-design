@@ -1,6 +1,0 @@
-# CU-ID: cu-004
-# CU-TYPE: RegularCU
-# TIMESTAMP: 2026-10-09T12:54:25.191200125Z
-# DTR-COORDINATES: TYPE.scala.itrcompiler.control.cli.CliParser.scala.CliParser, TYPE.scala.itrcompiler.application.services.ContentDeserialize.scala.ContentDeserialize, TYPE.scala.itrcompiler.infrastructure.parsers.JSONFormat.scala.JSONFormat, TYPE.scala.itrcompiler.infrastructure.parsers.YAMLFormat.scala.YAMLFormat
-
-REQUIREMENTS: batch files (JSON/YAML) can carry the four per-CU components plus synopsis data through to the models, so the writer and validator (cu-002, cu-003) receive everything they enforce. COORDINATES: TYPE.scala.itrcompiler.control.cli.CliParser.scala.CliParser + ContentDeserialize + JSONFormat + YAMLFormat parsers. IMPLEMENTATION_STEPS: (1) extend JSON/YAML batch schema with per-CU component fields and batch-level synopsis fields (feature ids, MAX_ATTEMPTS); (2) keep backward compatibility: batches without the new fields compile as today (single content payload); (3) add CLI flags only if needed, reusing --json-content/--yaml-content/--force otherwise. ACCEPTANCE: old-schema batches still compile unchanged (regression); new-schema batches round-trip all components into the written CU folders.

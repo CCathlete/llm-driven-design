@@ -1,6 +1,0 @@
-# CU-ID: cu-002
-# CU-TYPE: RegularCU
-# TIMESTAMP: 2026-10-09T12:54:25.190532474Z
-# DTR-COORDINATES: TYPE.scala.itrcompiler.application.services.RequiredPartsValidation.scala.RequiredPartsValidation
-
-REQUIREMENTS: compilation fails with a relevant error when any enforced rule is unmet: missing CU subdirectory content (any of the four components), missing root SYNOPSIS.itr, missing MAX_ATTEMPTS, or a missing/empty implementation summary in the synopsis data. Manually placed per-CU override files must be accepted without content enforcement. COORDINATES: TYPE.scala.itrcompiler.application.services.RequiredPartsValidation.scala.RequiredPartsValidation. IMPLEMENTATION_STEPS: (1) extend required-parts validation to check per-CU components and root synopsis/MAX_ATTEMPTS; (2) error messages name the CU id and the missing component/file; (3) explicitly skip content checks for Advisor-placed override files. ACCEPTANCE: T2 — batch omitting one component fails non-zero naming the component; T3 — missing MAX_ATTEMPTS fails non-zero naming it; T4 — hand-placed override file survives --force recompile byte-for-byte; T7 — missing/empty implementation summary fails non-zero naming the summary.

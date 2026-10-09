@@ -57,6 +57,33 @@ class FileSystemTest extends AnyFunSpec {
         val content = new String(Files.readAllBytes(cuFile))
         assert(content.contains("new content"))
       }
+
+      it("should write only component files (no blob) for a component-carrying CU") {
+        val outDir = tmpDir.resolve("cuwrite-components")
+        val cu = CU(
+          id = "cu-comp",
+          dtrCoordinates = Seq("TYPE.X"),
+          content = "legacy payload",
+          components = Map(
+            "coordinates" -> "TYPE.X",
+            "requirements" -> "build the thing",
+            "implementation-steps" -> "1. do it",
+            "acceptance" -> "it works"
+          )
+        )
+        fs.write(cu, outDir, force = false)
+
+        val cuDir = outDir.resolve("cu-comp")
+        assert(Files.exists(cuDir.resolve("COORDINATES.itr")))
+        assert(Files.exists(cuDir.resolve("REQUIREMENTS.itr")))
+        assert(Files.exists(cuDir.resolve("IMPLEMENTATION_STEPS.itr")))
+        assert(Files.exists(cuDir.resolve("ACCEPTANCE.itr")))
+        assert(!Files.exists(cuDir.resolve("cu-comp.itr")))
+        assert(!Files.exists(outDir.resolve("cu-comp.itr")))
+        val coords = new String(Files.readAllBytes(cuDir.resolve("COORDINATES.itr")))
+        assert(coords.contains("# COORDINATES: cu-comp"))
+        assert(coords.contains("TYPE.X"))
+      }
     }
 
     describe("ContentRead") {
