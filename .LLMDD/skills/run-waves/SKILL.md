@@ -89,6 +89,20 @@ otherwise the Advisor must write an explicit waves file.
   `<app>.logs/` the execution logs, `<app>.convergence.json` the state.
 3. No `ESCALATION` left unhandled in feedback before moving to E2E verify.
 
+## Handoff to Designer
+
+After writing `waves.json`, the agent prints the exact fish command for the
+Designer to paste (feature and app names filled in — no placeholders):
+
+```fish
+python3 .LLMDD/tools/run-waves.py --itr .LLMDD/ITRS/<feature-name> --app <app> --waves .LLMDD/ITRS/<feature-name>/waves.json --dry-run
+```
+
+First the Designer runs the `--dry-run` variant and confirms the plan; only
+then does the agent give the execute variant (same command without
+`--dry-run`). Never print the execute command before the dry-run is
+confirmed.
+
 ## Output
 
 Implemented code + per-CU feedback, committed by the code lead. Feeds
