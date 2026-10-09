@@ -52,6 +52,30 @@ cu-001:
   content: "Implement..."
 ```
 
+## CU content bar (dummy-proof)
+
+A batch is not compilable until every regular CU's content carries four
+labeled sections with implementation-grade detail — the Coder must be able
+to implement without asking questions:
+
+- **REQUIREMENTS** — what part of the feature this CU adds, in one paragraph.
+- **COORDINATES** — the exact DTR keys this CU touches (verified against the
+  feature DTR, not guessed). Creation semantics: a key that does not exist
+  yet means the CU creates it.
+- **IMPLEMENTATION_STEPS** — numbered steps, each with: exact file path(s),
+  what to add/change (code sketches or signatures, not prose like "extend
+  validation"), what NOT to touch (neighboring modules, signatures relied
+  on by others), and the command proving the step (`sbt compile`, focused
+  `testOnly`, etc.). End with an explicit stop condition ("stop when X is
+  green; Y and Z belong to other CUs").
+- **ACCEPTANCE** — test IDs mapped to the feature spec, each with the exact
+  command and expected result.
+
+The Designer rejects the batch (no compile) when any CU lacks file paths,
+code-level specifics, or verification commands in its steps, or when any
+coordinate does not resolve in the feature DTR. Vague verbs
+("handle", "extend", "improve") without a file + snippet are a reject.
+
 ## Commands (run from repo root)
 
 ```sh
@@ -86,9 +110,12 @@ cu-001:
 
 ## Verify
 
-1. Exit code is 0.
-2. Expected files exist: `ARCH.itr`, `LEGEND.itr`, `<id>.itr` per CU.
-3. Spot-check one frame header:
+1. Batch gate: every regular CU has all four content sections; every
+   coordinate resolves in the feature DTR (`python3 -c` check over batch +
+   `.dtr` keys — zero missing or no compile).
+2. Exit code is 0.
+3. Expected files exist: `ARCH.itr`, `LEGEND.itr`, `<id>.itr` per CU.
+4. Spot-check one frame header:
   `# CU-ID`, `# CU-TYPE`, `# TIMESTAMP`, `# DTR-COORDINATES`, then content.
 
 ## Output
