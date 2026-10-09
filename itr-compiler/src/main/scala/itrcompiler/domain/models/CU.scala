@@ -46,6 +46,8 @@ final case class CU(
     case E2eVerificationCU => "E2EVERIFICATION.itr"
     case RegularCU => s"${id}.itr"
   }
+
+  def missingComponents: Set[String] = CU.requiredComponents -- components.keySet
 }
 
 object CU {

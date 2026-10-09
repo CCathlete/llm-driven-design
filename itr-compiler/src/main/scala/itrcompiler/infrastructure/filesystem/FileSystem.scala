@@ -1,7 +1,7 @@
 package itrcompiler.infrastructure.filesystem
 
 import itrcompiler.application.ports.{ContentRead, CUWrite, DTRLoad}
-import itrcompiler.domain.models.{CU, CUBatch, RegularCU}
+import itrcompiler.domain.models.{CU, CUBatch, CUSynopsis, RegularCU}
 import itrcompiler.infrastructure.parsers.{JSONFormat, YAMLFormat}
 
 import java.nio.charset.StandardCharsets
@@ -84,6 +84,22 @@ final class FileSystem(
         Files.write(target, componentFrame.getBytes(StandardCharsets.UTF_8))
       }
     }
+  }
+
+  // ── Synopsis ─────────────────────────────────────────────
+
+  /** Write root SYNOPSIS.itr once per compile. */
+  override def writeSynopsis(outFolder: Path, synopsis: CUSynopsis, cus: Seq[CU], force: Boolean): Unit = {
+    Files.createDirectories(outFolder)
+    val target = outFolder.resolve("SYNOPSIS.itr")
+    if (!force && Files.exists(target)) return
+    val body =
+      s"FEATURES_IMPLEMENTED=${synopsis.features.mkString(",")}\n" +
+      s"MAX_ATTEMPTS=${synopsis.maxAttempts}\n" +
+      s"CUS=${cus.map(_.id).mkString(",")}\n" +
+      s"ENFORCED_BY=itr-compiler\n" +
+      s"SUMMARY=${synopsis.summary}\n"
+    Files.write(target, body.getBytes(StandardCharsets.UTF_8))
   }
 
   // ── ContentRead ────────────────────────────────────────────

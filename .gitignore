@@ -7,6 +7,7 @@ hs_err_pid*
 
 **/.metals
 **/.bloop
+**/.bsp
 **/target
 
 **/__pycache__
@@ -37,4 +38,5 @@ CU_*_IMPLEMENTATION_STEPS*.itr
 *.feedback/
 /.LLMDD/tools/*
 !/.LLMDD/tools/run-waves.py
+!/.LLMDD/tools/test_synopsis_budget.py
 !/.LLMDD/tools/*README.md

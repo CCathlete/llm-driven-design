@@ -1,7 +1,7 @@
 package itrcompiler.application.services
 
 import itrcompiler.application.ports.CUWrite
-import itrcompiler.domain.models.CU
+import itrcompiler.domain.models.{CU, CUSynopsis}
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters._
 
@@ -17,6 +17,13 @@ final class CUStore(cuWrite: CUWrite) extends Service {
   /** Store a single CU frame. Returns the path it was written to. */
   def store(cu: CU, outFolder: Path, force: Boolean): Unit =
     cuWrite.write(cu, outFolder, force)
+
+  /** Store the root SYNOPSIS.itr via the CUWrite port (ARCH.DIP:
+    * Compile depends on this application-layer service, never on
+    * infrastructure directly).
+    */
+  def storeSynopsis(outFolder: Path, synopsis: CUSynopsis, cus: Seq[CU], force: Boolean): Unit =
+    cuWrite.writeSynopsis(outFolder, synopsis, cus, force)
 
   /** List existing .itr files in the output folder. */
   def listExistingFiles(outFolder: Path): Set[String] = {

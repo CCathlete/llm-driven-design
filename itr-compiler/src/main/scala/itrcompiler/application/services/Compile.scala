@@ -1,7 +1,7 @@
 package itrcompiler.application.services
 
 import itrcompiler.application.ports.DTRLoad
-import itrcompiler.domain.models.{CompileCommand, CU, CUBatch}
+import itrcompiler.domain.models.{CompileCommand, CU, CUBatch, RegularCU}
 import java.nio.file.Path
 
 /** Service: Compile orchestration — the heart of the itr-compiler.
@@ -34,25 +34,52 @@ final class Compile(
     */
   def execute(cmd: CompileCommand): Seq[CU] = {
     val batch = buildBatch(cmd)
+    val batchMode = cmd.jsonContent.isDefined || cmd.yamlContent.isDefined
 
     // Validate required parts (batch mode only)
-    val validation = cmd match {
-      case _ if cmd.jsonContent.isDefined || cmd.yamlContent.isDefined =>
-        requiredPartsValidation.validateBatch(batch, Some(cmd.outFolder))
-      case _ =>
+    val validation =
+      if (batchMode) requiredPartsValidation.validateBatch(batch, Some(cmd.outFolder))
+      else
         // Single CU mode or empty: skip required parts validation
         requiredPartsValidation.ValidationResult(
           isValid = true,
           missingParts = Set.empty,
           existingParts = Set.empty
         )
-    }
 
     if (!validation.isValid) {
       throw new IllegalStateException(
         s"Missing required parts: ${validation.missingParts.mkString(", ")}. " +
         s"ITR must contain ARCH and LEGEND. They can be created incrementally."
       )
+    }
+
+    // Feat-1 enforcement: component + synopsis validation (cu-002).
+    //
+    // Enforcement applies to new-schema batches only (batch mode carrying a
+    // synopsis and/or at least one component-carrying regular CU). A legacy
+    // old-schema batch — no synopsis, every regular CU component-less — is
+    // compiled unchanged for backward compatibility (spec criterion 11: "a
+    // component-less legacy CU keeps exactly one <cu-id>.itr frame"; see also
+    // cu-003/cu-004 regression). Single-CU raw mode never carries synopsis or
+    // components, so it is exempt too.
+    //
+    // Override exemption: validation inspects ONLY CUs present in the batch.
+    // Files already on disk in the output folder whose names match no batch
+    // CU id (Advisor-placed overrides) are never validated, never deleted,
+    // never overwritten unless `--force` targets their exact path.
+    val isNewSchemaBatch =
+      batch.synopsis.isDefined ||
+        batch.cus.exists(cu => cu.cuType == RegularCU && cu.components.nonEmpty)
+    if (batchMode && isNewSchemaBatch) {
+      val feat1Errors =
+        requiredPartsValidation.validateComponents(batch) ++
+          requiredPartsValidation.validateSynopsis(batch)
+      if (feat1Errors.nonEmpty) {
+        throw new IllegalStateException(
+          "ITR enforcement failed:\n" + feat1Errors.mkString("\n")
+        )
+      }
     }
 
     val validated = batch.cus.map { cu =>
@@ -65,6 +92,14 @@ final class Compile(
       } catch {
         case e: Exception =>
           System.err.println(s"Warning: failed to write CU '${cu.id}': ${e.getMessage}")
+      }
+    }
+    batch.synopsis.foreach { syn =>
+      try {
+        cuStore.storeSynopsis(cmd.outFolder, syn, validated, cmd.force)
+      } catch {
+        case e: Exception =>
+          System.err.println(s"Warning: failed to write SYNOPSIS.itr: ${e.getMessage}")
       }
     }
     validated

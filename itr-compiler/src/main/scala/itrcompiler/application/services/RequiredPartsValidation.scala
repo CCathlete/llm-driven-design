@@ -79,4 +79,21 @@ final class RequiredPartsValidation extends Service {
       existingParts = existing
     )
   }
+
+  /** Report component omissions for regular CUs that opt into the
+    * component schema. A fully component-less regular CU is a legacy
+    * old-schema CU: it is exempt and keeps its single per-CU frame
+    * (feature spec criterion 11). Only CUs that already carry at least one
+    * component are required to carry all four.
+    */
+  def validateComponents(batch: CUBatch): Seq[String] =
+    batch.cus.filter(cu => cu.cuType == RegularCU && cu.components.nonEmpty).flatMap { cu =>
+      cu.missingComponents.toSeq.sorted.map(name => s"CU '${cu.id}' is missing component '$name'")
+    }
+
+  def validateSynopsis(batch: CUBatch): Seq[String] = batch.synopsis match {
+    case None => Seq("SYNOPSIS is missing: batch carries no synopsis data (features, MAX_ATTEMPTS, implementation summary)")
+    case Some(s) if !s.isComplete => Seq("SYNOPSIS is incomplete: implementation summary is missing or empty")
+    case _ => Seq.empty
+  }
 }
