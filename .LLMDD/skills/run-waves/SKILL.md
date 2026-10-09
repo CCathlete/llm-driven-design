@@ -18,8 +18,9 @@ and verified. Plan waves, dry-run, execute.
 
 ## Wave planning (Advisor)
 
-The Advisor writes the waves file. Goal: **as many parallel CUs per wave as
-possible**, subject to:
+The Advisor authors the waves file and places it in the ITR root:
+`.LLMDD/ITRS/<feature-name>/waves.json`. The Advisor never executes the
+runner. Goal: **as many parallel CUs per wave as possible**, subject to:
 
 - **Same file → different waves.** CUs editing the same file must be
   serialized across waves in dependency order — a wave's CUs run in
@@ -33,7 +34,7 @@ possible**, subject to:
 - **Pack aggressively.** Independent CUs touching different files belong in
   the same wave, even if that means 6+ parallel Coders.
 
-Waves file (`<feature>-waves.json`):
+Waves file (`.LLMDD/ITRS/<feature-name>/waves.json`):
 
 ```json
 [
@@ -43,14 +44,16 @@ Waves file (`<feature>-waves.json`):
 ]
 ```
 
-## Commands (run from repo root)
+## Execution (Designer, in a terminal)
+
+The Designer — never the agent — runs the runner from the repo root:
 
 ```sh
 # Always dry-run first
-python3 .LLMDD/tools/run-waves.py --itr .LLMDD/ITRS/<feature-name> --app <app> --waves <feature-waves.json> --dry-run
+python3 .LLMDD/tools/run-waves.py --itr .LLMDD/ITRS/<feature-name> --app <app> --waves .LLMDD/ITRS/<feature-name>/waves.json --dry-run
 
 # Execute
-python3 .LLMDD/tools/run-waves.py --itr .LLMDD/ITRS/<feature-name> --app <app> --waves <feature-waves.json>
+python3 .LLMDD/tools/run-waves.py --itr .LLMDD/ITRS/<feature-name> --app <app> --waves .LLMDD/ITRS/<feature-name>/waves.json
 ```
 
 Omitting `--waves` auto-detects a **single wave with all CUs** — maximum
@@ -72,7 +75,7 @@ otherwise the Advisor must write an explicit waves file.
 
 ## Rules
 
-- Dry-run before every execution; confirm wave count and CU assignments.
+- The Designer dry-runs before every execution; confirm wave count and CU assignments.
 - Never put same-file CUs in one wave.
 - Monitor per-CU feedback during execution; the lead picks up `ESCALATION`
   status (handled by the runner's review step, not by re-running waves).
