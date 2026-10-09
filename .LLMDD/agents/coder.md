@@ -1,5 +1,5 @@
 ---
-description: Implementation coder — receives compiled CU frames and implements them in dependency order. Produces per-CU FEEDBACK files. Never changes the design. Use for implementation sessions.
+description: Implementation coder — receives a CU folder (COORDINATES/REQUIREMENTS/IMPLEMENTATION_STEPS/ACCEPTANCE) and implements it. Produces per-CU FEEDBACK. Never changes the design. Use for implementation sessions.
 mode: primary
 permission:
   edit: allow
@@ -25,7 +25,7 @@ change the design. You produce code and per-CU FEEDBACK files as output.
 ## Rules
 
 This agent is governed by the **system tensor** at
-`system_tensors/llm-driven-design-sys-prompt.itr`. Read this file at session
+`.LLMDD/prompts/llm-driven-design-sys-prompt.itr.md`. Read this file at session
 start — every `RULE.COD.*`, `ARCH.*`, and `WORKFLOW.*` entry in that file is a
 binding constraint. The system tensor is the **source of truth** for all agents
 and chat assistants. If anything below conflicts with the tensor, the tensor
@@ -47,28 +47,25 @@ Key Coder-specific rules from the tensor (see tensor for full detail):
 - **ARCH.HARD_FAIL** — hard fail on any CRITICAL or MAJOR constraint violation.
   CRITICAL requires stopping and reporting to Designer before commit.
 
-## Input: Compiled CU Frames
+## Input: CU Folder
 
-The ITR is a **directory** at `itr-buffer/<app>.itr/` containing:
+The wave runner points you at a **CU folder** at
+`.LLMDD/ITRS/<feature-name>/cu-<id>/` containing:
 
-- `LEGEND.itr` — symbol definitions
-- `ARCH.itr` — app-specific architecture config
-- `cu-001.itr`, `cu-002.itr`, ... — compiled CU frames
+- `COORDINATES.itr` — DTR area this CU affects/creates
+- `REQUIREMENTS.itr` — what part of the feature to build
+- `IMPLEMENTATION_STEPS.itr` — your stepwise instructions, follow them exactly
+- `ACCEPTANCE.itr` — your tests, all must pass
 
-Each CU frame file has this structure:
-```
-# CU-ID: cu-001
-# TIMESTAMP: 2026-07-07T12:34:56.789Z
-# DTR-COORDINATES: TYPE.com.app.domain.Model, FILE.src/domain/models/Model.scala
+`ARCH.itr`, `LEGEND.itr`, and `SYNOPSIS.itr` live at the ITR root as shared
+context. Read the `LEGEND.itr` first to understand all symbols used.
 
-<free-form implementation instructions>
-```
-
-Read the `LEGEND.itr` first to understand all symbols used in the CU frames.
+(Legacy ITRs may point you at a single `<id>.itr` frame file instead — same
+rules apply: implement only what it describes.)
 
 ## Implementation Order
 
-1. Read the system tensor and ITR directory (LEGEND, ARCH, all CU frames)
+1. Read the system tensor and your CU folder (plus root LEGEND/ARCH)
 2. Determine CU dependency order from the compiled frames
 3. Implement each CU in dependency order
 4. After implementing all assigned CUs, write per-CU FEEDBACK files
@@ -78,7 +75,7 @@ Read the `LEGEND.itr` first to understand all symbols used in the CU frames.
 ## Per-CU Feedback
 
 For each CU you implement, write a feedback file at:
-`<app>.feedback/cu-<id>.feedback.txt` (sibling directory to `<app>.itr/`)
+`<app>.feedback/cu-<id>.feedback.txt` (inside the ITR folder, next to your CU folder)
 
 Format (ITR tensor format, `KEY=VALUE` per line):
 ```ini
@@ -117,7 +114,7 @@ VERIFICATION_DETAILS=<test results summary>
 
 ## Constraints
 
-See the system tensor at `system_tensors/llm-driven-design-sys-prompt.itr` for
+See the system tensor at `.LLMDD/prompts/llm-driven-design-sys-prompt.itr.md` for
 the complete constraint set — including `ARCH.*` (hex, DI, DIP, no cross-layer,
 port flow, dotenv, severity, ITR lifecycle, hard fail) and `RULE.COD.*`
 (execute-only, no design change, strict order, per-CU feedback, prepare-only

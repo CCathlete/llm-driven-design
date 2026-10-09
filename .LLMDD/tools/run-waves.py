@@ -23,7 +23,7 @@ from typing import Generic, TypeVar, Any
 
 # ── Defaults ───────────────────────────────────────────────────────
 
-DEFAULT_CODER_MODEL = "mistral/codestral-latest"
+DEFAULT_CODER_MODEL = "opencode/muse-spark-1.3-contributor-free"
 DEFAULT_LEAD_MODEL = "opencode/big-pickle"
 DEFAULT_CU_TIMEOUT = 300
 DEFAULT_LEAD_TIMEOUT = 600
@@ -31,7 +31,7 @@ DEFAULT_MAX_FIX_ITERATIONS = 3
 
 # ── Fallback defaults ───────────────────────────────────────────────
 DEFAULT_CODER_FALLBACKS = [
-    "google/gemma-4-31b-it",
+    "opencode/big-pickle",
 ]
 
 # ── Monadic Result Type ────────────────────────────────────────────
@@ -857,7 +857,7 @@ def run_coder(cu_file: Path, cu_id: str, fallback_chain: ModelFallbackChain,
             "opencode", "run",
             "--dir", str(project_dir),
             "--model", model,
-            "--agent", "coder",
+            "--agent", "llmdd/coder",
             "--format", "json",
             "--auto",
             prompt,

@@ -15,9 +15,9 @@ python3 .LLMDD/tools/run-waves.py --itr <itr-path> --app <app-name> [--waves <wa
 | `--itr <path>` | Path to compiled ITR directory | Required |
 | `--app <name>` | Application name | Required |
 | `--waves <json>` | Wave definition file | Auto-detect |
-| `--coder-model <m>` | Model for coders | mistral/codestral-latest |
+| `--coder-model <m>` | Model for coders | opencode/muse-spark-1.3-contributor-free |
 | `--lead-model <m>` | Model for code lead | opencode/big-pickle |
-| `--coder-fallbacks <m>` | Fallback models if primary fails | google/gemma-4-31b-it |
+| `--coder-fallbacks <m>` | Fallback models if primary fails | opencode/big-pickle |
 | `--max-fix-iterations <n>` | Max fix iterations per wave | 3 |
 | `--cu-timeout <s>` | Activity timeout per CU | 180 |
 | `--lead-timeout <s>` | Activity timeout for lead | 600 |
@@ -71,6 +71,6 @@ python3 .LLMDD/tools/run-waves.py \
 
 ## Models
 
-- **Coders**: mistral/codestral-latest (fast, parallel execution)
+- **Coders**: opencode/muse-spark-1.3-contributor-free (verified working, fast, parallel execution)
 - **Code Lead**: opencode/big-pickle (smarter, reviews and fixes)
-- **Fallback**: google/gemma-4-31b-it
+- **Fallback**: opencode/big-pickle

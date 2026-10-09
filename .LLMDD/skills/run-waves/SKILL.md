@@ -73,9 +73,9 @@ otherwise the Advisor must write an explicit waves file.
 
 | Option | Default | Notes |
 |--------|---------|-------|
-| `--coder-model` | `mistral/codestral-latest` | fast, parallel execution |
+| `--coder-model` | `opencode/muse-spark-1.3-contributor-free` | fast, parallel execution |
 | `--lead-model` | `opencode/big-pickle` | smarter, reviews and fixes |
-| `--coder-fallbacks` | `google/gemma-4-31b-it` | repeatable |
+| `--coder-fallbacks` | `opencode/big-pickle` | repeatable |
 | `--max-fix-iterations` | `3` | lead repairs per wave |
 | `--cu-timeout` | `300s` | activity timeout per CU |
 | `--lead-timeout` | `600s` | activity timeout for lead |
