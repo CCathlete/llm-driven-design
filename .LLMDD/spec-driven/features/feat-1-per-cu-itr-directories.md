@@ -1,6 +1,6 @@
 # feat-1: Per-CU ITR directories with enforced components
 
-- Status: Proposed
+- Status: Implemented
 - Created: 2026-10-09
 - Feature ID: feat-1-per-cu-itr-directories
 
@@ -22,9 +22,13 @@ explicitly NOT compiler-enforced.
 
 ## Implementation status
 
-Not implemented (Proposed). Moves to In Progress when CUs are assigned, to
-Implemented when all waves are done and E2E verify is green. Implementing
-commit(s) and ITR directory to be recorded here.
+Implemented. Waves 1–4 done, 0 escalations; implementing commit `de32e82`
+(`feat(feat-1): per-CU ITR directories`), ITR directory
+`.LLMDD/ITRS/feat-1-per-cu-itr-directories/`. Verified: `sbt test` 87/87
+(21 suites); live-binary probes for T1 (folders + SYNOPSIS, no blobs),
+T2 (missing components fail naming CU + pieces), T3/T7 (missing summary
+fails), legacy compat (in-folder blob, root clean); cross-layer import
+audit clean. E2E verify green.
 
 ## Acceptance criteria
 
