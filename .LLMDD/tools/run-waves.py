@@ -189,28 +189,13 @@ _REFUSAL_PATTERNS = [
 ]
 
 _ERROR_PATTERNS = [
-    # Actual errors (not file paths or tool output)
-    "Error:",
-    "FATAL:",
-    "panic:",
+    # Process-level fatal signals only (raw stderr, never JSON event text).
+    # Coder tool errors, compiler output, and opencode warnings MUST NOT
+    # fail a CU — only a dead process or an explicit opencode error event.
     "Traceback (most recent call last)",
     "Exception in thread",
-    "compilation failed",
-    "build failed",
-    "syntax error",
-    "not found:",
-    "value .* is not a member of",
-    # Context / resource errors
-    "context length",
-    "context window",
-    "token limit",
-    "maximum context",
-    "input is longer than",
-    "rate limit",
-    "429",
-    "503",
-    "overloaded",
-    "capacity",
+    "panic:",
+    "FATAL:",
 ]
 
 # ── Model Fallback Chain ────────────────────────────────────────────
@@ -696,8 +681,12 @@ def _stream_process_json(cmd: list[str], log_fh, colour: str, prefix: str,
 
                 display = _format_event(ev, colour)
                 if display:
-                    print(f"  {colour}{prefix}{C.RESET} {C.DIM}│{C.RESET} {display}",
+                    dlines = display.split("\n")
+                    print(f"  {colour}{prefix}{C.RESET} {C.DIM}│{C.RESET} {dlines[0]}",
                           flush=True)
+                    for cont in dlines[1:]:
+                        print(f"  {colour}{prefix}{C.RESET} {C.DIM}│{C.RESET} {cont}",
+                              flush=True)
 
             except (json.JSONDecodeError, ValueError):
                 print(f"  {colour}{prefix}{C.RESET} {C.DIM}│{C.RESET} {line}",
@@ -765,10 +754,11 @@ def _format_event(ev: dict, colour: str) -> str | None:
         text = part.get("text", "")
         if not text:
             return None
-        if len(text) > 120:
-            text = text[:117] + "..."
-        text = text.replace("\n", "↵")
-        return f"{C.DIM}📝 {text}{C.RESET}"
+        # Show what the agent actually says, in full, one line per line.
+        # Truncation here is what made runs unreadable — cap high.
+        if len(text) > 4000:
+            text = text[:3997] + "..."
+        return "\n".join(f"{C.BR_WHITE}📝 {ln}{C.RESET}" for ln in text.split("\n"))
 
     if t == "tool_invocation_start":
         part = ev.get("part", {})
@@ -877,15 +867,31 @@ def run_coder(cu_file: Path, cu_id: str, fallback_chain: ModelFallbackChain,
             case Err(e):
                 return Err(e)
 
-        # Check for issues via monadic file read
+        # Check for issues via monadic file read.
+        # An opencode `"type": "error"` event is authoritative. Plain-text
+        # patterns only apply to non-JSON lines (raw process stderr) so
+        # coder tool errors and compiler output can never fail a CU.
         match _read_file_text(log_file):
             case Ok(text):
                 is_refusal = any(p.lower() in text.lower() for p in _REFUSAL_PATTERNS)
-                is_error_lines = any(
-                    p in line for line in text.splitlines()
-                    for p in _ERROR_PATTERNS
-                    if "toolResult" not in line and "tool_result" not in line
-                )
+                is_error_lines = False
+                for line in text.splitlines():
+                    try:
+                        ev = json.loads(line)
+                        if isinstance(ev, dict) and ev.get("type") == "error":
+                            is_error_lines = True
+                            break
+                        continue
+                    except (json.JSONDecodeError, ValueError):
+                        pass
+                    if "toolResult" in line or "tool_result" in line:
+                        continue
+                    for p in _ERROR_PATTERNS:
+                        if p in line:
+                            is_error_lines = True
+                            break
+                    if is_error_lines:
+                        break
             case Err(_):
                 is_refusal = False
                 is_error_lines = False
@@ -933,6 +939,14 @@ def run_coder(cu_file: Path, cu_id: str, fallback_chain: ModelFallbackChain,
             if model_idx == len(fallback_chain) - 1:
                 model_used = model
                 _fail(f"CU {cu_id} failed on all {len(fallback_chain)} model(s)")
+
+                # Never clobber evidence: the coder may have written feedback
+                # before failing. Only write the escalation stub when the
+                # coder left no feedback file behind.
+                coder_feedback = feedback_dir / f"{cu_id}.feedback.txt"
+                if coder_feedback.is_file():
+                    _warn(f"Keeping coder feedback at {coder_feedback}")
+                    break
 
                 feedback_content = f"""CU_ID={cu_id}
 CODER_NAME=wave-runner
