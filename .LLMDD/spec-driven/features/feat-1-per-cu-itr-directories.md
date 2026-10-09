@@ -49,10 +49,11 @@ commit(s) and ITR directory to be recorded here.
    Advisor into the CU folder); the compiler must accept it without
    enforcing its content.
 9. The ITR root contains `SYNOPSIS.itr` naming which features this ITR
-   implements and defining the `MAX_ATTEMPTS` retry parameter.
+   implements, defining the `MAX_ATTEMPTS` retry parameter, and carrying
+   an implementation summary stating what the ITR builds.
 10. Compilation fails with a relevant error message when any of criteria
-   1–5, 7, or 9 is not met (missing component, missing subdirectory,
-   missing `SYNOPSIS.itr`/`MAX_ATTEMPTS`).
+    1–5, 7, or 9 is not met (missing component, missing subdirectory,
+    missing `SYNOPSIS.itr`/`MAX_ATTEMPTS`/implementation summary).
 
 ## Tests
 
@@ -80,3 +81,5 @@ lead in E2E verify):
   not-yet-existing DTR area (assert exit 0 — creation semantics); and a
   runner-level test asserting the retry-then-escalate behavior honors
   `MAX_ATTEMPTS` from `SYNOPSIS.itr`.
+- `T7` (criteria 9–10): compile with the implementation summary missing or
+  empty in the synopsis data; assert non-zero exit naming the summary.

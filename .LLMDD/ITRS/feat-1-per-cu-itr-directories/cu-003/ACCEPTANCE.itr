@@ -1,5 +1,6 @@
 # ACCEPTANCE: cu-003
 # TIMESTAMP: 2026-10-09
 
-T1 — compiled layout matches the spec.
+T1 — compiled layout matches the spec; SYNOPSIS.itr holds features,
+MAX_ATTEMPTS, and a non-empty implementation summary.
 T5 — git check-ignore passes for IMPLEMENTATION_STEPS.itr.
