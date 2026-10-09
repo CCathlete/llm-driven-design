@@ -5,7 +5,7 @@ Execute CUs in parallel waves with code lead review.
 ## Usage
 
 ```bash
-python3 wave-command/run-waves.py --itr <itr-path> --app <app-name> [--waves <waves-json>]
+python3 .LLMDD/tools/run-waves.py --itr <itr-path> --app <app-name> [--waves <waves-json>]
 ```
 
 ## Options
@@ -50,17 +50,17 @@ Final wave: code lead commits everything.
 
 ```bash
 # Dry run
-python3 wave-command/run-waves.py \
-  --itr itr-buffer/llm-driven-design.itr \
-  --app llm-driven-design \
-  --waves wave-command/llmdd-v8-waves.json \
+python3 .LLMDD/tools/run-waves.py \
+  --itr .LLMDD/ITRS/<feature-name> \
+  --app <app> \
+  --waves <waves-json> \
   --dry-run
 
 # Execute
-python3 wave-command/run-waves.py \
-  --itr itr-buffer/llm-driven-design.itr \
-  --app llm-driven-design \
-  --waves wave-command/llmdd-v8-waves.json
+python3 .LLMDD/tools/run-waves.py \
+  --itr .LLMDD/ITRS/<feature-name> \
+  --app <app> \
+  --waves <waves-json>
 ```
 
 ## Output
