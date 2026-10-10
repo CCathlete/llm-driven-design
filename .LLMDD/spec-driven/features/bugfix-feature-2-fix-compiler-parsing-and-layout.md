@@ -1,8 +1,8 @@
-# feat-2: Fix compiler parsing and layout
+# bugfix-feature-2: Fix compiler parsing and layout
 
 - Status: Proposed
 - Created: 2026-10-10
-- Feature ID: feat-2-fix-compiler-parsing-and-layout
+- Feature ID: bugfix-feature-2-fix-compiler-parsing-and-layout
 
 ## Synopsis
 
