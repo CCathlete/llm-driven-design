@@ -249,16 +249,34 @@ final class JSONFormat {
     * are absent, returns Map.empty so the legacy path is preserved.
     * An explicit "components" object, when present, wins over splitting
     * (handled by the caller).
+    *
+    * Bare (colon-less) labels (REQUIREMENTS, COORDINATES, ...) are accepted
+    * as aliases of their colon forms per Designer decision (bugfix-feature-3
+    * / bug-3), so Advisor batches drafted from the skill prose split to the
+    * four component files instead of falling back to the silent legacy
+    * blob. Matching is colon-first per component key (labels grouped by key
+    * from CU.sectionLabels, colon form listed first): the colon form of a
+    * key is tried before its bare alias, so a bare prefix never shadows a
+    * colon label — a bare occurrence is only used when the colon form of
+    * that key is absent from the content entirely.
     */
   private def splitInlineSections(content: String): Map[String, String] = {
     if (content == null || content.isEmpty) return Map.empty
     // Labels come from CU.sectionLabels — the same list validation uses
     // (domain layer), so parser and enforcement always agree on what a
-    // section header is.
-    val found = CU.sectionLabels.flatMap { case (label, key) =>
-      val idx = content.indexOf(label)
-      if (idx == -1) None else Some((idx, label, key))
-    }
+    // section header is. Labels are grouped by component key; each key
+    // lists its colon form first, then its bare alias, and only the first
+    // label of a key found in the content becomes a section (colon forms
+    // first so a bare prefix never shadows a colon label).
+    val found = CU.sectionLabels
+      .groupBy(_._2)
+      .flatMap { case (_, labelsForKey) =>
+        labelsForKey.collectFirst {
+          case (label, key) if content.contains(label) =>
+            (content.indexOf(label), label, key)
+        }
+      }
+      .toSeq
     if (found.isEmpty) return Map.empty
     val sorted = found.sortBy(_._1)
     val builder = Map.newBuilder[String, String]

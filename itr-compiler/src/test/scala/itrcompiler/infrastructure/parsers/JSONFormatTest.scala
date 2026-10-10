@@ -95,4 +95,41 @@ class JSONFormatTest extends AnyFlatSpec with Matchers {
     batch.cus.size shouldBe 1
     batch.cus.head.components shouldBe Map.empty
   }
+
+  it should "split all four inline sections from bare labels (bug-3 repro 1)" in {
+    val content = "REQUIREMENTS\nreq body\nCOORDINATES\ncoord body\nIMPLEMENTATION_STEPS\nsteps body\nACCEPTANCE\nacc body"
+    val json = """[{"cu-id":"cu-bare","dtr-coordinates":[],"content":"""" + content.replace("\n", "\\n") + """"}]"""
+    val batch = parser.parse(json)
+    batch.cus.size shouldBe 1
+    val comps = batch.cus.head.components
+    comps.size shouldBe 4
+    comps("requirements") shouldBe "req body"
+    comps("coordinates") shouldBe "coord body"
+    comps("implementation-steps") shouldBe "steps body"
+    comps("acceptance") shouldBe "acc body"
+  }
+
+  it should "split mixed bare and colon labels fully (bug-3 repro 3)" in {
+    val content = "REQUIREMENTS\nreq body\nCOORDINATES\ncoord body\nIMPLEMENTATION_STEPS: steps body\nACCEPTANCE: acc body"
+    val json = """[{"cu-id":"cu-mixed","dtr-coordinates":[],"content":"""" + content.replace("\n", "\\n") + """"}]"""
+    val batch = parser.parse(json)
+    batch.cus.size shouldBe 1
+    val comps = batch.cus.head.components
+    comps.size shouldBe 4
+    comps("requirements") shouldBe "req body"
+    comps("coordinates") shouldBe "coord body"
+    comps("implementation-steps") shouldBe "steps body"
+    comps("acceptance") shouldBe "acc body"
+  }
+
+  it should "prefer the colon label over its bare prefix (bare never shadows colon)" in {
+    val content = "ACCEPTANCE: acc body"
+    val json = """[{"cu-id":"cu-colon-first","dtr-coordinates":[],"content":"""" + content + """"}]"""
+    val batch = parser.parse(json)
+    batch.cus.size shouldBe 1
+    val comps = batch.cus.head.components
+    comps.size shouldBe 1
+    // The colon form wins: the body must not start with the leaked colon
+    comps("acceptance") shouldBe "acc body"
+  }
 }

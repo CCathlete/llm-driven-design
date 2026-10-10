@@ -68,16 +68,25 @@ object CU {
 
   /** Labeled section headers of the compile-itr skill's CU content bar, as
     * (label, component-key) pairs: the four labels a regular CU carries
-    * inline in its `content` string. Single definition shared by cu-002's
-    * JSON splitter (JSONFormat.splitInlineSections) and by validation, so
-    * "what counts as a section" cannot drift between parser and
-    * enforcement (wave-1 watch item: splitter/detector agreement).
+    * inline in its `content` string. Each label also carries a bare
+    * (colon-less) alias accepted per Designer decision (bugfix-feature-3 /
+    * bug-3): Advisor batches drafted from the skill prose name the sections
+    * without the colon. The colon form is listed FIRST per key and stays
+    * canonical — matchers must try the colon form before its bare alias so
+    * a bare prefix never shadows a colon label. Single definition shared by
+    * cu-002's JSON splitter (JSONFormat.splitInlineSections) and by
+    * validation, so "what counts as a section" cannot drift between parser
+    * and enforcement (wave-1 watch item: splitter/detector agreement).
     */
   val sectionLabels: Seq[(String, String)] = Seq(
     "REQUIREMENTS:" -> "requirements",
+    "REQUIREMENTS" -> "requirements",
     "COORDINATES:" -> "coordinates",
+    "COORDINATES" -> "coordinates",
     "IMPLEMENTATION_STEPS:" -> "implementation-steps",
-    "ACCEPTANCE:" -> "acceptance"
+    "IMPLEMENTATION_STEPS" -> "implementation-steps",
+    "ACCEPTANCE:" -> "acceptance",
+    "ACCEPTANCE" -> "acceptance"
   )
 
   /** Component keys whose labeled section header occurs in `content` —
