@@ -107,6 +107,25 @@ Each CU frame is compiled by `itr-compiler` from CU content + baseline DTR.
 7. **E2E_VERIFY** — Code lead runs e2e tests, repairs until convergence
 8. **ITERATE** — Re-scan with dtr-builder, repeat
 
+## Layer layout demands
+
+Every app follows the hexagonal layer partition below. Folder-name casing
+follows the implementation language: snake_case for Python, camelCase for
+Scala/TS/JS, etc. (a Scala app uses `useCases`, `dependencyInjection`,
+`entryPoint`, `valueObjects`; a Python app uses `use_cases`,
+`dependency_injection`, `entry_point`, `value_objects`).
+
+- **application** divides into `services`, `ports`, `useCases` — nothing else.
+- **infrastructure** divides into one folder per application port (each port
+  gets its adapter folder), plus an `Env` adapter singleton that loads config
+  and env variables (system env takes precedence over loaded config).
+- **domain** contains `models` and `valueObjects` only.
+- **control** divides into `dependencyInjection` and `entryPoint` — nothing else.
+- **No layer root holds files.** `application`, `infrastructure`, `domain`,
+  and `control` contain only their nested folders; every source file lives in
+  a nested folder. A file placed directly in a layer root is a constraint
+  violation (`HARD_FAIL`).
+
 ## Constraints
 
 - Hexagonal architecture (`HEX`)
@@ -119,6 +138,12 @@ Each CU frame is compiled by `itr-compiler` from CU content + baseline DTR.
 - Severity taxonomy: CRITICAL / MAJOR / MINOR / TRIVIAL (`SEVERITY`)
 - One ITR directory per app, tracked in git (`ITR_LIFECYCLE`)
 - Hard fail on constraint violation (`HARD_FAIL`)
+- Fixed layer partition: application → services/ports/useCases,
+  infrastructure → one folder per port + Env singleton,
+  domain → models/valueObjects only,
+  control → dependencyInjection/entryPoint (`LAYER_LAYOUT`)
+- No files in layer roots, only in nested folders (`NO_LAYER_ROOT_FILES`)
+- Infra Env adapter singleton loads config + env variables (`ENV_ADAPTER`)
 
 See the system tensor at `system_tensors/llm-driven-design-sys-prompt.itr` for
 the complete specification.

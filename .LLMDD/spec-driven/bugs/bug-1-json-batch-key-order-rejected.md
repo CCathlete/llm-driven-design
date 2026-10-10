@@ -1,8 +1,8 @@
 # bug-1: JSON batch key order rejected
 
-- Status: Open
+- Status: Resolved
 - Created: 2026-10-09
-- Resolved: -
+- Resolved: 2026-10-10
 - Bug ID: bug-1-json-batch-key-order-rejected
 
 ## Bug detail
@@ -67,14 +67,31 @@ batch authors must obey an undocumented ordering rule.
 
 ## Resolution status
 
-Open. No fix merged.
+Resolved. Fix merged in commit `078c65b`
+(`Fix: itr-compiler batch parsing + CU layout (bugfix-feature-2, waves 1-3
+consolidated)`, cu-001); proving tests below green on 2026-10-10.
 
 ## Fix summary (Resolved only)
 
-Pending.
+`JSONFormat.parse` no longer uses the order-hardcoded `cuLocator` regex: a
+per-object scan locates each CU object extent and extracts `cu-id`,
+optional `cu-type`, `dtr-coordinates`, and `content` independently of key
+order (iterative `parseJsonString` content extraction kept, no regex
+backtracking). Class docstring updated. Fixing commit: `078c65b` (cu-001).
 
 ## Tests proving resolution (Resolved only)
 
-Pending. Suggested: `sbt "testOnly *JSONFormat* -- -z key-order"` (new test)
-parsing the two minimal batches above and asserting equal `CUBatch` results;
-plus re-run of the two CLI repro commands expecting exit 0 for both.
+Failing-before (Oct 9 binary): content-first batch →
+`IllegalStateException: Missing required parts: ArchCU, LegendCU`, exit 1;
+identical-values cu-id-first batch → exit 0.
+
+Passing-after (2026-10-10, rebuilt binary 6097863 bytes,
+md5 `a86cb864290e5dcb2f8573f78bcb56fd`):
+
+1. Both CLI repro commands from Bug detail re-run → `Compiled 3 CU(s)`,
+   exit 0 for both, identical output file sets
+   (`diff` of `find` listings clean).
+2. `sbt "testOnly itrcompiler.infrastructure.parsers.JSONFormatTest
+   itrcompiler.infrastructure.parsers.YAMLFormatTest"` from `itr-compiler/`:
+   12 tests, 0 failed — including `should parse equal CUBatch across key
+   orders (key-order)`.

@@ -1,8 +1,8 @@
 # bug-2: Compiler emits cu-*.itr blobs instead of CU folder with component files
 
-- Status: Open
+- Status: Resolved
 - Created: 2026-10-10
-- Resolved: -
+- Resolved: 2026-10-10
 - Bug ID: bug-2-flat-cu-itr-instead-of-folder
 
 ## Bug detail
@@ -69,15 +69,39 @@ uncovered.
 
 ## Resolution status
 
-Open. No fix merged.
+Resolved. Fix merged in commit `078c65b`
+(`Fix: itr-compiler batch parsing + CU layout (bugfix-feature-2, waves 1-3
+consolidated)`, cu-002); proving tests below green on 2026-10-10.
 
 ## Fix summary (Resolved only)
 
-Pending.
+`JSONFormat.splitInlineSections` (called from `parse()` for `RegularCU`s)
+cuts the four colon-labeled sections (`REQUIREMENTS:`, `COORDINATES:`,
+`IMPLEMENTATION_STEPS:`, `ACCEPTANCE:` from `CU.sectionLabels`) out of the
+CU's `content` into `CU.components` after content extraction; an explicit
+`"components"` object wins when present, and all-four-absent keeps the
+legacy single-frame path. `FileSystem.write` needed no change — its
+`components.nonEmpty` branch was already correct; the parser simply never
+fed it. Fixing commit: `078c65b` (cu-002).
 
 ## Tests proving resolution (Resolved only)
 
-Pending. Suggested: re-run the two CLI repro commands above and assert the
-four component files exist per CU with no `cu-<id>/cu-<id>.itr` blob; plus a
-parser-level test feeding an inline-section batch and asserting the parsed
-`CU.components` (or the written folder) contains all four components.
+Failing-before (2026-10-10, Oct 9 binary 6092538 bytes): recompiling
+`.LLMDD/ITRS/feat-1-per-cu-itr-directories/batch.json` yielded
+`cu-001/cu-001.itr` … `cu-005/cu-005.itr` (5 blobs, 0 component files).
+
+Passing-after (2026-10-10, rebuilt binary 6097863 bytes,
+md5 `a86cb864290e5dcb2f8573f78bcb56fd`):
+
+1. `.LLMDD/tools/itr-compiler --compile --json-content
+   .LLMDD/ITRS/feat-1-per-cu-itr-directories/batch.json --out-folder
+   /tmp/itr_repro_feat1` → `Compiled 7 CU(s)`, exit 0;
+   `find /tmp/itr_repro_feat1 -name "cu-*.itr" | wc -l` = 0, each of
+   `cu-001`…`cu-005` holds exactly `COORDINATES.itr`, `REQUIREMENTS.itr`,
+   `IMPLEMENTATION_STEPS.itr`, `ACCEPTANCE.itr`, root holds `ARCH.itr` +
+   `LEGEND.itr` only.
+2. Minimal inline-section batch (`/tmp/batch_inline.json` from Bug detail) →
+   `/tmp/itr_inline/cu-001/` holds the four component files, no
+   `cu-001/cu-001.itr`.
+3. `sbt test` from `itr-compiler/`: 22 suites, 93 tests, 0 failed
+   (includes the new splitter/key-order/layout regression tests).

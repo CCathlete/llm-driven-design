@@ -4,7 +4,6 @@
 - Created: 2026-10-10
 - Resolved: -
 - Bug ID: bug-3-silent-blob-on-bare-section-labels
-- Related features: -
 
 ## Bug detail
 
