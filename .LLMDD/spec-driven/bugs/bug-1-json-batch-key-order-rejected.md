@@ -4,7 +4,6 @@
 - Created: 2026-10-09
 - Resolved: -
 - Bug ID: bug-1-json-batch-key-order-rejected
-- Related features: -
 
 ## Bug detail
 

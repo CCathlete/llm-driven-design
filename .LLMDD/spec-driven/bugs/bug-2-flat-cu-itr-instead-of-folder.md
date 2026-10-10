@@ -4,7 +4,6 @@
 - Created: 2026-10-10
 - Resolved: -
 - Bug ID: bug-2-flat-cu-itr-instead-of-folder
-- Related features: feat-1-per-cu-itr-directories
 
 ## Bug detail
 

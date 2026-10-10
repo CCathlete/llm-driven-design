@@ -75,7 +75,8 @@ E2E verify.
   even if the title is reworded.
 - A bug/bugs fix feature must use the `bugfix-feature-<n>-<short-name>` name
   and ID, and must list the fixed bug ID(s) (e.g. `bug-1-...`) in its
-  Synopsis.
+  Synopsis. Linkage flows fix → bugs only: never add a reverse pointer in
+  the bug file(s).
 
 ## Output
 
