@@ -68,9 +68,20 @@ final class Compile(
     // Files already on disk in the output folder whose names match no batch
     // CU id (Advisor-placed overrides) are never validated, never deleted,
     // never overwritten unless `--force` targets their exact path.
+    // cu-003/wave-2: new-schema detection reads effectiveComponentKeys,
+    // which is exactly the cu.components map the writer will emit — so a
+    // split-derived (cu-002) inline-section CU counts as component-carrying
+    // while prose that merely mentions component words does not. Legacy =
+    // no synopsis AND zero component-carrying regular CUs. validateSynopsis
+    // self-gates: with no synopsis data it only fires for batches that
+    // supplied an explicit "components" object (feat-1 schema opt-in), so
+    // synopsis-less Advisor batches (bug-2 repro, feat-1 batch.json) still
+    // compile — feature tests T2/T3.
     val isNewSchemaBatch =
       batch.synopsis.isDefined ||
-        batch.cus.exists(cu => cu.cuType == RegularCU && cu.components.nonEmpty)
+        batch.cus.exists(cu =>
+          cu.cuType == RegularCU && requiredPartsValidation.effectiveComponentKeys(cu).nonEmpty
+        )
     if (batchMode && isNewSchemaBatch) {
       val feat1Errors =
         requiredPartsValidation.validateComponents(batch) ++

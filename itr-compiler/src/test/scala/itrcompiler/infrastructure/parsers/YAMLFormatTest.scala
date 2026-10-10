@@ -42,4 +42,36 @@ class YAMLFormatTest extends AnyFlatSpec with Matchers {
     parsed.cus(1).id shouldBe "cu-2"
     parsed.cus(1).cuType shouldBe RegularCU
   }
+
+  it should "parse equal CUBatch across key orders (key-order proves order-independence)" in {
+    val orderA = """cu-1:
+  cu-type: regular
+  dtr-coordinates: ["TYPE.A"]
+  content: "hello"
+"""
+    val orderB = """cu-1:
+  content: "hello"
+  dtr-coordinates: ["TYPE.A"]
+  cu-type: regular
+"""
+    val orderC = """cu-1:
+  dtr-coordinates: ["TYPE.A"]
+  content: "hello"
+  cu-type: regular
+"""
+    val a = parser.parse(orderA)
+    val b = parser.parse(orderB)
+    val c = parser.parse(orderC)
+    a.cus.size shouldBe 1
+    b.cus.size shouldBe 1
+    c.cus.size shouldBe 1
+    b.cus.head.id shouldBe a.cus.head.id
+    b.cus.head.content shouldBe a.cus.head.content
+    b.cus.head.dtrCoordinates shouldBe a.cus.head.dtrCoordinates
+    b.cus.head.cuType shouldBe a.cus.head.cuType
+    c.cus.head.id shouldBe a.cus.head.id
+    c.cus.head.content shouldBe a.cus.head.content
+    c.cus.head.dtrCoordinates shouldBe a.cus.head.dtrCoordinates
+    c.cus.head.cuType shouldBe a.cus.head.cuType
+  }
 }

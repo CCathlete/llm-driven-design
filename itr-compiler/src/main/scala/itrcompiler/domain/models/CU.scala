@@ -65,4 +65,28 @@ object CU {
     "implementation-steps" -> "IMPLEMENTATION_STEPS.itr",
     "acceptance" -> "ACCEPTANCE.itr"
   )
+
+  /** Labeled section headers of the compile-itr skill's CU content bar, as
+    * (label, component-key) pairs: the four labels a regular CU carries
+    * inline in its `content` string. Single definition shared by cu-002's
+    * JSON splitter (JSONFormat.splitInlineSections) and by validation, so
+    * "what counts as a section" cannot drift between parser and
+    * enforcement (wave-1 watch item: splitter/detector agreement).
+    */
+  val sectionLabels: Seq[(String, String)] = Seq(
+    "REQUIREMENTS:" -> "requirements",
+    "COORDINATES:" -> "coordinates",
+    "IMPLEMENTATION_STEPS:" -> "implementation-steps",
+    "ACCEPTANCE:" -> "acceptance"
+  )
+
+  /** Component keys whose labeled section header occurs in `content` —
+    * the same scan the JSON splitter performs before populating
+    * `CU.components`. Used by validation to tell a component key derived
+    * from cu-002's split apart from one supplied by an explicit
+    * "components" object.
+    */
+  def contentSectionKeys(content: String): Set[String] =
+    if (content == null || content.isEmpty) Set.empty
+    else sectionLabels.collect { case (label, key) if content.contains(label) => key }.toSet
 }
