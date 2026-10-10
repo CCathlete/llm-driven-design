@@ -39,4 +39,5 @@ CU_*_IMPLEMENTATION_STEPS*.itr
 /.LLMDD/tools/*
 !/.LLMDD/tools/run-waves.py
 !/.LLMDD/tools/test_synopsis_budget.py
+!/.LLMDD/tools/validate-steps.py
 !/.LLMDD/tools/*README.md
