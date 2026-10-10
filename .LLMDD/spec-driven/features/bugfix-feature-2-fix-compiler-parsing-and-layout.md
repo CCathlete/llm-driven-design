@@ -6,7 +6,7 @@
 
 ## Synopsis
 
-Motivation: three open bugs break the normal Advisor → compile path through
+Motivation: two open bugs break the normal Advisor → compile path through
 `itr-compiler`. Bug-1 (`bug-1-json-batch-key-order-rejected`) rejects valid
 JSON batches whose object keys are not in one hard-coded order, misreporting
 them as missing ARCH/LEGEND. Bug-2
@@ -14,15 +14,13 @@ them as missing ARCH/LEGEND. Bug-2
 per regular CU even when the CU content carries the four required sections,
 instead of the `cu-<id>/` folder with `COORDINATES.itr`,
 `REQUIREMENTS.itr`, `IMPLEMENTATION_STEPS.itr`, `ACCEPTANCE.itr` that feat-1
-specifies. Bug-3 (`bug-3-silent-blob-on-bare-section-labels`) compiles a batch
-whose sections use bare labels (no trailing colon) with exit 0 into a silent
-legacy blob — no warning that the sections were unrecognized — while the
-partially-bare case fails loudly. Together they mean a freshly compiled feat-1
-`batch.json` no longer reproduces its own checked-in ITR, batches
-round-tripped through key-reordering JSON tooling fail with a misleading
-error, and batches following the skill prose but omitting colons go green
-into the wrong layout. This feature fixes parser, splitter, and enforcement
-paths so the documented batch shapes compile to the documented layout.
+specifies. Together they mean a freshly compiled feat-1 `batch.json` no
+longer reproduces its own checked-in ITR, and any batch round-tripped
+through key-reordering JSON tooling fails with a misleading error. This
+feature fixes parser, splitter, and enforcement paths so the documented
+batch shapes compile to the documented layout. (Bare section labels without
+trailing colons are bug-3's scope, handled by
+`bugfix-feature-3-accept-bare-label-aliases`.)
 
 Scope: `itr-compiler` batch parsing (`JSONFormat`, plus `YAMLFormat` if it
 shares the ordering assumption), CU emission (`FileSystem.write` /
@@ -30,9 +28,8 @@ component splitting), and enforcement of the flat-CU fix. In:
 key-order-independent parsing, inline-section → components splitting, writer
 branch coverage via the real batch-file path, and a hard fail naming the CU
 and missing component(s) whenever a regular CU would otherwise land as a
-flat/single-file blob, plus bare-label handling (accept bare labels as
-aliases or fail naming them — never a silent blob). Out: `dtr-builder`,
-`run-waves`, skill-doc rewrites except where the batch format itself changes.
+flat/single-file blob. Out: `dtr-builder`, `run-waves`, skill-doc rewrites
+except where the batch format itself changes.
 
 ## Implementation status
 
@@ -40,10 +37,8 @@ In Progress. Waves 1–3 merged in commit `078c65b`
 (`Fix: itr-compiler batch parsing + CU layout (bugfix-feature-2, waves 1-3
 consolidated)`); ITR directory
 `.LLMDD/ITRS/bugfix-feature-2-fix-compiler-parsing-and-layout/`. Intended to
-close `bug-1-json-batch-key-order-rejected`,
-`bug-2-flat-cu-itr-instead-of-folder`, and
-`bug-3-silent-blob-on-bare-section-labels` once E2E verify is green.
-Criterion 9 / test T7 (bare labels, bug-3) still needs a follow-up CU.
+close `bug-1-json-batch-key-order-rejected` and
+`bug-2-flat-cu-itr-instead-of-folder` once E2E verify is green.
 
 ## Acceptance criteria
 
@@ -71,10 +66,6 @@ Criterion 9 / test T7 (bare labels, bug-3) still needs a follow-up CU.
    `cu-<id>.itr` blob (at root or inside the CU folder) is left behind for
    the offending CU.
 8. `sbt test` stays green (no regressions in existing parser/writer suites).
-9. Bare labels never go green silently: a CU whose sections use bare labels
-   (no trailing colon) either compiles to the four component files (bare
-   labels accepted as aliases) or fails with non-zero exit naming the
-   unrecognized labels; exit 0 with a legacy blob for such a CU is forbidden.
 
 ## Tests
 
@@ -104,10 +95,3 @@ Criterion 9 / test T7 (bare labels, bug-3) still needs a follow-up CU.
   non-zero exit, stderr names the CU id and the missing section, and no
   `<out>/cu-<id>.itr` flat file nor `<out>/cu-<id>/cu-<id>.itr` blob exists
   for the offending CU.
-- `T7` (criterion 9, bug-3 bare labels): re-run bug-3's CLI repros —
-  the all-bare batch must either yield
-  `<out>/cu-001/{COORDINATES,REQUIREMENTS,IMPLEMENTATION_STEPS,ACCEPTANCE}.itr`
-  or fail non-zero naming the unrecognized labels (never exit 0 with only
-  `<out>/cu-001/cu-001.itr`); the all-colon batch stays green with four
-  component files; plus a parser-level test over a bare-label batch
-  asserting components-or-error instead of silent empty.
