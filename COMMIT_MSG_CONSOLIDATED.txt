@@ -1,0 +1,30 @@
+bugfix-feature-3/cu-001: accept bare section-label aliases in inline splitting (bug-3)
+
+- Extend CU.sectionLabels (domain) with a bare (colon-less) alias per component key,
+  colon form listed first and canonical
+- Make JSONFormat.splitInlineSections match colon-first per key (groupBy key + collectFirst)
+  so a bare prefix never shadows a colon label
+- contentSectionKeys agrees by construction over the same list
+- All-bare and mixed bare/colon batches now compile to four-file CU folders instead of
+  silent legacy blobs
+- Explicit "components" objects still win; all-four-absent still takes the legacy
+  single-frame path
+- Partially-labeled batches keep failing loudly naming CU id + missing sections
+- Add three bare-label parser tests to JSONFormatTest (all-bare split, mixed split,
+  colon-over-bare priority)
+- No changes to FileSystem.scala, Compile.scala, or YAMLFormat.scala
+
+Related waves:
+bugfix-feature-2: Fix JSONFormat.parse to accept CU object keys in any order (cu-001),
+  Split inline CU sections into components in JSONFormat (cu-002), Enforce flat-CU fix
+  at compile time (cu-003): batch-level legacy exemption plus all-regular-CU component
+  validation with split-derived content headers; new-schema detection covers effective
+  keys; fail-fast before writes, cu-004: YAML parity proven order-independent plus
+  regression tests (JSON key-order, inline splitter, inline-batch layout)
+feat-1: Implemented cu-001: domain models carry four ITR components plus batch synopsis,
+  Implemented cu-002: component + synopsis validation with relevant errors,
+  Implement cu-003: per-CU component writer now returns early with no .itr blob (pre-existing),
+  add FileSystem.writeSynopsis + CUStore.storeSynopsis + Compile synopsis hook writing
+  root SYNOPSIS.itr, Implemented cu-004: batch schema components plus synopsis in JSON and
+  YAML parsers with legacy round-trip preserved, Implement cu-005: feat-1 executable proof
+  T1-T7 (Feat1Layout/Validation/Override integration tests plus synopsis budget script)

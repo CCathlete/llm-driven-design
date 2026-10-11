@@ -98,7 +98,7 @@ produced by the **dtr-builder** tool in two modes:
 | Mode | Command | Use Case |
 |------|---------|----------|
 | Extract | `dtr-builder --root <path> --out <file>` | Existing codebase |
-| Create Baseline | `dtr-builder --create-baseline --app <name> --lang <lang> --root <path> --out <file>` | Greenfield project |
+| Create Baseline | `dtr-builder --create-baseline-dtr --language <lang> --root <path> --out <file>` | Greenfield project |
 
 **DTR Sections:**
 
@@ -107,7 +107,7 @@ produced by the **dtr-builder** tool in two modes:
 | `ARCH` | Architecture constraints | `ARCH=HEX,DI,DIP,NO_CROSS_LAYER` |
 | `LAYER` | Layer ordering | `LAYER.ORDER=DOMAIN,APPLICATION,INFRASTRUCTURE,CONTROL` |
 | `META.` | Extraction metadata | `META.GENERATOR=dtr-builder`, `META.TIMESTAMP=...` |
-| `FILE.` | Source files | `FILE.src/main/Foo.scala=SIZE:1234,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala` |
+| `FILE.` | Source files | `FILE.src/main/Foo.scala=SIZE:1234,MIME:text/x-scala,ENCODING:UTF-8,LANG:Scala,EXT:scala,LAYER:APPLICATION` |
 | `CODEX.` | Code elements | `CODEX.src/main/Foo.scala=CLASS:Foo`, `CODEX.src/main/Foo.scala=DEF:doSomething` |
 | `TYPE.` | Type definitions | `TYPE.com.app.domain.Foo=KIND:CLASS,FILE:src/main/Foo.scala` |
 | `REL.` | Relations | `REL.com.app.domain.Foo->com.app.domain.Bar=USES:Foo uses Bar` |
@@ -280,7 +280,7 @@ dtr-builder --root . --out baseline.dtr --filter "test/" --filter "build/"
 ### Create Baseline for Greenfield
 
 ```bash
-dtr-builder --create-baseline --app my-app --lang Scala --root /path/to/project --out baseline.dtr
+dtr-builder --create-baseline-dtr --language Scala --root /path/to/my-app --out baseline.dtr
 ```
 
 Generates a skeleton DTR with hexagonal architecture placeholders
@@ -448,7 +448,7 @@ llm-driven-design/
 
 ```bash
 # 1. Generate a baseline DTR for a new app
-dtr-builder --create-baseline --app my-app --lang Scala --root ./my-app --out baseline.dtr
+dtr-builder --create-baseline-dtr --language Scala --root ./my-app --out baseline.dtr
 
 # 2. Draft CU content (cus.json) — work with an Advisor to decompose
 #    the design into Computational Units

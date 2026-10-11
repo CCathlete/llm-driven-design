@@ -42,10 +42,10 @@ class BatchJSONWriteTest extends AnyFunSpec {
     assert(results.size == 4)
     assert(Files.exists(tmpDir.resolve("out/ARCH.itr")))
     assert(Files.exists(tmpDir.resolve("out/LEGEND.itr")))
-    assert(Files.exists(tmpDir.resolve("out/cu-a.itr")))
-    assert(Files.exists(tmpDir.resolve("out/cu-b.itr")))
+    assert(Files.exists(tmpDir.resolve("out/cu-a/cu-a.itr")))
+    assert(Files.exists(tmpDir.resolve("out/cu-b/cu-b.itr")))
 
-    val contentA = new String(Files.readAllBytes(tmpDir.resolve("out/cu-a.itr")))
+    val contentA = new String(Files.readAllBytes(tmpDir.resolve("out/cu-a/cu-a.itr")))
     assert(contentA.contains("content a"))
   }
 }

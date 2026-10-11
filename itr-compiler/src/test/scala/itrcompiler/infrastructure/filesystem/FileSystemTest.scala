@@ -24,7 +24,7 @@ class FileSystemTest extends AnyFunSpec {
         val cu = CU(id = "cu-test", dtrCoordinates = Seq("TYPE.Test"), content = "frame content")
         fs.write(cu, outDir, force = false)
 
-        val written = new String(Files.readAllBytes(outDir.resolve("cu-test.itr")))
+        val written = new String(Files.readAllBytes(outDir.resolve("cu-test/cu-test.itr")))
         assert(written.contains("# CU-ID: cu-test"))
         assert(written.contains("# DTR-COORDINATES: TYPE.Test"))
         assert(written.contains("frame content"))
@@ -33,7 +33,8 @@ class FileSystemTest extends AnyFunSpec {
       it("should skip existing file when force=false") {
         val outDir = tmpDir.resolve("cuwrite-skip")
         Files.createDirectories(outDir)
-        val cuFile = outDir.resolve("cu-skip.itr")
+        val cuFile = outDir.resolve("cu-skip/cu-skip.itr")
+        Files.createDirectories(cuFile.getParent)
         Files.write(cuFile, "original".getBytes)
 
         val cu = CU(id = "cu-skip", dtrCoordinates = Seq.empty, content = "new content")
@@ -46,7 +47,8 @@ class FileSystemTest extends AnyFunSpec {
       it("should overwrite existing file when force=true") {
         val outDir = tmpDir.resolve("cuwrite-force")
         Files.createDirectories(outDir)
-        val cuFile = outDir.resolve("cu-force.itr")
+        val cuFile = outDir.resolve("cu-force/cu-force.itr")
+        Files.createDirectories(cuFile.getParent)
         Files.write(cuFile, "original".getBytes)
 
         val cu = CU(id = "cu-force", dtrCoordinates = Seq.empty, content = "new content")
@@ -54,6 +56,33 @@ class FileSystemTest extends AnyFunSpec {
 
         val content = new String(Files.readAllBytes(cuFile))
         assert(content.contains("new content"))
+      }
+
+      it("should write only component files (no blob) for a component-carrying CU") {
+        val outDir = tmpDir.resolve("cuwrite-components")
+        val cu = CU(
+          id = "cu-comp",
+          dtrCoordinates = Seq("TYPE.X"),
+          content = "legacy payload",
+          components = Map(
+            "coordinates" -> "TYPE.X",
+            "requirements" -> "build the thing",
+            "implementation-steps" -> "1. do it",
+            "acceptance" -> "it works"
+          )
+        )
+        fs.write(cu, outDir, force = false)
+
+        val cuDir = outDir.resolve("cu-comp")
+        assert(Files.exists(cuDir.resolve("COORDINATES.itr")))
+        assert(Files.exists(cuDir.resolve("REQUIREMENTS.itr")))
+        assert(Files.exists(cuDir.resolve("IMPLEMENTATION_STEPS.itr")))
+        assert(Files.exists(cuDir.resolve("ACCEPTANCE.itr")))
+        assert(!Files.exists(cuDir.resolve("cu-comp.itr")))
+        assert(!Files.exists(outDir.resolve("cu-comp.itr")))
+        val coords = new String(Files.readAllBytes(cuDir.resolve("COORDINATES.itr")))
+        assert(coords.contains("# COORDINATES: cu-comp"))
+        assert(coords.contains("TYPE.X"))
       }
     }
 

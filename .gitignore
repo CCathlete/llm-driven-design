@@ -7,6 +7,7 @@ hs_err_pid*
 
 **/.metals
 **/.bloop
+**/.bsp
 **/target
 
 **/__pycache__
@@ -17,4 +18,26 @@ hs_err_pid*
 **/output
 **/input
 
-# Build artifacts — assembled fat JARs are tracked (PREPEND_EXECUTION_SCRIPT)
+# Assembled fat JARs — published as GitHub Releases, not tracked in git.
+# Build with: cs launch sbt -- assembly   (then copy the binary to the module root)
+# Anchored to module roots so nested paths are unaffected.
+/dtr-builder/dtr-builder
+/commit-tool/commit-tool
+/itr-compiler/itr-compiler
+
+CU_*_IMPLEMENTATION_STEPS*.itr
+**/IMPLEMENTATION_STEPS.itr
+
+# Wave-runner execution outputs: runtime-only per-run state, never tracked.
+# (Feedback is consumed during the run; the committed record is the code.)
+.LLMDD/ITRS/*.convergence.json
+.LLMDD/ITRS/*.logs/
+.LLMDD/ITRS/*.feedback/
+*.convergence.json
+*.logs/
+*.feedback/
+/.LLMDD/tools/*
+!/.LLMDD/tools/run-waves.py
+!/.LLMDD/tools/test_synopsis_budget.py
+!/.LLMDD/tools/validate-steps.py
+!/.LLMDD/tools/*README.md

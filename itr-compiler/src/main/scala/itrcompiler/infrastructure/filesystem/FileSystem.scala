@@ -1,7 +1,7 @@
 package itrcompiler.infrastructure.filesystem
 
 import itrcompiler.application.ports.{ContentRead, CUWrite, DTRLoad}
-import itrcompiler.domain.models.{CU, CUBatch}
+import itrcompiler.domain.models.{CU, CUBatch, CUSynopsis, RegularCU}
 import itrcompiler.infrastructure.parsers.{JSONFormat, YAMLFormat}
 
 import java.nio.charset.StandardCharsets
@@ -37,12 +37,25 @@ final class FileSystem(
     *   <blank line>
     *   <content>
     *
+    * Layout: regular CUs live in a per-CU subdirectory `<outFolder>/<cu-id>/`.
+    * A CU carrying components gets ONLY its four component files
+    * (COORDINATES/REQUIREMENTS/IMPLEMENTATION_STEPS/ACCEPTANCE.itr) — no
+    * per-CU `.itr` blob is ever written for it. A component-less CU keeps a
+    * single `<cu-id>.itr` frame inside its folder (never at the output
+    * root). ARCH.itr, LEGEND.itr and verification files stay at the root.
     * File name is determined by CU.fileName (e.g., ARCH.itr, LEGEND.itr).
-    * If the file already exists and force=false, it is skipped.
+    * If a target file already exists and force=false, it is skipped.
     */
   override def write(cu: CU, outFolder: Path, force: Boolean): Unit = {
-    Files.createDirectories(outFolder)
-    val cuFile = outFolder.resolve(cu.fileName)
+    if (cu.cuType == RegularCU && cu.components.nonEmpty) {
+      writeComponents(cu, outFolder, force)
+      return
+    }
+    val cuDir =
+      if (cu.cuType == RegularCU) outFolder.resolve(cu.id)
+      else outFolder
+    Files.createDirectories(cuDir)
+    val cuFile = cuDir.resolve(cu.fileName)
 
     if (!force && Files.exists(cuFile)) return
 
@@ -55,6 +68,38 @@ final class FileSystem(
 
     val frame = s"$header\n\n${cu.content}\n"
     Files.write(cuFile, frame.getBytes(StandardCharsets.UTF_8))
+  }
+
+  /** Write the four component files of a CU into its subdirectory.
+    * No per-CU `.itr` blob is written. Same force semantics as frames.
+    */
+  private def writeComponents(cu: CU, outFolder: Path, force: Boolean): Unit = {
+    val cuDir = outFolder.resolve(cu.id)
+    Files.createDirectories(cuDir)
+    cu.components.foreach { case (key, body) =>
+      val target = cuDir.resolve(CU.componentFileNames.getOrElse(key, key.toUpperCase + ".itr"))
+      if (!force && Files.exists(target)) ()
+      else {
+        val componentFrame = s"# ${key.toUpperCase.replace("-", "_")}: ${cu.id}\n\n$body\n"
+        Files.write(target, componentFrame.getBytes(StandardCharsets.UTF_8))
+      }
+    }
+  }
+
+  // ── Synopsis ─────────────────────────────────────────────
+
+  /** Write root SYNOPSIS.itr once per compile. */
+  override def writeSynopsis(outFolder: Path, synopsis: CUSynopsis, cus: Seq[CU], force: Boolean): Unit = {
+    Files.createDirectories(outFolder)
+    val target = outFolder.resolve("SYNOPSIS.itr")
+    if (!force && Files.exists(target)) return
+    val body =
+      s"FEATURES_IMPLEMENTED=${synopsis.features.mkString(",")}\n" +
+      s"MAX_ATTEMPTS=${synopsis.maxAttempts}\n" +
+      s"CUS=${cus.map(_.id).mkString(",")}\n" +
+      s"ENFORCED_BY=itr-compiler\n" +
+      s"SUMMARY=${synopsis.summary}\n"
+    Files.write(target, body.getBytes(StandardCharsets.UTF_8))
   }
 
   // ── ContentRead ────────────────────────────────────────────

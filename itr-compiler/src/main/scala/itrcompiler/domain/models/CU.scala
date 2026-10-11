@@ -31,7 +31,8 @@ final case class CU(
   dtrCoordinates: Seq[String],
   content: String,
   cuType: CUType = RegularCU,
-  timestamp: Instant = Instant.now()
+  timestamp: Instant = Instant.now(),
+  components: Map[String, String] = Map.empty
 ) extends Model {
   def isRequiredPart: Boolean = cuType match {
     case ArchCU | LegendCU => true
@@ -45,10 +46,56 @@ final case class CU(
     case E2eVerificationCU => "E2EVERIFICATION.itr"
     case RegularCU => s"${id}.itr"
   }
+
+  def missingComponents: Set[String] = CU.requiredComponents -- components.keySet
 }
 
 object CU {
   val requiredParts: Set[CUType] = Set(
     ArchCU, LegendCU
   )
+
+  val requiredComponents: Set[String] = Set(
+    "coordinates", "requirements", "implementation-steps", "acceptance"
+  )
+
+  val componentFileNames: Map[String, String] = Map(
+    "coordinates" -> "COORDINATES.itr",
+    "requirements" -> "REQUIREMENTS.itr",
+    "implementation-steps" -> "IMPLEMENTATION_STEPS.itr",
+    "acceptance" -> "ACCEPTANCE.itr"
+  )
+
+  /** Labeled section headers of the compile-itr skill's CU content bar, as
+    * (label, component-key) pairs: the four labels a regular CU carries
+    * inline in its `content` string. Each label also carries a bare
+    * (colon-less) alias accepted per Designer decision (bugfix-feature-3 /
+    * bug-3): Advisor batches drafted from the skill prose name the sections
+    * without the colon. The colon form is listed FIRST per key and stays
+    * canonical — matchers must try the colon form before its bare alias so
+    * a bare prefix never shadows a colon label. Single definition shared by
+    * cu-002's JSON splitter (JSONFormat.splitInlineSections) and by
+    * validation, so "what counts as a section" cannot drift between parser
+    * and enforcement (wave-1 watch item: splitter/detector agreement).
+    */
+  val sectionLabels: Seq[(String, String)] = Seq(
+    "REQUIREMENTS:" -> "requirements",
+    "REQUIREMENTS" -> "requirements",
+    "COORDINATES:" -> "coordinates",
+    "COORDINATES" -> "coordinates",
+    "IMPLEMENTATION_STEPS:" -> "implementation-steps",
+    "IMPLEMENTATION_STEPS" -> "implementation-steps",
+    "ACCEPTANCE:" -> "acceptance",
+    "ACCEPTANCE" -> "acceptance"
+  )
+
+  /** Component keys whose labeled section header occurs in `content` —
+    * the same scan the JSON splitter performs before populating
+    * `CU.components`. Used by validation to tell a component key derived
+    * from cu-002's split apart from one supplied by an explicit
+    * "components" object.
+    */
+  def contentSectionKeys(content: String): Set[String] =
+    if (content == null || content.isEmpty) Set.empty
+    else sectionLabels.collect { case (label, key) if content.contains(label) => key }.toSet
 }

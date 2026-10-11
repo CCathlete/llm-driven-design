@@ -1,7 +1,0 @@
-[
-  {
-    "wave": 1,
-    "description": "Fix sequential CUs — add ThreadPoolExecutor + asyncio + monadic Result to run-waves.py",
-    "cus": ["cu-parallel-fix"]
-  }
-]

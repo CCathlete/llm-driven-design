@@ -49,9 +49,9 @@ class AddToExistingFolderTest extends AnyFunSpec {
 
     // Existing file unchanged
     assert(new String(Files.readAllBytes(existingFile)) == "EXISTING")
-    // New file created
-    assert(Files.exists(outDir.resolve("cu-added.itr")))
-    val added = new String(Files.readAllBytes(outDir.resolve("cu-added.itr")))
+    // New file created inside its per-CU subdirectory
+    assert(Files.exists(outDir.resolve("cu-added/cu-added.itr")))
+    val added = new String(Files.readAllBytes(outDir.resolve("cu-added/cu-added.itr")))
     assert(added.contains("new cu content"))
   }
 }
