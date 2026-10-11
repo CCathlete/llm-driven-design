@@ -233,7 +233,16 @@ The script cannot judge everything. The reviewer additionally confirms:
   every first binding carries an explicit annotation, no `typing.Any` /
   bare generics, slotted+frozen dataclasses for value objects, monadic
   error handling over `try-except`. Injectable Python fences violating
-  `EXPLICIT_DECLARATION` or `NO_ANY` fail like any J-rule.
+  `EXPLICIT_DECLARATION` or `NO_ANY` fail like any J-rule. Annotation
+  presence alone does not pass: the reviewer runs
+  `uvx mypy --strict <touched-files>` with zero errors required
+  (feat-4 lesson: 77 errors invisible to tests and to annotation audits —
+  annotated TypeVars, annotated functional `TypedDict(...)`, same-scope
+  re-annotations). Sanctioned forms that are both rule-clean and
+  linter-clean: bare `T = TypeVar(...)` definitions (annotating them is a
+  linter error; tensor exemption recorded), class-based `TypedDict`s
+  (functional form cannot carry `TypeAlias`), `cast` only at
+  foreign-boundary narrowings.
 
 ## Rules
 
@@ -242,7 +251,8 @@ The script cannot judge everything. The reviewer additionally confirms:
 - Keep this skill's checker and the F-rules in sync — editing one means
   editing the other.
 - Record the validation run (command + PASS list) in the CU feedback or
-  commit message.
+  commit message. For Python work, record the `mypy --strict` run the same
+  way (command + zero-error verdict).
 
 ## Output
 
