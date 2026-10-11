@@ -1,6 +1,6 @@
 # feat-4: Refactor Python Code Into Discipline
 
-- Status: Proposed
+- Status: Implemented
 - Created: 2026-10-11
 - Feature ID: feat-4-refactor-python-into-discipline
 
@@ -26,7 +26,7 @@ is explicitly excluded; non-Python tooling (Scala) is exempt per
 
 Proposed. On approval: compile the batch at
 `.LLMDD/ITRS/feat-4-refactor-python-into-discipline/batch.json` into that
-ITR directory, run the waves in `.LLMDD/ITRS/feat-4-refactor-python-into-discipline/waves.json` in order (wave 1: cu-001 + cu-002, wave 2: cu-003, wave 3: cu-004). No waves run yet; no commits yet. Prerequisite gate fixes already applied: validate-steps accepts repo-rooted paths and `{"synopsis", "cus"}` envelope batches (mechanical gate passes 4/4 on this batch).
+ITR directory, run the waves in `.LLMDD/ITRS/feat-4-refactor-python-into-discipline/waves.json` in order (wave 1: cu-001 + cu-002, wave 2: cu-003, wave 3: cu-004). Implemented 2026-10-11 by the pipeline operator following the compiled frames in order; all CUs COMPLETED, T1-T7 green, per-CU feedback in the ITR feedback directory. Prerequisite gate fixes already applied: validate-steps accepts repo-rooted paths and `{"synopsis", "cus"}` envelope batches (mechanical gate passes 4/4 on this batch).
 
 ## Acceptance criteria
 
