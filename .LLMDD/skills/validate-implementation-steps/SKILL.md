@@ -61,7 +61,7 @@ Checker rules (FAIL = batch rejected, fix and recompile):
 - F6: any `TBD|TODO|FIXME|XXX|e.g.|etc.` token (code fences excluded
   from this rule except for `TODO|FIXME|XXX`, which fail everywhere).
 
-Reference implementation (keep in sync with the rules above):
+Reference implementation (keep in sync with the rules above; itself complies with `ARCH.PYTHON.*` — explicit annotations, no `Any`, failures returned as a list):
 
 ```python
 """validate-steps.py — mechanical dummy-proof gate for CU steps.
@@ -72,17 +72,115 @@ Usage:
 
 Exits 0 when every regular CU passes, 1 otherwise. See
 .LLMDD/skills/validate-implementation-steps/SKILL.md for the F-rules.
+
+This tool itself complies with ARCH.PYTHON.*: every first binding carries
+an explicit annotation, no typing.Any appears, and failures are returned
+as a list (monadic style) instead of raised/caught with try-except.
 """
 import json
 import re
 import sys
 from pathlib import Path
+from typing import Optional, TypedDict
 
-BANNED = ["handle", "extend", "improve", "enhance", "refactor",
+BatchCu = TypedDict("BatchCu", {"cu-id": str, "content": str, "cu-type": str}, total=False)
+
+BANNED: list[str] = ["handle", "extend", "improve", "enhance", "refactor",
           "wire up", "take care of", "manage"]
-PLACEHOLDER = re.compile(r"TBD|TODO|FIXME|XXX|etc\.")
-EG = re.compile(r"e\.g\.")
-FENCE = re.compile(r"```(\w+)\n(.*?)```", re.S)
+PLACEHOLDER: re.Pattern[str] = re.compile(r"TBD|TODO|FIXME|XXX|etc\.")
+EG: re.Pattern[str] = re.compile(r"e\.g\.")
+FENCE: re.Pattern[str] = re.compile(r"```(\w+)\n(.*?)```", re.S)
+STEP: re.Pattern[str] = re.compile(r"(?m)^(\d+)\.\s")
+PATH: re.Pattern[str] = re.compile(r"(src/|conf/|project/)[\w./-]+|\bbuild\.sbt\b")
+PROVE: re.Pattern[str] = re.compile(r"Prove:\s*`([^`]+)`")
+
+
+def check(cu_id: str, text: str) -> list[str]:
+    fails: list[str] = []
+    body: str
+    if "# IMPLEMENTATION_STEPS:" in text:
+        body = text.split("# IMPLEMENTATION_STEPS:", 1)[-1]
+    else:
+        body = text
+    parts: list[str] = STEP.split(body)[1:]
+    nums: list[str] = parts[0::2]
+    chunks: list[str] = parts[1::2]
+    if len(nums) < 1:
+        fails.append("F1: no numbered steps")
+    n: str
+    ch: str
+    verb: str
+    for n, ch in zip(nums, chunks):
+        if not PATH.search(ch):
+            fails.append(f"F1: step {n} has no exact file path")
+        if re.search(r"[Cc]reate|[Cc]hange|[Aa]dd|[Ww]rite", ch) and "```" not in ch:
+            fails.append(f"F2: step {n} changes a file without a fenced code block")
+        for verb in BANNED:
+            if re.search(rf"\b{verb}\b", ch, re.I) and not ("```" in ch and PATH.search(ch)):
+                fails.append(f"F5: step {n} uses vague verb '{verb}' without fence+path")
+    if len(PROVE.findall(body)) < len(nums):
+        fails.append(f"F3: {len(PROVE.findall(body))} Prove lines for {len(nums)} steps")
+    if "Do NOT touch:" not in body:
+        fails.append("F4: missing Do NOT touch list")
+    if "Stop when" not in body:
+        fails.append("F4: missing Stop when condition")
+    code_free: str = FENCE.sub("", body)
+    if PLACEHOLDER.search(code_free) or EG.search(code_free):
+        fails.append("F6: placeholder token outside code (TBD/TODO/FIXME/XXX/e.g./etc.)")
+    if re.search(r"TODO|FIXME|XXX", body):
+        fails.append("F6: TODO/FIXME/XXX token (even in code)")
+    fence_pair: tuple[str, str]
+    fence_text: str = ""
+    placeholder_in_fence: bool = False
+    for fence_pair in FENCE.findall(body):
+        fence_text = fence_pair[1]
+        if "\u2026" in fence_text or "..." in fence_text:
+            placeholder_in_fence = True
+    if placeholder_in_fence:
+        fails.append("F2: fenced block contains \u2026/... placeholder instead of exact code")
+    return fails
+
+
+def main() -> None:
+    src: Path = Path(sys.argv[1])
+    targets: dict[str, str] = {}
+    raw: str
+    parsed: list[BatchCu] = []
+    cu: BatchCu
+    content: str
+    cu_id: str
+    m: Optional[re.Match[str]]
+    steps_file: Path
+    if src.suffix == ".json":
+        raw = src.read_text()
+        parsed = json.loads(raw)
+        for cu in parsed:
+            if cu.get("cu-type", "regular") in ("arch", "legend"):
+                continue
+            content = str(cu.get("content", ""))
+            m = re.search(r"IMPLEMENTATION_STEPS:(.*?)ACCEPTANCE:", content, re.S)
+            cu_id = str(cu.get("cu-id", ""))
+            targets[cu_id] = m.group(1) if m else ""
+    else:
+        for steps_file in sorted(src.glob("cu-*/IMPLEMENTATION_STEPS.itr")):
+            targets[steps_file.parent.name] = steps_file.read_text()
+    failed: bool = False
+    cid: str
+    text: str
+    errs: list[str] = []
+    e: str
+    for cid, text in targets.items():
+        errs = check(cid, text)
+        print(("FAIL " if errs else "PASS ") + cid)
+        for e in errs:
+            print("  - " + e)
+            failed = True
+    sys.exit(1 if failed else 0)
+
+
+if __name__ == "__main__":
+    main()
+```(\w+)\n(.*?)```", re.S)
 STEP = re.compile(r"(?m)^(\d+)\.\s")
 PATH = re.compile(r"(src/|conf/|project/)[\w./-]+|\bbuild\.sbt\b")
 PROVE = re.compile(r"Prove:\s*`([^`]+)`")
@@ -160,6 +258,11 @@ The script cannot judge everything. The reviewer additionally confirms:
 - J3: cross-CU contracts name the exact API (e.g. `BronzeUnit.idFor`
   public in cu-001, consumed in cu-005) and dependency order is stated.
 - J4: each `Prove:` command's expected output is stated, not just the command.
+- J5: Python code (when `APP.LANGUAGE=Python`) obeys `ARCH.PYTHON.*` —
+  every first binding carries an explicit annotation, no `typing.Any` /
+  bare generics, slotted+frozen dataclasses for value objects, monadic
+  error handling over `try-except`. Injectable Python fences violating
+  `EXPLICIT_DECLARATION` or `NO_ANY` fail like any J-rule.
 
 ## Rules
 

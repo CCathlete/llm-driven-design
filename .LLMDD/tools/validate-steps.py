@@ -6,32 +6,44 @@ Usage:
 
 Exits 0 when every regular CU passes, 1 otherwise. See
 .LLMDD/skills/validate-implementation-steps/SKILL.md for the F-rules.
+
+This tool itself complies with ARCH.PYTHON.*: every first binding carries
+an explicit annotation, no typing.Any appears, and failures are returned
+as a list (monadic style) instead of raised/caught with try-except.
 """
 import json
 import re
 import sys
 from pathlib import Path
+from typing import Optional, TypedDict
 
-BANNED = ["handle", "extend", "improve", "enhance", "refactor",
+BatchCu = TypedDict("BatchCu", {"cu-id": str, "content": str, "cu-type": str}, total=False)
+
+BANNED: list[str] = ["handle", "extend", "improve", "enhance", "refactor",
           "wire up", "take care of", "manage"]
-PLACEHOLDER = re.compile(r"TBD|TODO|FIXME|XXX|etc\.")
-EG = re.compile(r"e\.g\.")
-FENCE = re.compile(r"```(\w+)\n(.*?)```", re.S)
-STEP = re.compile(r"(?m)^(\d+)\.\s")
-PATH = re.compile(r"(src/|conf/|project/)[\w./-]+|\bbuild\.sbt\b")
-PROVE = re.compile(r"Prove:\s*`([^`]+)`")
+PLACEHOLDER: re.Pattern[str] = re.compile(r"TBD|TODO|FIXME|XXX|etc\.")
+EG: re.Pattern[str] = re.compile(r"e\.g\.")
+FENCE: re.Pattern[str] = re.compile(r"```(\w+)\n(.*?)```", re.S)
+STEP: re.Pattern[str] = re.compile(r"(?m)^(\d+)\.\s")
+PATH: re.Pattern[str] = re.compile(r"(src/|conf/|project/)[\w./-]+|\bbuild\.sbt\b")
+PROVE: re.Pattern[str] = re.compile(r"Prove:\s*`([^`]+)`")
 
 
 def check(cu_id: str, text: str) -> list[str]:
     fails: list[str] = []
+    body: str
     if "# IMPLEMENTATION_STEPS:" in text:
         body = text.split("# IMPLEMENTATION_STEPS:", 1)[-1]
     else:
         body = text
-    parts = STEP.split(body)[1:]
-    nums, chunks = parts[0::2], parts[1::2]
+    parts: list[str] = STEP.split(body)[1:]
+    nums: list[str] = parts[0::2]
+    chunks: list[str] = parts[1::2]
     if len(nums) < 1:
         fails.append("F1: no numbered steps")
+    n: str
+    ch: str
+    verb: str
     for n, ch in zip(nums, chunks):
         if not PATH.search(ch):
             fails.append(f"F1: step {n} has no exact file path")
@@ -46,30 +58,51 @@ def check(cu_id: str, text: str) -> list[str]:
         fails.append("F4: missing Do NOT touch list")
     if "Stop when" not in body:
         fails.append("F4: missing Stop when condition")
-    code_free = FENCE.sub("", body)
+    code_free: str = FENCE.sub("", body)
     if PLACEHOLDER.search(code_free) or EG.search(code_free):
         fails.append("F6: placeholder token outside code (TBD/TODO/FIXME/XXX/e.g./etc.)")
     if re.search(r"TODO|FIXME|XXX", body):
         fails.append("F6: TODO/FIXME/XXX token (even in code)")
-    if any("…" in b or "..." in b for _, b in FENCE.findall(body)):
-        fails.append("F2: fenced block contains …/... placeholder instead of exact code")
+    fence_pair: tuple[str, str]
+    fence_text: str = ""
+    placeholder_in_fence: bool = False
+    for fence_pair in FENCE.findall(body):
+        fence_text = fence_pair[1]
+        if "\u2026" in fence_text or "..." in fence_text:
+            placeholder_in_fence = True
+    if placeholder_in_fence:
+        fails.append("F2: fenced block contains \u2026/... placeholder instead of exact code")
     return fails
 
 
 def main() -> None:
-    src = Path(sys.argv[1])
+    src: Path = Path(sys.argv[1])
     targets: dict[str, str] = {}
+    raw: str
+    parsed: list[BatchCu] = []
+    cu: BatchCu
+    content: str
+    cu_id: str
+    m: Optional[re.Match[str]]
+    steps_file: Path
     if src.suffix == ".json":
-        for cu in json.loads(src.read_text()):
+        raw = src.read_text()
+        parsed = json.loads(raw)
+        for cu in parsed:
             if cu.get("cu-type", "regular") in ("arch", "legend"):
                 continue
-            content = cu.get("content", "")
+            content = str(cu.get("content", ""))
             m = re.search(r"IMPLEMENTATION_STEPS:(.*?)ACCEPTANCE:", content, re.S)
-            targets[cu["cu-id"]] = m.group(1) if m else ""
+            cu_id = str(cu.get("cu-id", ""))
+            targets[cu_id] = m.group(1) if m else ""
     else:
         for steps_file in sorted(src.glob("cu-*/IMPLEMENTATION_STEPS.itr")):
             targets[steps_file.parent.name] = steps_file.read_text()
-    failed = False
+    failed: bool = False
+    cid: str
+    text: str
+    errs: list[str] = []
+    e: str
     for cid, text in targets.items():
         errs = check(cid, text)
         print(("FAIL " if errs else "PASS ") + cid)

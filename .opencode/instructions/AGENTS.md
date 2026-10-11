@@ -2,7 +2,7 @@
 
 This project explores AI-assisted software design through structured system
 tensors. Every design decision, architecture constraint, and implementation
-step is encoded in `.itr` (implementation tensor) files under `system_tensors/`.
+step is encoded in `.itr` (implementation tensor) files under `.LLMDD/` and `itr-buffer/`.
 
 ## The Triad
 
@@ -19,7 +19,7 @@ The Designer opens an **Advisor session** for design work, a **Coder session** f
 
 ## Workflow
 
-The LLMDD pipeline is defined in `system_tensors/llm-driven-design-sys-prompt.itr`:
+The LLMDD pipeline is defined in `.LLMDD/prompts/llm-driven-design-sys-prompt.itr.md`:
 
 1. **Obtain Baseline** — Designer runs `dtr-builder` to produce a baseline DTR (extract from existing code or --create-baseline for greenfield)
 2. **Analyze & Decompose** — Advisor analyzes the DTR and brainstorms with Designer, decomposing work into Computational Units (CUs)
@@ -36,6 +36,21 @@ The LLMDD pipeline is defined in `system_tensors/llm-driven-design-sys-prompt.it
 - No cross-layer dependencies
 - Port flow: outbound → inbound
 - Layer order: domain > application > infrastructure > control
+
+## Python discipline (Python implementation code)
+
+- Every variable must be declared with an explicit type annotation at
+  first binding before its value is defined (`name: Type = value` or
+  `name: Type` then `name = value`) — MUST, CRITICAL/HARD_FAIL
+- `typing.Any` (and bare `dict`/`list`/`tuple`/`set`) forbidden — define
+  unambiguous custom types (`NewType`, dataclass, `Enum`, `Literal`,
+  `Union`, `TypeAlias`, `Protocol`) — MUST, CRITICAL/HARD_FAIL
+- Slotted, frozen dataclasses (`@dataclass(slots=True, frozen=True)`)
+  preferred over plain/mutable classes — SHOULD, MAJOR by default
+- Monadic containers (`Result[T,E]`/`Either`/`Option`-style, `Optional`
+  chaining) preferred over `try-except` for expected/domain failures;
+  `try-except` only for truly exceptional boundary errors — SHOULD,
+  MAJOR by default
 
 ## Knowledge base
 
@@ -57,7 +72,7 @@ verification and e2e testing sessions.
 
 ## Source of truth
 
-The master specification is `system_tensors/llm-driven-design-sys-prompt.itr`.
+The master specification is `.LLMDD/prompts/llm-driven-design-sys-prompt.itr.md`.
 The `.opencode/agents/` files are convenience wrappers. Any agent or chat
 assistant that reads the system tensor at session start understands the LLMDD
 standard.
