@@ -15,9 +15,9 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Optional, TypedDict
+from typing import Optional, TypeAlias, TypedDict
 
-BatchCu = TypedDict("BatchCu", {"cu-id": str, "content": str, "cu-type": str}, total=False)
+BatchCu: TypeAlias = TypedDict("BatchCu", {"cu-id": str, "content": str, "cu-type": str}, total=False)
 
 BANNED: list[str] = ["handle", "extend", "improve", "enhance", "refactor",
           "wire up", "take care of", "manage"]
