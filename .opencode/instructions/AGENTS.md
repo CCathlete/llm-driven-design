@@ -41,7 +41,7 @@ The LLMDD pipeline is defined in `.LLMDD/prompts/llm-driven-design-sys-prompt.it
 
 - Every variable must be declared with an explicit type annotation at
   first binding before its value is defined (`name: Type = value` or
-  `name: Type` then `name = value`) — MUST, CRITICAL/HARD_FAIL
+  `name: Type` then `name = value`) — MUST, CRITICAL/HARD_FAIL (TypeVar definitions stay bare — annotating them is a linter error)
 - `typing.Any` (and bare `dict`/`list`/`tuple`/`set`) forbidden — define
   unambiguous custom types (`NewType`, dataclass, `Enum`, `Literal`,
   `Union`, `TypeAlias`, `Protocol`) — MUST, CRITICAL/HARD_FAIL

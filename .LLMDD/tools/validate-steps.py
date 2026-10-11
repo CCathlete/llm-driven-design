@@ -15,9 +15,32 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Optional, TypeAlias, TypedDict
+from typing import Optional, TypedDict
 
-BatchCu: TypeAlias = TypedDict("BatchCu", {"cu-id": str, "content": str, "cu-type": str}, total=False)
+class BatchCu(TypedDict, total=False):
+    cu_id: str
+    content: str
+    cu_type: str
+
+
+def _normalize_cu_keys(raw: object) -> BatchCu:
+    """Map wire keys (cu-id) to identifier keys; ValueError on wrong-typed values."""
+    if not isinstance(raw, dict):
+        raise ValueError(f"CU item is not an object: {raw!r}")
+    normalized: BatchCu = {}
+    cu_id_raw: object = raw.get("cu-id", "")
+    if not isinstance(cu_id_raw, str):
+        raise ValueError(f"CU item has non-string cu-id: {cu_id_raw!r}")
+    normalized["cu_id"] = cu_id_raw
+    content_raw: object = raw.get("content", "")
+    if not isinstance(content_raw, str):
+        raise ValueError(f"CU item has non-string content: {content_raw!r}")
+    normalized["content"] = content_raw
+    cu_type_raw: object = raw.get("cu-type", "regular")
+    if not isinstance(cu_type_raw, str):
+        raise ValueError(f"CU item has non-string cu-type: {cu_type_raw!r}")
+    normalized["cu_type"] = cu_type_raw
+    return normalized
 
 BANNED: list[str] = ["handle", "extend", "improve", "enhance", "refactor",
           "wire up", "take care of", "manage"]
@@ -89,19 +112,22 @@ def main() -> None:
         raw = src.read_text()
         loaded: object = json.loads(raw)
         items: list[BatchCu] = []
+        raw_items: list[object] = []
         if isinstance(loaded, dict):
             cus_raw: object = loaded.get("cus", [])
             if isinstance(cus_raw, list):
-                # Boundary translation: foreign JSON list narrowed at once.
-                items = cus_raw
+                raw_items = cus_raw
         elif isinstance(loaded, list):
-            items = loaded
+            raw_items = loaded
+        item: object
+        for item in raw_items:
+            items.append(_normalize_cu_keys(item))
         for cu in items:
-            if cu.get("cu-type", "regular") in ("arch", "legend"):
+            if cu.get("cu_type", "regular") in ("arch", "legend"):
                 continue
-            content = str(cu.get("content", ""))
+            content = cu.get("content", "")
             m = re.search(r"IMPLEMENTATION_STEPS:(.*?)ACCEPTANCE:", content, re.S)
-            cu_id = str(cu.get("cu-id", ""))
+            cu_id = cu.get("cu_id", "")
             targets[cu_id] = m.group(1) if m else ""
     else:
         for steps_file in sorted(src.glob("cu-*/IMPLEMENTATION_STEPS.itr")):

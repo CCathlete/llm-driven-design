@@ -157,7 +157,7 @@ Non-Python tooling (e.g. Scala dtr-builder/itr-compiler) is exempt.
    variable carries an explicit type annotation at its first binding:
    `name: Type = value`, or `name: Type` declared before `name = value`.
    Covers locals, attributes, function args and returns, loop targets.
-   Bare `x = ...` on first binding is a `HARD_FAIL` violation.
+   Bare `x = ...` on first binding is a `HARD_FAIL` violation. TypeVar definitions stay bare (`T = TypeVar(...)`) — annotating them is a linter error; the TypeVar itself is the declaration.
 2. **No `Any` (MUST/CRITICAL).** `typing.Any` is forbidden. Bare
    `dict`/`list`/`tuple`/`set` without parameters count as implicit
    `Any` and are forbidden. Create unambiguous custom types instead:

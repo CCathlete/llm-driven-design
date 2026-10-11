@@ -16,8 +16,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Generic, Optional, TypeVar
 
-T: TypeVar = TypeVar("T")
-E: TypeVar = TypeVar("E", bound=Exception)
+# TypeVar definitions stay bare: annotating them is a linter error.
+# ARCH.PYTHON exemption — the TypeVar itself is the declaration.
+T = TypeVar("T")
+E = TypeVar("E", bound=Exception)
 
 
 @dataclass(slots=True, frozen=True)

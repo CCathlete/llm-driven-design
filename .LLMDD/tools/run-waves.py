@@ -18,7 +18,7 @@ import typing
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Generic, Iterator, Optional, Sequence, TypeAlias, TypedDict, TypeVar
+from typing import Generic, Iterator, Literal, Optional, Sequence, TypeAlias, TypedDict, TypeVar, cast
 
 
 # ── Defaults ───────────────────────────────────────────────────────
@@ -36,8 +36,10 @@ DEFAULT_CODER_FALLBACKS: list[str] = [
 
 # ── Monadic Result Type ────────────────────────────────────────────
 
-T: TypeVar = TypeVar("T")
-E_co: TypeVar = TypeVar("E_co", bound=Exception, covariant=True)
+# TypeVar definitions stay bare: annotating them is a linter error.
+# ARCH.PYTHON exemption — the TypeVar itself is the declaration.
+T = TypeVar("T")
+E_co = TypeVar("E_co", bound=Exception, covariant=True)
 
 
 @dataclass(slots=True, frozen=True)
@@ -63,48 +65,67 @@ class CoderOutput:
 
 # ── JSON Custom Types (no Any, no bare generics) ───────────────────
 
-TokenCache: TypeAlias = TypedDict("TokenCache", {"read": int, "write": int}, total=False)
-StepTokens: TypeAlias = TypedDict(
-    "StepTokens",
-    {"input": int, "output": int, "reasoning": int, "cache": TokenCache, "total": int},
-    total=False,
-)
+class TokenCache(TypedDict, total=False):
+    read: int
+    write: int
+class StepTokens(TypedDict, total=False):
+    input: int
+    output: int
+    reasoning: int
+    cache: TokenCache
+    total: int
 EventResult: TypeAlias = str | dict[str, str | int | float | bool | list[str]]
 EventModel: TypeAlias = str | dict[str, str]
-EventPart: TypeAlias = TypedDict(
-    "EventPart",
-    {"text": str, "tool": str, "toolName": str, "result": EventResult,
-     "tokens": StepTokens, "cost": float, "reason": str,
-     "action": str, "resource": str, "model": EventModel, "id": str},
-    total=False,
-)
-JsonEvent: TypeAlias = TypedDict(
-    "JsonEvent",
-    {"type": str, "part": EventPart, "tokens": StepTokens,
-     "cost": float, "reason": str, "sessionID": str, "model": EventModel},
-    total=False,
-)
-TokenReport: TypeAlias = TypedDict(
-    "TokenReport",
-    {"input": int, "output": int, "reasoning": int,
-     "cache_read": int, "cache_write": int, "total": int, "cost": float,
-     "session_id": str, "model": str},
-)
-WaveDef: TypeAlias = TypedDict("WaveDef", {"wave": int, "cus": list[str], "description": str}, total=False)
-WaveRecord: TypeAlias = TypedDict(
-    "WaveRecord",
-    {"wave": int, "cus": list[str], "escalations": int,
-     "coder_status": int, "lead_status": int,
-     "files_changed": dict[str, list[str]], "credits": dict[str, TokenReport]},
-)
-ConvergenceData: TypeAlias = TypedDict(
-    "ConvergenceData", {"waves": list[WaveRecord], "status": str}
-)
+class EventPart(TypedDict, total=False):
+    text: str
+    tool: str
+    toolName: str
+    result: EventResult
+    tokens: StepTokens
+    cost: float
+    reason: str
+    action: str
+    resource: str
+    model: EventModel
+    id: str
+class JsonEvent(TypedDict, total=False):
+    type: str
+    part: EventPart
+    tokens: StepTokens
+    cost: float
+    reason: str
+    sessionID: str
+    model: EventModel
+class TokenReport(TypedDict):
+    input: int
+    output: int
+    reasoning: int
+    cache_read: int
+    cache_write: int
+    total: int
+    cost: float
+    session_id: str
+    model: str
+class WaveDef(TypedDict, total=False):
+    wave: int
+    cus: list[str]
+    description: str
+class WaveRecord(TypedDict):
+    wave: int
+    cus: list[str]
+    escalations: int
+    coder_status: int
+    lead_status: int
+    files_changed: dict[str, list[str]]
+    credits: dict[str, TokenReport]
+class ConvergenceData(TypedDict):
+    waves: list[WaveRecord]
+    status: str
 
 
 # ── I/O Boundary — Monadic Result Wrappers (only try/except in the tool) ──
 
-def _popen(cmd: list[str], cwd: Path) -> Ok[subprocess.Popen] | Err[Exception]:
+def _popen(cmd: list[str], cwd: Path) -> Ok[subprocess.Popen[bytes]] | Err[Exception]:
     """Spawn subprocess. Returns Ok(proc) or Err(FileNotFoundError|OSError)."""
     # MONADIC-BOUNDARY: foreign process spawn; OS failure becomes Err.
     caught: Exception
@@ -116,7 +137,7 @@ def _popen(cmd: list[str], cwd: Path) -> Ok[subprocess.Popen] | Err[Exception]:
         return Err(caught)
 
 
-def _open_file(path: Path, mode: str = "r") -> Ok[typing.TextIO] | Err[Exception]:
+def _open_file(path: Path, mode: Literal["r", "w"] = "r") -> Ok[typing.TextIO] | Err[Exception]:
     """Open a file. Returns Ok(fh) or Err(OSError|IOError)."""
     # MONADIC-BOUNDARY: foreign filesystem open; OS failure becomes Err.
     caught: Exception
@@ -311,7 +332,7 @@ def _detect_error(log_file: Path) -> bool:
 def _as_part(raw: object) -> EventPart:
     """Narrow foreign JSON into an EventPart; non-dicts become empty."""
     if isinstance(raw, dict):
-        narrowed_part: EventPart = raw
+        narrowed_part: EventPart = cast(EventPart, raw)
         return narrowed_part
     return {}
 
@@ -319,7 +340,7 @@ def _as_part(raw: object) -> EventPart:
 def _as_tokens(raw: object) -> StepTokens:
     """Narrow foreign JSON into StepTokens; non-dicts become empty."""
     if isinstance(raw, dict):
-        narrowed_tok: StepTokens = raw
+        narrowed_tok: StepTokens = cast(StepTokens, raw)
         return narrowed_tok
     return {}
 
@@ -760,7 +781,7 @@ def _parse_event_line(line: str) -> Ok[JsonEvent] | Err[ValueError]:
     except (json.JSONDecodeError, ValueError) as caught:
         return Err(caught)
     if isinstance(parsed, dict):
-        event: JsonEvent = parsed
+        event: JsonEvent = cast(JsonEvent, parsed)
         return Ok(event)
     return Err(ValueError("event line is not a JSON object"))
 
@@ -771,7 +792,7 @@ def _stream_process_json(cmd: list[str], log_fh: typing.TextIO, colour: str, pre
     """Stream JSON events with activity-based timeout.
     Returns Ok(exit_code) or Err(FileNotFoundError|OSError|TimeoutError).
     """
-    proc: subprocess.Popen
+    proc: subprocess.Popen[bytes]
     e: Exception
     match _popen(cmd, cwd=work_dir):
         case Ok(proc):
@@ -784,7 +805,7 @@ def _stream_process_json(cmd: list[str], log_fh: typing.TextIO, colour: str, pre
     last_activity: list[datetime] = [datetime.now()]
 
 
-    def _reader():
+    def _reader() -> None:
         assert proc.stdout is not None
         raw: bytes
         line: str
@@ -904,13 +925,13 @@ def _format_event(ev: JsonEvent, colour: str) -> str | None:
         return "\n".join(prefixed)
 
     if t == "tool_invocation_start":
-        part: EventPart = ev.get("part", {})
+        part = ev.get("part", {})
         tool: str = part.get("toolName", "unknown")
         return f"{C.BR_YELLOW}🔧 {tool}{C.RESET}"
 
     if t == "tool_result":
-        part: EventPart = ev.get("part", {})
-        tool: str = part.get("toolName", "unknown")
+        part = ev.get("part", {})
+        tool = part.get("toolName", "unknown")
         result: EventResult = part.get("result", "")
         if isinstance(result, str) and len(result) > 80:
             result = result[:77] + "..."
@@ -1034,7 +1055,6 @@ def run_coder(cu_file: Path, cu_id: str, fallback_chain: ModelFallbackChain,
                 is_error_lines: bool = False
                 line: str
                 ev: JsonEvent
-                p: str
                 for line in text.splitlines():
                     parsed_line: Ok[JsonEvent] | Err[ValueError] = _parse_event_line(line)
                     if isinstance(parsed_line, Err):
@@ -1178,7 +1198,7 @@ def run_code_lead(wave: int, num_waves: int, model: str, max_iterations: int,
             f"9. Stage all changes and commit with the consolidated message\n"
         )
     else:
-        commit_instruction: str = (
+        commit_instruction = (
             f"\n7. Prepare a COMMIT_MESSAGE for this wave in {feedback_dir}/wave-{wave}-commit.txt\n"
             f"8. Do NOT commit \u2014 the final wave lead will commit\n"
         )
@@ -1615,7 +1635,6 @@ async def main_async(args: argparse.Namespace) -> None:
 
         # Wave file summary
         print(f"  {C.BOLD}Wave {wave_num} files changed:{C.RESET}")
-        cu_id: str
         files: list[str]
         for cu_id, files in wave_files_changed.items():
             if files:
@@ -1698,7 +1717,6 @@ async def main_async(args: argparse.Namespace) -> None:
         if w["coder_status"] != 0 or w["lead_status"] != 0:
             failed_waves += 1
     unique_all: set[str] = set()
-    files: list[str]
     for w in convergence["waves"]:
         for files in w.get("files_changed", {}).values():
             unique_all.update(files)
