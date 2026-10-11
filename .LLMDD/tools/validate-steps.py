@@ -25,7 +25,7 @@ PLACEHOLDER: re.Pattern[str] = re.compile(r"TBD|TODO|FIXME|XXX|etc\.")
 EG: re.Pattern[str] = re.compile(r"e\.g\.")
 FENCE: re.Pattern[str] = re.compile(r"```(\w+)\n(.*?)```", re.S)
 STEP: re.Pattern[str] = re.compile(r"(?m)^(\d+)\.\s")
-PATH: re.Pattern[str] = re.compile(r"(src/|conf/|project/)[\w./-]+|\bbuild\.sbt\b")
+PATH: re.Pattern[str] = re.compile(r"(src/|conf/|project/|\.LLMDD/|itr-buffer/|dtr-builder/|itr-compiler/|commit-tool/|scripts/|docs/)[\w./-]+|\bbuild\.sbt\b|\bREADME\.md\b")
 PROVE: re.Pattern[str] = re.compile(r"Prove:\s*`([^`]+)`")
 
 
@@ -87,8 +87,16 @@ def main() -> None:
     steps_file: Path
     if src.suffix == ".json":
         raw = src.read_text()
-        parsed = json.loads(raw)
-        for cu in parsed:
+        loaded: object = json.loads(raw)
+        items: list[BatchCu] = []
+        if isinstance(loaded, dict):
+            cus_raw: object = loaded.get("cus", [])
+            if isinstance(cus_raw, list):
+                # Boundary translation: foreign JSON list narrowed at once.
+                items = cus_raw
+        elif isinstance(loaded, list):
+            items = loaded
+        for cu in items:
             if cu.get("cu-type", "regular") in ("arch", "legend"):
                 continue
             content = str(cu.get("content", ""))
