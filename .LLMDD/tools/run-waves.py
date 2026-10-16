@@ -30,14 +30,14 @@ DEFAULT_LEAD_TIMEOUT: int = 600
 DEFAULT_MAX_FIX_ITERATIONS: int = 3
 
 # ── Fallback defaults ───────────────────────────────────────────────
-# Coder fallbacks: small, fast models tried in order when the primary
-# coder fails (refusal, error, or activity timeout). Ordered by observed
-# latency (laguna ~60s, deepseek ~260s). kimi-k3 removed: end-of-life
-# 2026-10-15, no longer served.
+# Coder fallbacks: small, fast Nvidia models tried in order when the
+# primary coder fails (refusal, error, or activity timeout). Ordered by
+# observed latency (laguna ~60s, deepseek ~260s). kimi-k3 removed:
+# end-of-life 2026-10-15, no longer served. Nvidia-only by policy:
+# no cross-provider entries.
 DEFAULT_CODER_FALLBACKS: list[str] = [
     "nvidia/poolside/laguna-xs-2.1",
     "nvidia/deepseek-ai/deepseek-v4.1-flash",
-    "opencode/big-pickle",
 ]
 # Lead fallbacks: larger models tried in order when the primary lead
 # fails (activity timeout or non-zero exit). Ordered by observed latency
