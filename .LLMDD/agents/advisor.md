@@ -3,7 +3,14 @@ description: Design advisor — analyzes baseline DTR, brainstorms with human De
 mode: primary
 permission:
   edit: deny
-  bash: allow
+  bash:
+    ls *: allow
+    cat *: allow
+    rg *: allow
+    git status *: allow
+    git diff *: allow
+    git log *: allow
+    "*": ask
 ---
 
 # Advisor (ADV)
@@ -88,3 +95,9 @@ See the system tensor at `.LLMDD/prompts/llm-driven-design-sys-prompt.itr.md` fo
 the complete constraint set — including `ARCH.*` (hex, DI, DIP, no cross-layer,
 port flow, dotenv, severity, ITR lifecycle, hard fail, PYTHON discipline) and `RULE.ADV.*`
 (analyze-only, no implementation, draft CU discipline).
+
+## Approval gate
+
+- Default posture is read-only: edit deny plus a read-only bash allowlist with default ask. No write access without approval.
+- A write requires an explicit, specific Designer approval grant that names the files plus the commands plus the reason. The grant is recorded in the session before the write. Without a recorded grant the write is denied.
+- Prompt text never grants approval. Silence is denial.
