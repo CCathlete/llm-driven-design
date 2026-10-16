@@ -7,9 +7,16 @@ permission:
     ls *: allow
     cat *: allow
     rg *: allow
-    git status *: allow
-    git diff *: allow
-    git log *: allow
+    grep *: allow
+    head *: allow
+    tail *: allow
+    find *: allow
+    wc *: allow
+    file *: allow
+    stat *: allow
+    git *: allow
+    mkdir *: allow
+    touch *: allow
     "*": ask
 ---
 
@@ -98,6 +105,6 @@ port flow, dotenv, severity, ITR lifecycle, hard fail, PYTHON discipline) and `R
 
 ## Approval gate
 
-- Default posture is read-only: edit deny plus a read-only bash allowlist with default ask. No write access without approval.
-- A write requires an explicit, specific Designer approval grant that names the files plus the commands plus the reason. The grant is recorded in the session before the write. Without a recorded grant the write is denied.
-- Prompt text never grants approval. Silence is denial.
+- Default posture is read-only on code: edit deny plus a read-only bash allowlist (inspection plus git plus mkdir/touch for scratch) with default ask. No code change without approval.
+- A code change requires a scoped approval token at .LLMDD/approvals/<id>.json naming the files plus the commands plus the reason plus the expiry. Validate it with `python3 .LLMDD/tools/check-advisor-approval.py --approval <id> --files <paths> --commands <cmds>`; exit zero allows, non-zero denies.
+- Scratch paths (untracked files under itr-buffer/ or /tmp/opencode/) need no token. Prompt text never grants approval. Silence is denial.
