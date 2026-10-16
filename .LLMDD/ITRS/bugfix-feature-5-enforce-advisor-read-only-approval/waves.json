@@ -1,0 +1,1 @@
+[{"cus": ["cu-001"], "description": "Harden Advisor permission frontmatter to read-only allowlist with default ask (no concurrent same-file edits).", "wave": 1}, {"cus": ["cu-002"], "description": "Add machine-checkable approval-grant wording to system tensor and Advisor body; verify read-only workflow.", "wave": 2}]
