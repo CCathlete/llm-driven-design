@@ -26,24 +26,29 @@ from typing import Generic, Iterator, Literal, Optional, Sequence, TypeAlias, Ty
 DEFAULT_CODER_MODEL: str = "nvidia/z-ai/glm-5.3-flash"
 DEFAULT_LEAD_MODEL: str = "nvidia/nvidia/nemotron-3.5-lightning-30b-a3b"
 DEFAULT_CU_TIMEOUT: int = 300
-DEFAULT_LEAD_TIMEOUT: int = 600
+DEFAULT_LEAD_TIMEOUT: int = 300
 DEFAULT_MAX_FIX_ITERATIONS: int = 3
 
 # ── Fallback defaults ───────────────────────────────────────────────
 # Coder fallbacks: small, fast Nvidia models tried in order when the
 # primary coder fails (refusal, error, or activity timeout). Ordered by
-# observed latency (laguna ~60s, deepseek ~260s). kimi-k3 removed:
-# end-of-life 2026-10-15, no longer served. Nvidia-only by policy:
-# no cross-provider entries.
+# observed latency (diffgemma ~2s, gpt-oss ~3s, laguna ~60s,
+# deepseek ~260s). Nvidia-only by policy: no cross-provider entries.
+# Dead models removed after live probes: kimi-k3 (EOL 2026-10-15),
+# magistral-small-2506 (HTTP 404), mistral-7b-instruct-v0.3 (not found).
 DEFAULT_CODER_FALLBACKS: list[str] = [
+    "nvidia/google/diffusiongemma-26b-a4b-it",
+    "nvidia/openai/gpt-oss-20b",
     "nvidia/poolside/laguna-xs-2.1",
     "nvidia/deepseek-ai/deepseek-v4.1-flash",
 ]
-# Lead fallbacks: larger models tried in order when the primary lead
-# fails (activity timeout or non-zero exit). Ordered by observed latency
-# (glimmer ~60s, glm-5.3 ~240s). mistral-medium-3 removed: HTTP 404,
-# not served.
+# Lead fallbacks: larger Nvidia models tried in order when the primary
+# lead fails (activity timeout or non-zero exit). Ordered by observed
+# latency (gpt-oss ~8s, nemotron-120b ~11s, glimmer ~60s, glm-5.3 ~240s).
+# Dead models removed after live probes: mistral-medium-3 (HTTP 404).
 DEFAULT_LEAD_FALLBACKS: list[str] = [
+    "nvidia/openai/gpt-oss-20b",
+    "nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b",
     "nvidia/meta/muse-glimmer-30b",
     "nvidia/z-ai/glm-5.3",
 ]
@@ -1608,6 +1613,7 @@ async def main_async(args: argparse.Namespace) -> None:
     _info(f"App:           {C.BOLD}{app_name}{C.RESET}")
     _info(f"CUs found:     {C.BOLD}{len(cu_map)}{C.RESET}")
     _info(f"Coder model:   {args.coder_model}")
+    _info(f"Coder fallbacks: {', '.join(args.coder_fallbacks) if args.coder_fallbacks else '(none)'}")
     _info(f"Lead model:    {args.lead_model}")
     _info(f"Lead fallbacks: {', '.join(args.lead_fallbacks) if args.lead_fallbacks else '(none)'}")
     _info(f"CU timeout:    {args.cu_timeout}s")
