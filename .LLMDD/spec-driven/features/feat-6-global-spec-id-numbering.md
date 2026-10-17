@@ -1,6 +1,6 @@
 # feat-6: Global Per-Repo Spec Numbering
 
-- Status: In Progress
+- Status: Implemented
 - Created: 2026-10-17
 - Feature ID: feat-6-global-spec-id-numbering
 
@@ -30,9 +30,21 @@ with the allocator reading every git ref rather than the checkout.
 
 ## Implementation status
 
-Proposed. Allocator tool plus its fixture test, then the two skills, then
-the tensor rule, `init-repo` and the tools README. ITR directory:
-`.LLMDD/ITRS/feat-6-global-spec-id-numbering/`.
+Implemented in commit d96e2a0 (wave 1 cu-001; wave 2 cu-002 and cu-003).
+Both waves converged with zero escalations; all three CU feedback files
+report STATUS=COMPLETED, VERIFICATION_RESULT=PASSED, ESCALATION_REASON=none.
+ITR directory: `.LLMDD/ITRS/feat-6-global-spec-id-numbering/`.
+
+Delivered: `.LLMDD/tools/next-spec-id.py` (ref-aware allocator with
+`--kind`, `--prefix`, `--dry-run`, `--check`) and
+`.LLMDD/tools/test_next_spec_id.py`; both spec skills rewired onto the
+allocator; the counter seeded at `.LLMDD/spec-driven/ids.txt`
+(`bug=5`, `feature=6`); `RULE.NUM.GLOBAL_SPEC_IDS` in the tensor;
+`init-repo` resets the counter; `.LLMDD/tools/README.md` documents both
+tools.
+
+No linked bugs: this feature was scoped directly, not raised as a defect,
+so no file under `.LLMDD/spec-driven/bugs/` is closed by it.
 
 ## Acceptance criteria
 
