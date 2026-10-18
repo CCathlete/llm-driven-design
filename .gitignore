@@ -36,5 +36,10 @@ CU_*_IMPLEMENTATION_STEPS*.itr
 *.convergence.json
 *.logs/
 *.feedback/
+# ---
+.LLMDD/approvals/*
+!.LLMDD/approvals/git-global.json
+!.LLMDD/approvals/llmdd-workspace.json
+# ---
 /.LLMDD/tools/itr-compiler
 /.LLMDD/tools/dtr-builder
