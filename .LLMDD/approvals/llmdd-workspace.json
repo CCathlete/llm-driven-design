@@ -5,6 +5,7 @@
     ".LLMDD/ITRS/*",
     ".LLMDD/DTRS/*",
     ".LLMDD/approvals/*",
+    ".LLMDD/skills/*",
     ".LLMDD/tests/*"
   ],
   "commands": [

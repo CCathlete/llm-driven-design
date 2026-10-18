@@ -1,8 +1,8 @@
 # bug-3: Silent blob fallback on bare section labels
 
-- Status: Open
+- Status: Resolved
 - Created: 2026-10-10
-- Resolved: -
+- Resolved: 2026-10-18
 - Bug ID: bug-3-silent-blob-on-bare-section-labels
 
 ## Bug detail
@@ -68,19 +68,51 @@ expect folders).
 
 ## Resolution status
 
-Open. No fix merged.
+Resolved on 2026-10-18 by the Designer, on verification that the fix
+merged in `93d2cc8` is present and its proving tests pass. Verified in
+this repo rather than inferred from the commit message.
 
 ## Fix summary (Resolved only)
 
-Pending. Suggested: either accept bare labels as aliases in
-`splitInlineSections`, or emit a warning/failure when `content`
-contains a bare near-miss label (`REQUIREMENTS` etc. without colon)
-while `components` comes back empty.
+Fixing commit: `93d2cc8` ("bugfix-feature-3/cu-001: accept bare
+section-label aliases in inline splitting (bug-3)"). Spec:
+`bugfix-feature-3-accept-bare-label-aliases`.
+
+`CU.sectionLabels` (domain) gained a bare, colon-less alias per component
+key, with the colon form listed first and canonical.
+`JSONFormat.splitInlineSections` now matches colon-first per key
+(`groupBy key` + `collectFirst`), so a bare prefix can never shadow a
+colon label, and `contentSectionKeys` agrees with it by construction over
+the same list. All-bare and mixed bare/colon batches compile to four-file
+CU folders instead of silently falling back to a legacy blob. An explicit
+`components` object still wins, all-four-absent still takes the legacy
+single-frame path, and partially-labelled batches keep failing loudly
+naming the CU id plus the missing sections. No changes to
+`FileSystem.scala`, `Compile.scala` or `YAMLFormat.scala`.
 
 ## Tests proving resolution (Resolved only)
 
-Pending. Suggested: re-run CLI repro commands 1 and 2 above —
-command 1 must either yield the four component files or fail with an
-error naming the unrecognized labels (exit non-zero); command 2 must
-stay green with four component files. Plus a parser-level test over a
-bare-label batch asserting components-or-error instead of silent empty.
+`sbt 'testOnly itrcompiler.infrastructure.parsers.JSONFormatTest'` run in
+this repo on 2026-10-18: **11 tests run, 11 succeeded, 0 failed, 0
+aborted, 0 pending.** All three bug-3 repro tests are green:
+
+- "should split all four inline sections from bare labels (bug-3 repro 1)"
+  - the original silent-blob repro now yields four component files
+- "should split mixed bare and colon labels fully (bug-3 repro 3)"
+  - the mixed case still succeeds fully
+- "should prefer the colon label over its bare prefix (bare never shadows
+  colon)" - the colon-first precedence invariant
+
+The three tests that were green before the fix and had to stay green also
+pass: all-four-present split, one-section-missing split, and
+"should leave components empty when no inline sections are present" - the
+last confirming the legacy single-frame path is preserved for genuinely
+unlabelled content.
+
+Caveat on the original repro commands: they invoke the repo-root
+assembly `./itr-compiler/itr-compiler`, whose mtime (2026-10-10 16:49)
+predates the fix commit (2026-10-10 17:01) by twelve minutes, and the
+assembly is gitignored. Running those commands as written exercises the
+stale binary and would still show the old behaviour. The test-level
+evidence above is the authoritative proof for this closure; the assembly
+should be rebuilt before anyone re-runs the CLI repro verbatim.

@@ -11,8 +11,8 @@ Symptoms: `~/.config/opencode/cli.json` sets
 `session.permissions: "autoaccept"`, which auto-accepts permission
 prompts for every session regardless of agent. Any `"*": ask` fallback
 declared in an agent's bash allowlist therefore never reaches the user,
-which makes bug-6 invisible in practice: even if the Advisor frontmatter
-were loaded correctly, its default-ask rule would still be bypassed.
+which defeats the default-ask rule in the Advisor frontmatter (which is
+loaded and parsed correctly - that part works).
 
 The setting is user-global, so it silently overrides the per-repo intent
 expressed in agent frontmatter. A repository that believes it is
@@ -40,11 +40,11 @@ outranks repository config, so no repo-level change can override it.
 
 Impact: the `ask` tier of the permission model is dead on this machine.
 Approval becomes advisory by configuration, not merely by omission -
-compounding bug-6 and bug-8. Every agent in the triad is affected, not
+compounding bug-8. Every agent in the triad is affected, not
 just the Advisor.
 
-Related: bug-6 (frontmatter not loaded), bug-8 (advisory-only approval
-gate), bug-5 (original unenforced-approval report, still Open).
+Related: bug-8 (advisory-only approval gate), bug-5 (original
+unenforced-approval report, Resolved).
 
 ## Resolution status
 

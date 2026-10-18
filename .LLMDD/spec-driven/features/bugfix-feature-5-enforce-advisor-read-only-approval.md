@@ -87,14 +87,26 @@ honoured. Three independent checks:
 So the shipped mechanism is real and correct in form, and it is being
 followed in practice, but its enforcement is advisory: it holds because
 the Advisor reads the tensor and chooses to run the gate, not because
-anything prevents a write. Carried by
-`bug-6-advisor-permission-frontmatter-not-loaded`,
+anything intercepts a write. Carried by
 `bug-7-session-permissions-autoaccept-nullifies-ask` and
-`bug-8-approval-gate-advisory-not-enforced` (all Open). The out-of-band
+`bug-8-approval-gate-advisory-not-enforced` (both Open). The out-of-band
 fix is a real `pre-commit` hook - the same shape as the pre-push hook
 that already blocks agent pushes. The principal defence in force today is
 detective, not preventive: an unapproved write is visible in `git diff` to
 the code lead and the Designer.
+
+Correction (2026-10-18): an earlier draft asserted that `advisor.md` was
+never loaded and that its `permission:` block was therefore inert. Both
+claims were wrong and are withdrawn. `advisor.md` IS loaded as the agent
+definition - an Advisor session receives its body verbatim while
+`.opencode/instructions/AGENTS.md` does not contain it - and `permission`
+is a valid `AgentConfig` key whose `PermissionConfig` supports `edit` and
+`bash` with values "ask" | "allow" | "deny". The residual is narrower
+than first recorded: the **edit channel is closed outright**, because an
+Advisor session is granted no edit, write or patch tool at all
+(`execute, glob, grep, question, read, shell, skill, subagent, webfetch,
+websearch`). What remains open is the `bash` write channel, gated only by
+`autoaccept`, plus the token check that nothing invokes.
 
 Note on T3 as originally executed: the Coder's T3 probe stripped the agent
 body to a temp copy and observed that `edit: deny` survived in the
@@ -102,7 +114,7 @@ frontmatter. That proves the file says `edit: deny`; it does not prove
 the harness enforces it. The test is circular and should be replaced by a
 behavioural probe - issue an `edit` call from an Advisor session with no
 token in scope and assert the harness returns a permission error. That
-replacement is part of the bug-6/7/8 work, not of this feature.
+replacement is part of the bug-7/8 work, not of this feature.
 
 ## Acceptance criteria
 

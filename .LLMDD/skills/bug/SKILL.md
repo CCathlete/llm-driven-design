@@ -42,7 +42,8 @@ and suspected cause. Enough for another engineer to reproduce blind.
 
 Whether the bug is resolved or not. Move Open → Resolved only when the
 fix is merged AND the proving tests below pass. Record the fixing
-commit(s) here.
+commit(s) here. There is no third state — to cancel a bug, delete the
+file.
 
 ## Fix summary (Resolved only)
 
@@ -60,7 +61,26 @@ Leave as "Pending" while Open.
 
 - One file per bug; a bug covering two symptoms is two files.
 - Status is a single value from the allowed set — `Resolved` requires both
-  a merged fix and green proving tests, no exceptions.
+  a merged fix and green proving tests, no exceptions. Never introduce a
+  third status to describe a bug that stopped being one.
+- A cancelled or invalid bug is **deleted**, not annotated. `Open` and
+  `Resolved` are the whole enum. When deleting, also strip references to
+  that id from every other bug, feature record and book section — a
+  deleted file with live references is worse than either legal state. The
+  serial stays burned; the allocator never reissues it, so the sequence
+  may skip a number and `--check` still exits 0.
+- Run the reproduction **before writing the file**, not at fix time. A bug
+  whose reproduction has never been executed is an assertion wearing a
+  report's clothes. If a probe genuinely cannot be run, say so in Bug
+  detail and mark the cause unknown rather than implying it was verified.
+- Never file a runtime or configuration claim you inferred. Claims about
+  what a tool loads, parses, enforces or exposes must be observed from the
+  running system — read the installed schema, query the endpoint, inspect
+  the live tool set. A plausible guess about a framework's behaviour is
+  the most common way a filed bug turns out not to be a bug at all.
+- `Resolved` is not immutable. If later evidence contradicts a closure,
+  amend the file with a dated correction naming what changed, and restate
+  which tests changed verdict. Do not silently leave the stale claim.
 - Reproduction steps must be verified before the fix starts; unverified
   reports stay Open with cause marked unknown.
 - The bug ID (serial int) is assigned at creation and never changes.

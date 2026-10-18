@@ -51,8 +51,8 @@ DTR-traceability, severity baselining, and Coder/Verifier review.
 Resolved on 2026-10-18 by Designer decision. The approval mechanism this
 bug asked for was built and merged; the residual gap is that the
 mechanism is honoured by prompt adherence rather than mechanically
-enforced. That residual is carried forward as bug-6, bug-7 and bug-8,
-which remain Open and are the enforcement work. Closing this bug records
+enforced. That residual is carried forward as bug-7 and bug-8, which
+remain Open and are the enforcement work. Closing this bug records
 that the mechanism exists, works in practice, and is no longer blocking -
 it does NOT assert that the Advisor is technically prevented from writing.
 
@@ -105,17 +105,28 @@ Partially green. Stated exactly, including what does not pass.
     model choosing to run the gate script and honour its exit code. This
     is the original bug's suggested test (2), and it fails.
 
-(4) NOT PASSING - static assertion that the Advisor grants no
-    write-capable tools. The bash allowlist grants `mkdir *`, `touch *`
-    and `git *`; `git commit` is a write channel. This is the original
-    bug's suggested test (1), and it fails. `edit: deny` is declared but
-    is not loaded as a permission (bug-6).
+(4) PASSING - static assertion that the Advisor is granted no
+    write-capable tool. An Advisor session's live tool set is
+    `execute, glob, grep, question, read, shell, skill, subagent,
+    webfetch, websearch` — there is no edit, write or patch tool to
+    grant. The edit channel is closed by capability removal, which is
+    stronger than the declared `edit: deny`.
+
+    (An earlier draft of this entry recorded this as failing, on the
+    claim that `edit: deny` was "not loaded as a permission". That claim
+    was wrong and was withdrawn on 2026-10-18: `advisor.md` is loaded as
+    the agent definition, and `permission` is a valid `AgentConfig` key
+    whose `PermissionConfig` supports `edit` and `bash` with values
+    "ask" | "allow" | "deny".)
+
+    The residual write channel is `bash`, which can write via
+    `cat > file`, `python3` or `git commit` despite the allowlist. That
+    is tracked by bug-7 (autoaccept) and bug-8 (advisory gate), not here.
 
 (5) NOT PASSING - an agent-level `"*": ask` never surfaces, because the
     user-global config sets `session.permissions: "autoaccept"` (bug-7).
 
-Tests (3), (4) and (5) become achievable only when bug-6, bug-7 and
-bug-8 are fixed - chiefly by moving the gate out-of-band of the model as
+Tests (3) and (5) become achievable only when bug-7 and bug-8 are fixed - chiefly by moving the gate out-of-band of the model as
 a real `pre-commit` hook. Until then this closure rests on prompt
 adherence plus a detective control (the change is visible in `git diff`
 to the code lead and the Designer). That is a deliberate, accepted

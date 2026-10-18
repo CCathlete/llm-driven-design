@@ -43,13 +43,32 @@ states the requirement in the same register as the rules it does not
 mechanically enforce: `RULE.ADV.APPROVAL_REQUIRED` is phrased as text,
 and the "Prompt text never grants approval" clause is itself only text.
 
-Impact: this is the load-bearing gap. bug-6 and bug-7 each remove one
-inert layer; this bug is why removing them would still leave the
-guarantee resting on model instruction-following. The only working control
-today is detective, not preventive - a violation is visible in
-`git diff` to the code lead and the Designer, but nothing prevents it.
-Note the asymmetry with the pre-push hook, which does sit out-of-band of
-the model and does block.
+Impact: the approval gate itself is advisory. It holds because the
+Advisor reads the tensor and chooses to run the script, not because
+anything intercepts a write.
+
+Correction (2026-10-18): an earlier draft of this bug overstated the
+gap by asserting that nothing prevents the Advisor from writing code. That
+is wrong on the edit channel. An Advisor session's live tool set contains
+no edit, write or patch tool at all, so that channel is closed by
+capability removal rather than by policy — strictly stronger than the
+`edit: deny` the frontmatter declares. What actually remains open is
+narrower and sharper than this bug first claimed:
+
+- **Closed:** direct file edits. No such tool exists to grant.
+- **Open:** the `bash` channel, which can write (`cat > file`, `python3`,
+  `git add`). Gated only by `session.permissions: "autoaccept"` (bug-7),
+  which auto-approves anything not explicitly denied.
+- **Open:** the token check itself, which nothing invokes (this bug).
+
+So the residual is precisely the bash write path, not "the Advisor can
+write code". Severity is lower than first recorded, but the defect is real
+and the same `pre-commit` remedy closes it, because a hook is indifferent
+to which channel the write arrived through.
+
+Related: bug-7 (autoaccept nullifies the bash `ask` default),
+bug-10 (CU scope boundaries unenforced), bug-5 (Resolved — the mechanism
+exists and is followed in practice).
 
 Remediation direction (not a design decision - for a future
 bugfix-feature): move the gate out-of-band of the model. A `pre-commit`
@@ -60,8 +79,8 @@ re-validation of token coverage against the merged diff is the backstop.
 This is deliberately not specified here - bug specs track the defect,
 the fix is shaped in the feature that links to it.
 
-Related: bug-6 (frontmatter not loaded), bug-7 (global autoaccept),
-bug-5 (original unenforced-approval report, still Open).
+Related: bug-7 (global autoaccept), bug-5 (original unenforced-approval
+report, Resolved).
 
 ## Resolution status
 
