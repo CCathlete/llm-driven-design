@@ -1,2 +1,2 @@
 bug=10
-feature=6
+feature=7
