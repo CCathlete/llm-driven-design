@@ -40,7 +40,7 @@ structured **Implementation Tensor (ITR)**, then an AI **Coder** executes it
 deterministically. The result feeds back into the next design iteration.
 
 The master specification lives in
-[`system_tensors/llm-driven-design-sys-prompt.itr`](system_tensors/llm-driven-design-sys-prompt.itr).
+[`.LLMDD/prompts/llm-driven-design-sys-prompt.itr.md`](.LLMDD/prompts/llm-driven-design-sys-prompt.itr.md).
 That file is the source of truth for all agents — any chat assistant or
 agent that reads this file at session start understands the LLMDD standard.
 
@@ -356,6 +356,16 @@ system tensor under `ARCH.*`):
 | **DOTENV_WALKUP** | DotEnv walk-up discovery is mandatory — walk from root to filesystem root, first `.env` wins |
 | **SEVERITY** | CRITICAL / MAJOR / MINOR / TRIVIAL taxonomy for implementation fidelity |
 | **HARD_FAIL** | Stop and report on any CRITICAL or unacknowledged MAJOR violation |
+| **PYTHON_EXPLICIT_DECLARATION** | Every Python variable annotated at first binding — MUST, CRITICAL |
+| **PYTHON_NO_ANY** | `typing.Any` / bare generics forbidden, custom types required — MUST, CRITICAL |
+| **PYTHON_FROZEN_SLOTTED_DATACLASS** | Slotted+frozen dataclasses preferred — SHOULD, MAJOR |
+| **PYTHON_MONADIC_ERROR** | Monadic containers preferred over try-except — SHOULD, MAJOR |
+
+**Python discipline** (Python implementation code only): explicit type
+declaration before definition (CRITICAL), no `Any`/bare generics
+(CRITICAL), slotted+frozen dataclasses preferred (MAJOR), monadic error
+handling preferred over `try-except` (MAJOR). See the system tensor
+`ARCH.PYTHON.*` for the binding definitions.
 
 **Layer order:** `DOMAIN → APPLICATION → INFRASTRUCTURE → CONTROL`
 
@@ -403,8 +413,8 @@ COMMIT_MESSAGE=feat(domain): implement Model sealed trait with validation
 
 ```
 llm-driven-design/
-├── system_tensors/
-│   └── llm-driven-design-sys-prompt.itr   # Master system prompt (source of truth)
+├── .LLMDD/prompts/
+│   └── llm-driven-design-sys-prompt.itr.md # Master system prompt (source of truth)
 ├── dtr-builder/                            # Tool: baseline DTR generation
 │   ├── bin/
 │   ├── build.sbt
