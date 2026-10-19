@@ -28,9 +28,8 @@ grep -rn "check-advisor-approval" . --include='*.py' --include='*.sh' \
 # ACTUAL: no hits - references are only prose in the system tensor,
 #   .LLMDD/agents/advisor.md, a DTR, and archived wave logs
 
-ls .git/hooks/pre-commit .git/hooks/pre-push 2>/dev/null
-# ACTUAL: pre-push exists (blocks agent pushes); pre-commit does not
-#   exist - so an unapproved write can still be committed
+ls .git/hooks/pre-commit 2>/dev/null
+# ACTUAL: absent - so an unapproved write can still be committed
 ```
 
 Environment: repo checkout at 4436647 on `llmdd-v9`; identical content on
