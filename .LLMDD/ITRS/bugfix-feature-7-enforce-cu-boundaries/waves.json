@@ -1,0 +1,5 @@
+[
+  {"wave": 1, "description": "cu-001 creates the shared cu_scope vocabulary and wires the F7 design-time checks into validate-steps.py. Blocks the others: they import the module it creates.", "cus": ["cu-001"]},
+  {"wave": 2, "description": "cu-002 wires the run-time boundary check into run-waves.py, comparing the files_changed the runner already computes against the parsed no-touch set.", "cus": ["cu-002"]},
+  {"wave": 3, "description": "cu-003 adds the pre-flight dirty-tree refusal in run-waves.py. Separate wave because it is the same file as cu-002.", "cus": ["cu-003"]}
+]
