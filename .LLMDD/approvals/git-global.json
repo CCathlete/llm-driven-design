@@ -1,6 +1,17 @@
 {
   "id": "git-global",
-  "files": [],
+  "files": [
+    ".LLMDD/*",
+    "!.LLMDD/approvals",
+    ".opencode/*",
+    "conf/*",
+    "pipelines/*",
+    ".gitignore",
+    "LICENSE",
+    "README.md",
+    "Session.vim",
+    "index.qmd"
+  ],
   "commands": [
     "git add *",
     "git commit *",

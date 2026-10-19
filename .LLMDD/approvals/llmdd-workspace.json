@@ -4,7 +4,7 @@
     ".LLMDD/spec-driven/*",
     ".LLMDD/ITRS/*",
     ".LLMDD/DTRS/*",
-    ".LLMDD/approvals/*",
+    "!.LLMDD/approvals/*",
     ".LLMDD/agents/*",
     ".LLMDD/prompts/*",
     ".LLMDD/skills/*",
@@ -24,6 +24,7 @@
     "sbt assembly *",
     "git add *",
     "git commit *",
+    "git apply *",
     "git rm --cached *"
   ],
   "reason": "Standing Designer grant: the Advisor operates all .LLMDD design artifacts and .LLMDD tools freely, no per-run token needed, plus sbt compile/test/testOnly/assembly for verification (these write only gitignored target/). Scoped to AUTHORED paths only. Deliberately excluded: pipelines/** (application code, RULE.ADV.NO_IMPLEMENTATION, the Coder's); git push (pre-push hook blocks agents).",
