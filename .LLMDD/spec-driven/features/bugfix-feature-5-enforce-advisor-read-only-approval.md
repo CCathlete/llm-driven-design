@@ -11,7 +11,7 @@ role is specified as analyze-only / never writes application code, but the
 constraint lives only in prompt text plus `edit: deny`, while frontmatter
 still grants blanket `bash: allow`. Bash is a write-capable channel, so an
 Advisor session can perform code changes without explicit, specific
-Designer approval, silently breaking the triad guarantee that design
+Designer approval, silently breaking the guarantee that design
 sessions are side-effect-free until the Designer approves CU content. This
 feature adds deterministic enforcement, not prose: least-privilege Advisor
 capabilities by default (read-only inspection plus scratch creation —
@@ -90,8 +90,10 @@ the Advisor reads the tensor and chooses to run the gate, not because
 anything intercepts a write. Carried by
 `bug-7-session-permissions-autoaccept-nullifies-ask` and
 `bug-8-approval-gate-advisory-not-enforced` (both Open). The out-of-band
-fix is a real `pre-commit` hook - the same shape as the pre-push hook
-that already blocks agent pushes. The principal defence in force today is
+fix is a real `pre-commit` hook, which sits out-of-band of the model
+(it fires from git, not from the agent). An earlier draft justified this
+by reference to an existing global pre-push hook; no such hook exists —
+see the correction in `bug-8`. The principal defence in force today is
 detective, not preventive: an unapproved write is visible in `git diff` to
 the code lead and the Designer.
 

@@ -13,8 +13,8 @@ application code (`.opencode/agents/llmdd/advisor.md`: `edit: deny`;
 `.LLMDD/prompts/llm-driven-design-sys-prompt.itr.md`), yet nothing
 deterministically enforces the "ask Designer for explicit, specific approval
 before obtaining code access" requirement. An Advisor session can perform
-code changes without that approval, silently violating the triad
-separation (Designer approves CU content, Coder implements).
+code changes without that approval, silently violating the separation
+of roles (Designer approves CU content, Coder implements).
 
 Reproduction (from repo root, read-only):
 

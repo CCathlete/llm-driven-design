@@ -40,7 +40,7 @@ outranks repository config, so no repo-level change can override it.
 
 Impact: the `ask` tier of the permission model is dead on this machine.
 Approval becomes advisory by configuration, not merely by omission -
-compounding bug-8. Every agent in the triad is affected, not
+compounding bug-8. Every role is affected, not
 just the Advisor.
 
 Related: bug-8 (advisory-only approval gate), bug-5 (original
@@ -62,5 +62,5 @@ set to an auto-accepting value, or a startup lint that warns when a
 global auto-accept shadows an agent `"*": ask`; (2) negative e2e test -
 an Advisor session invoking a non-allowlisted command surfaces a prompt to
 the user, and proceeding requires an explicit interactive choice;
-(3) regression guard asserting the triad agents' `ask` fallbacks are
+(3) regression guard asserting every agent's `ask` fallbacks are
 reachable under the effective (global + project merged) permission config.

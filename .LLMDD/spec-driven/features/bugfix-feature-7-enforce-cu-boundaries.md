@@ -2,7 +2,7 @@
 
 - Status: Proposed
 - Created: 2026-10-18
-- Feature ID: bugfix-feature-7-enforce-triad-boundaries
+- Feature ID: bugfix-feature-7-enforce-cu-boundaries
 
 ## Synopsis
 
