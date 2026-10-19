@@ -1,4 +1,4 @@
-# bugfix-feature-7: Enforce the triad boundaries
+# bugfix-feature-7: Enforce CU boundaries
 
 - Status: Proposed
 - Created: 2026-10-18
@@ -6,171 +6,149 @@
 
 ## Synopsis
 
-Motivation: three bugs are Open after the 2026-10-18 audit, and all three
-are the same defect wearing different clothes: the triad's separation
-between Advisor, Coder and Designer is asserted in prose and enforced
-nowhere. They share a cause — every control is advisory — so unlike the
-full backlog they form a coherent unit of work. That is stated plainly
-here because it is the reason they are bundled.
+Motivation: a CU declares its blast radius twice — the paths it writes
+(`IMPLEMENTATION_STEPS`, enforced as F1) and the `Do NOT touch:` list —
+and neither declaration is checked against what the Coder actually
+changes. The boundary is prose that no gate parses and no runner compares,
+so a drifting Coder produces a green wave. `bug-10` is Open against exactly
+this, and it is the only bug this feature covers.
 
-Scope: In — the acceptance criteria and Tests below for `bug-7`,
-`bug-8` and `bug-10`. Out — `bug-4`, excluded by Designer decision on
-2026-10-18 (see "Out of scope" below); the CUs themselves, drafted as a
-batch only after this spec is approved; and any change to
-`itr-compiler` or `dtr-builder`.
+Earlier drafts of this spec bundled `bug-4`, then `bug-7` and `bug-8`
+alongside `bug-10`. Those were removed by Designer decision on
+2026-10-18/19: `bug-4` is an unrelated Scala refactor and remains Open, and
+`bug-7`/`bug-8` belong to the approval-gate line of work (`feat-8` and a
+future adapter feature), not here. What remains is the CU boundary problem,
+which was always the only coherent member of that group.
 
-### Out of scope: bug-4
+Scope: In — the three gaps below, in `.LLMDD/tools/validate-steps.py` and
+`.LLMDD/tools/run-waves.py`. Out — a declared per-CU allowlist (see the
+cost warning), any change to the CU content format, every existing compiled
+frame, `bug-7`, `bug-8`, `bug-4`, and the approval-gate work in `feat-8`.
 
-`bug-4-layer-layout-demands-violated` (the Scala layer layout in
-`itr-compiler` and `dtr-builder`) is **excluded by Designer decision on
-2026-10-18** and remains **Open**. It is a five-violation relocation
-refactor across ~26 files with a real regression surface, and it shares
-nothing with the enforcement work beyond a bug number. It was carried in
-an earlier draft of this spec; the feature was renamed from
-`bugfix-feature-7-close-open-bug-backlog` at the same time, because that
-name promised to close the whole backlog and would no longer be true.
+### The three gaps
 
-Also unresolved and still open from that draft: whether bug-4's scope
-covers `dtr-builder` as well as `itr-compiler`, since its suggested test
-demands `sbt test` green in both. That needs settling whenever bug-4 is
-picked up, not here.
+All three were verified against the tree at `397334b`, and the reproduction
+in `bug-10` was executed rather than asserted.
 
-### The three in-scope bugs in detail
+**Gap 1 — the validator checks that a no-touch list exists, never what is
+in it.** `validate-steps.py` F4 is two substring tests:
 
-**bug-7 — autoaccept nullifies the ask tier.** `~/.config/opencode/cli.json`
-sets `session.permissions: "autoaccept"`. The CLI's own flag documents the
-semantics: `--auto  Auto-approve permissions that are not explicitly
-denied`. Two consequences, the second the more important:
+```python
+if "Do NOT touch:" not in body:
+    fails.append("F4: missing Do NOT touch list")
+```
 
-- Anything not *explicitly denied* auto-approves, so the Advisor
-  frontmatter's `"*": ask` default can never surface a prompt.
-- **Therefore `deny` is the only action that survives autoaccept.** This
-  reframes the fix: the repo must express its write boundary as explicit
-  `deny` rules, not rely on `ask`.
+The list is never parsed, never normalised, and never intersected against
+the paths the steps declare. There is no allowlist concept: scope is
+inferred from prose paths inside step bodies. Verified probe: a CU that
+lists its own write target in the no-touch list prints `PASS cu-bad`,
+exit 0.
 
-Verified constraint: `session` is **not** a project-config key — the
-installed SDK types give project `Config` the keys `agent`, `permission`,
-`tools`, `instructions`, `skills` and so on, with no `session`. So the
-`autoaccept` value cannot be overridden from the repo; it lives only in
-the user-global file. This splits the fix in two, and only one half ships
-in this repo:
+**Gap 2 — the exclusions that matter are unmatchable prose.** The shipped
+`bugfix-feature-5` frames lean on exactly the clauses a simple Coder is
+most likely to violate:
 
-- *Designer action, out of repo:* set `session.permissions` to a prompting
-  value (or remove the key) in `~/.config/opencode/cli.json`.
-- *Repo action, in scope here:* restate the Advisor boundary as explicit
-  `deny` rules so it holds **regardless** of that setting.
+```
+cu-001  Do NOT touch: ...coder.md, ...verifier.md, opencode.json,
+        the sys-prompt tensor, any Scala source, any Python tool.
+cu-003  Do NOT touch: ...advisor.md (both twins), coder.md, verifier.md,
+        opencode.json, the sys-prompt tensor, any Scala source,
+        any ITR frame or feedback file.
+```
 
-The second half is the one that matters, because it is the only one that
-travels with the repository and survives a fresh machine.
+`any Scala source`, `any Python tool` and `any ITR frame or feedback
+file` are not paths. No matcher can test them, so the clauses carrying the
+most weight are the ones enforcement cannot reach.
 
-**bug-8 — the gate is advisory.** `check-advisor-approval.py` is never
-invoked by anything. `run-waves.py` is irrelevant here — this is the
-Advisor path, not the Coder path. The fix is a real `pre-commit` hook that
-refuses any staged change to git-tracked files unless a matching,
-unexpired, in-scope token covers those paths, with CI re-validation of
-token coverage against the merged diff as backstop. Same shape as the
-pre-push hook that already blocks agent pushes.
+**Gap 3 — the runner measures drift and discards the measurement.**
+`run-waves.py` populates `files_changed` from the diff at line 1127 and
+threads it to reporting at 1186, 1202, 1428, 1458 and 1501 — and never
+compares it to anything. `grep -cE "no_touch|scope_files|allowed_paths"`
+returns 0. The only place CU scope reaches a Coder is a prompt string at
+line 1018.
 
-Note the residual is narrower than bug-8 originally claimed, per its dated
-correction: the Advisor has **no edit, write or patch tool at all**, so the
-edit channel is already closed by capability removal. What the hook would
-actually defend is the `bash` write channel — `cat > file`, `python3`,
-`git add` — which is exactly the path bug-7 governs. bug-7 and bug-8 are
-consequently two halves of one exposure and should be scheduled together.
+### Drift has already been waved through
 
-**bug-10 — CU scope unenforced.** Three gaps, all verified: F4 in
-`validate-steps.py` only substring-tests for `Do NOT touch:` and never
-parses the list or intersects it against declared write paths, with no
-allowlist concept at all; the shipped frames' most important exclusions are
-prose (`any Scala source`, `any Python tool`, `any ITR frame or feedback
-file`) that no matcher can test; and `run-waves.py` populates
-`files_changed` from the diff and forwards it to reporting without ever
-comparing it to anything. Drift has already been waved through — `cu-001`
-found a file from its own no-touch list dirty mid-run, `cu-002` found its
-edits pre-existing from an aborted attempt, both `STATUS=COMPLETED`.
+- `cu-001` feedback: the sys-prompt tensor "carries a pre-existing
+  modification not made or touched by this session (cu-002 scope)" — a
+  file explicitly on cu-001's own no-touch list, dirty while cu-001 ran.
+  The Coder noticed and narrated it; nothing failed.
+- `cu-002` feedback: "both cu-002 edits were already present in the
+  working tree from a prior interrupted attempt". State from an aborted
+  attempt leaked into a later run with no gate noticing.
 
-### Cost warning on bug-10
+Both waves reported `STATUS=COMPLETED` with verification green.
 
-Making scope a declared structure is a **breaking format change**: every
-existing batch and compiled frame lacks an explicit allowlist, so either
-all frames must be recompiled or the validator must infer an allowlist for
-legacy content and reject it only when inference fails. That trade should
-be decided before the CU batch is written, not during implementation. The
-cheapest high-leverage slice is independent of the format change and
-should be cut first: compare the `files_changed` the runner already
-computes against the paths parsed from the existing `Do NOT touch:` list,
-with prose clauses converted to globs. That closes the runtime gap without
-touching any frame.
+### Cost warning: the full fix is a breaking format change
+
+Making scope a declared structure — an explicit per-CU allowlist — is
+**breaking**: every existing batch and compiled frame lacks one, so either
+all frames are recompiled or the validator infers an allowlist for legacy
+content and rejects only when inference fails. That trade should be decided
+in its own feature, not here.
+
+This feature deliberately takes the slice that needs no format change and
+no recompile: parse the no-touch list that already exists, make its prose
+clauses matchable, and compare it against the `files_changed` the runner
+already computes. Highest leverage first, same principle as leading with
+the measurement that already exists rather than the one you wish existed.
 
 ## Implementation status
 
-Proposed. No CUs drafted; the decomposition below is a proposal for the
-Designer to accept, reshape, or reject.
+Proposed. No CUs drafted; the decomposition below is a proposal.
 
 ### Proposed decomposition
 
-Four independent groups, recommended as four waves of one batch rather
-than four features — chosen because the Designer asked for one feature,
-but see the splitting note.
+- `cu-001` (design time) — parse `Do NOT touch:` into a path set; convert
+  the prose clauses to globs so they are matchable; fail a CU whose list is
+  empty, unparseable, or intersects its own declared write paths, naming
+  both sides.
+- `cu-002` (run time) — in `run-waves.py`, compare `files_changed` against
+  the parsed no-touch set and fail the CU non-zero naming the offending
+  path and the CU it belongs to. No change to the CU content format, so no
+  frame recompile.
+- `cu-003` (pre-flight) — refuse to start a CU when a path in another
+  active CU's declared write paths is already dirty in the working tree.
+  This is the `cu-001`/`cu-002` contamination above, caught before the
+  implementation step rather than narrated afterwards.
 
-- `cu-001` (bug-7, smallest, unblocks framing) — restate the Advisor
-  permission boundary as explicit `deny` rules; remove reliance on
-  `"*": ask`; document that `session` is user-global only. Verify with a
-  probe that `deny` is honoured under `autoaccept` — see Tests.
-- `cu-002` (bug-10 runtime slice) — parse `Do NOT touch:` into paths,
-  convert prose clauses to globs, assert at run time that `files_changed`
-  ∩ no-touch is empty, fail the CU non-zero naming the offending path.
-  No format change, no recompile.
-- `cu-003` (bug-8) — `pre-commit` hook plus CI re-validation, reusing
-  `check-advisor-approval.py` as the validator rather than duplicating it.
-  Depends on `cu-001`: the deny rules are what the hook defends.
-### Why these three belong together
-
-They are one defect in three places. `bug-7`, `bug-8` and the bug-10
-runtime slice each describe the same failure: the boundary is declared and
-nothing checks it. `cu-003` depends on `cu-001`, because the deny rules are
-exactly what the hook defends. Three CUs, one guarantee.
+`cu-001` blocks the other two. `cu-002` and `cu-003` are independent of
+each other.
 
 ## Acceptance criteria
 
-1. **bug-7** — the Advisor write boundary is expressed as explicit `deny`
-   rules that hold with `session.permissions: "autoaccept"` set, verified
-   by probe rather than assumed. No repo rule depends on `ask` to be
-   enforced. The user-global setting is documented as a Designer action
-   outside the repository, including that `session` is not a project-config
-   key and so cannot be overridden from here.
-2. **bug-8** — a `pre-commit` hook refuses a staged change to any
-   git-tracked file unless a matching unexpired token covers it, exiting
-   non-zero with a message naming the offending path. The hook is a real
-   git hook, not an agent-invoked step, and functions with the agent
-   disabled. CI re-validates token coverage against the merged diff.
-3. **bug-10** — `validate-steps.py` parses the `Do NOT touch:` list into a
-   path set and fails a CU whose no-touch list is empty, unparseable, or
-   intersects its own declared write paths. `run-waves.py` fails a CU
-   non-zero when `files_changed` contains a path in that set, naming both.
-   Prose clauses are converted to globs so they are matchable.
+1. `validate-steps.py` parses the `Do NOT touch:` list into a normalised
+   path set. A CU is rejected when the list is absent, empty, or contains
+   an entry that is not a path or a glob. Failure names the CU and the
+   offending entry.
+2. The prose clauses that appear in shipped frames — `any Scala source`,
+   `any Python tool`, `any ITR frame or feedback file` — are matchable
+   globs, and a path falling under one is recognised as covered.
+3. `validate-steps.py` fails a CU whose no-touch set intersects the paths
+   its own steps declare as writes, naming both sides.
+4. `run-waves.py` fails a CU non-zero when `files_changed` contains a path
+   in that CU's no-touch set, naming the path. Conforming CUs are
+   unaffected and `files_changed` is still reported as before.
+5. A CU refuses to start when a path belonging to another active CU is
+   already dirty in the working tree, naming the path and the owning CU.
 
 ## Tests proving resolution
 
-- `T1` (criterion 1, bug-7) — **probe, not assumption.** With
-  `session.permissions: "autoaccept"` in effect, assert an explicit
-  `permission.edit: deny` is honoured and an `ask` rule does not prompt.
-  This probe is the load-bearing proof for bug-7 and its result must be
-  recorded either way; if `deny` turns out to be auto-approved too, the
-  criterion fails and the fix has to move entirely to bug-8's hook.
-  (This is stated as a probe because a bug withdrawn earlier the same day
-  asserted unverified runtime behaviour — the discipline applies here.)
-- `T2` (criterion 2) — negative: a write outside token scope is refused by
-  the hook with non-zero exit and a clear reason, with no agent
-  cooperation; positive: an in-scope unexpired token commits cleanly;
-  expiry: a past `expires` denies; bypass: the hook still fires with the
-  agent disabled.
-- `T3` (criterion 3) — negative: a CU whose no-touch list names its own
-  write target fails validation naming both sides; negative: an empty or
-  prose-only no-touch list fails rather than passing substring presence;
-  negative: a run whose diff touches a no-touch path fails the CU non-zero
-  naming the path; positive: a conforming run still passes with
-  `files_changed` reported as before.
-- `T4` (all three) — after the batch, `python3 .LLMDD/tools/next-spec-id.py
-  --check` exits 0, no existing frame regresses, and each bug file records
-  its proving evidence and moves Open → Resolved.
+- `T1` (criteria 1, 2) — parser unit tests: a well-formed list parses to
+  the expected set; an empty list is rejected; an entry that is neither
+  path nor glob is rejected naming it; each shipped prose clause resolves
+  to a glob that matches a representative path and does not match an
+  unrelated one.
+- `T2` (criterion 3) — a CU whose no-touch list names its own write target
+  fails validation, naming both sides. This is the `PASS cu-bad` probe from
+  `bug-10`, inverted: the same fixture must now exit non-zero.
+- `T3` (criterion 4) — negative: a run whose diff touches a no-touch path
+  fails the CU non-zero, naming the path; positive: a conforming run still
+  passes and reports `files_changed` unchanged; negative: a no-touch glob
+  (`any Scala source`) is matched, not just an exact path.
+- `T4` (criterion 5) — a CU starting with a sibling CU's declared path
+  already dirty fails before implementation begins, naming both.
+- `T5` (all) — `mypy --strict` clean on both tools, per the standing proof;
+  no `Any`, explicit annotations at first binding, monadic error handling
+  for expected failures; every existing compiled frame still validates
+  unchanged, proving no format change was introduced.
