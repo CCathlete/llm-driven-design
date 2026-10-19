@@ -5,6 +5,8 @@
     ".LLMDD/ITRS/*",
     ".LLMDD/DTRS/*",
     ".LLMDD/approvals/*",
+    ".LLMDD/agents/*",
+    ".LLMDD/prompts/*",
     ".LLMDD/skills/*",
     ".LLMDD/tests/*"
   ],
