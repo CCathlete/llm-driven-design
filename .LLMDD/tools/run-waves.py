@@ -20,6 +20,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Generic, Iterator, Literal, Optional, Sequence, TypeAlias, TypedDict, TypeVar, cast
 
+from cu_scope import NoTouch, is_touched, parse_no_touch, write_paths
+
 
 # ── Defaults ───────────────────────────────────────────────────────
 
@@ -671,6 +673,69 @@ _COMPONENT_FILES: Sequence[str] = ("COORDINATES.itr", "REQUIREMENTS.itr",
                     "IMPLEMENTATION_STEPS.itr", "ACCEPTANCE.itr")
 
 
+def _cu_no_touch(cu_dir: Path) -> NoTouch:
+    """Return the no-touch set declared by one CU frame folder."""
+    steps: Path = cu_dir / "IMPLEMENTATION_STEPS.itr"
+    opened: Ok[typing.TextIO] | Err[Exception] = _open_file(steps)
+    if isinstance(opened, Err):
+        return parse_no_touch("")
+    handle: typing.TextIO = opened.value
+    text: str = handle.read()
+    handle.close()
+    return parse_no_touch(text)
+
+
+def _dirty_paths(project_dir: Path) -> frozenset[str]:
+    """Return tracked paths currently dirty, empty when git cannot answer."""
+    dirty: frozenset[str]
+    match _git_run("status", "--porcelain", "--untracked-files=no", cwd=project_dir):
+        case Ok(out):
+            lines: list[str] = out.splitlines()
+            # _git_run strips the whole output, so when the first porcelain
+            # line has its X column set to a space (worktree-only change,
+            # " M path") that space is eaten and the path would shift one
+            # character left. A native line whose X column is a letter is
+            # either XY (letter at index 1) or X+space+space (separator at
+            # index 2), so letter + one space + non-space can only be a
+            # stripped line — restore the lost column before the index-3 parse.
+            if (lines and len(lines[0]) > 2 and lines[0][0].isalpha()
+                    and lines[0][1] == " " and lines[0][2] != " "):
+                lines[0] = " " + lines[0]
+            dirty = frozenset(line[3:].strip() for line in lines if len(line) > 3)
+        case Err(_):
+            dirty = frozenset()
+    return dirty
+
+
+def _wave_write_index(cu_files: Sequence[tuple[str, Path]]) -> dict[str, Sequence[str]]:
+    """Map each CU id to the write targets its frame declares in prose."""
+    index: dict[str, Sequence[str]] = {}
+    cu_id: str
+    directory: Path
+    for cu_id, directory in cu_files:
+        steps_file: Path = directory / "IMPLEMENTATION_STEPS.itr"
+        opened: Ok[typing.TextIO] | Err[Exception] = _open_file(steps_file)
+        if isinstance(opened, Err):
+            continue
+        handle: typing.TextIO = opened.value
+        text: str = handle.read()
+        handle.close()
+        index[cu_id] = write_paths(text)
+    return index
+
+
+def _wave_dirty_clashes(cu_files: Sequence[tuple[str, Path]],
+                        baseline_dirty: frozenset[str]) -> list[tuple[str, str]]:
+    """Return (owner, path) pairs whose write target was dirty before the run."""
+    owners: dict[str, Sequence[str]] = _wave_write_index(cu_files)
+    return sorted({
+        (owner, path)
+        for owner, paths in owners.items()
+        for path in paths
+        if path in baseline_dirty
+    })
+
+
 def _file_cu_id(f: Path) -> str | None:
     """Return the CU-ID header of a frame file, or None."""
     opened: Ok[typing.TextIO] | Err[Exception] = _open_file(f)
@@ -989,7 +1054,7 @@ def _usage_line(usage: TokenUsage, colour: str = "") -> str:
 def run_coder(cu_file: Path, cu_id: str, fallback_chain: ModelFallbackChain,
               feedback_dir: Path, log_dir: Path, timeout: int,
               project_dir: Path, coder_colour: tuple[str, str],
-              stash_ref: str = "") -> Ok[CoderOutput] | Err[Exception]:
+              no_touch: NoTouch, stash_ref: str = "") -> Ok[CoderOutput] | Err[Exception]:
     """Run coder with model fallback. Returns Ok(CoderOutput) or Err.
 
     If stash_ref is provided (git HEAD hash captured before parallel dispatch),
@@ -1127,6 +1192,16 @@ def run_coder(cu_file: Path, cu_id: str, fallback_chain: ModelFallbackChain,
                 files_changed = diff_out.splitlines() if diff_out else []
             case Err(_):
                 files_changed = []
+
+        declared: NoTouch = no_touch
+        if declared.entries:
+            breaches: Sequence[str] = [
+                f for f in files_changed if is_touched(declared.patterns, f)]
+            if breaches:
+                _fail(f"CU {cu_id} breached its own no-touch list on {len(breaches)} path(s):")
+                for breached in breaches:
+                    _fail(f"    {breached}")
+                return Err(RuntimeError(f"{cu_id} touched its no-touch list"))
 
         # Determine if this attempt succeeded
         succeeded: bool = stream_rc == 0 and not is_refusal and not is_error
@@ -1479,6 +1554,8 @@ async def run_wave_parallel(
         for idx, (cu_id, cu_file) in enumerate(cu_files):
             coder_colour: tuple[str, str] = CODER_COLOURS[idx % len(CODER_COLOURS)]
             fallback_chain: ModelFallbackChain = ModelFallbackChain(coder_model, tuple(coder_fallbacks))
+            cu_frame_dir: Path | None = cu_file if cu_file.is_dir() else None
+            no_touch: NoTouch = _cu_no_touch(cu_frame_dir) if cu_frame_dir else parse_no_touch("")
 
             future: asyncio.Future[Ok[CoderOutput] | Err[Exception]] = loop.run_in_executor(
                 pool,
@@ -1486,6 +1563,7 @@ async def run_wave_parallel(
                 cu_file, cu_id, fallback_chain,
                 feedback_dir, log_dir, cu_timeout,
                 project_dir, coder_colour,
+                no_touch,
                 stash_ref,
             )
             coder_futures.append((cu_id, cu_file, future))
@@ -1632,6 +1710,7 @@ async def main_async(args: argparse.Namespace) -> None:
     if not args.dry_run:
         save_convergence(convergence_file, {"waves": [], "status": "RUNNING"})
     tracker: CreditTracker = CreditTracker()
+    baseline_dirty: frozenset[str] = _dirty_paths(project_dir)
 
     wave_def: WaveDef
     for wave_def in waves:
@@ -1668,6 +1747,14 @@ async def main_async(args: argparse.Namespace) -> None:
                 print(f"    {C.DIM}·{C.RESET} {C.BR_CYAN}{cu_id}{C.RESET} {C.DIM}→ {f.name}{C.RESET}")
             print()
             continue
+
+        clashes: list[tuple[str, str]] = _wave_dirty_clashes(cu_files, baseline_dirty)
+        if clashes:
+            owner: str
+            path: str
+            for owner, path in clashes:
+                _fail(f"wave {wave_num}: CU {owner} declares {path} was already dirty before this run")
+            sys.exit(1)
 
         # Capture pre-wave HEAD ref for accurate file tracking after wave lead commits
         ref: str
