@@ -1,6 +1,6 @@
 # bugfix-feature-7: Enforce CU boundaries
 
-- Status: Reopened
+- Status: Implemented
 - Created: 2026-10-18
 - Feature ID: bugfix-feature-7-enforce-cu-boundaries
 
