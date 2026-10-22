@@ -1,6 +1,6 @@
 # bugfix-feature-7: Enforce CU boundaries
 
-- Status: Proposed
+- Status: Reopened
 - Created: 2026-10-18
 - Feature ID: bugfix-feature-7-enforce-cu-boundaries
 
@@ -152,3 +152,31 @@ each other.
   no `Any`, explicit annotations at first binding, monadic error handling
   for expected failures; every existing compiled frame still validates
   unchanged, proving no format change was introduced.
+
+## Reopened 2026-10-22 (audit of the shipped runtime slice)
+
+The previous implementation (fa50684) compiled and ran cu-001..cu-003, but the run-time boundary check is unsound (probes in /tmp/opencode/probe_fidelity.py).
+
+### Over-fire
+- R1 Sibling contamination: every CU diffed against the same pre-wave HEAD, so wave-wide changes were attributed to the CU currently running.
+- R2 Pre-existing dirt: baseline_dirty captured once before the loop, and untracked files ignored; dirt on disk was blamed on later CUs.
+
+### Under-fire
+- R3 New files invisible (git diff only).
+- R4 Directory entries (.LLMDD/agents) never match (fnmatch whole string).
+- R5 Symlink entries never match.
+- R6 Unparsed no-touch clauses dropped silently; semicolon lists collapse to unparsed; empty patterns allowed the gate to pass vacuously.
+- R7 Wrapped continuation lines lost their tail.
+- R8 Absent no-touch list disables the gate entirely.
+- R9 Flat frames never gated.
+- R10 Leads ungated.
+- R11 Pre-flight weak (no per-wave baseline, no untracked, no same-wave write-target collision).
+- R12 No tests.
+
+### Fix design
+Measure the CU's change set from the CU's own opencode JSON tool_use events (write/edit/patch + shell), union wave diff and untracked files minus the pre-wave baseline, and attribute each changed path to the claiming CU. Enforce: own no-touch, cross-CU write collision (shared attributed path), and unattributed changes against every no-touch in the wave. Fail closed when a list yields no enforceable pattern. Resolve symlinks, expand directories, split on commas and semicolons, continue wrapped lines. Gate leads and recompute baseline per wave. Add a regression suite.
+
+### Fix batch (waves)
+- wave 1: cu-004 (cu_scope hardening), cu-005 (run-waves attribution)
+- wave 2: cu-006 (run-waves enforcement)
+Waves plan in .LLMDD/ITRS/bugfix-feature-7-enforce-cu-boundaries/waves.json after compilation.
