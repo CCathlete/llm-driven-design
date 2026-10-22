@@ -1,0 +1,110 @@
+{
+  "waves": [
+    {
+      "wave": 2,
+      "cus": [
+        "cu-006"
+      ],
+      "escalations": 0,
+      "coder_status": 0,
+      "lead_status": 0,
+      "files_changed": {},
+      "credits": {
+        "lead": {
+          "input": 75986,
+          "output": 5949,
+          "reasoning": 9528,
+          "cache_read": 1018656,
+          "cache_write": 0,
+          "total": 0,
+          "cost": 0.0,
+          "session_id": "ses_e9c324c0fffeU3rMoaAdzQop97",
+          "model": ""
+        }
+      }
+    },
+    {
+      "wave": 3,
+      "cus": [
+        "cu-007"
+      ],
+      "escalations": 1,
+      "coder_status": 0,
+      "lead_status": 0,
+      "files_changed": {
+        "cu-007": [
+          ".LLMDD/skills/prepare-implementation/SKILL.md",
+          ".LLMDD/tools/cu_scope.py",
+          ".LLMDD/tools/run-waves.py"
+        ]
+      },
+      "credits": {
+        "cu-007-lead": {
+          "input": 130441,
+          "output": 5610,
+          "reasoning": 29333,
+          "cache_read": 2609520,
+          "cache_write": 0,
+          "total": 0,
+          "cost": 0.0,
+          "session_id": "ses_e9bab9395ffetG2i9Xv0BWU8Sz",
+          "model": ""
+        },
+        "lead": {
+          "input": 71420,
+          "output": 2908,
+          "reasoning": 4061,
+          "cache_read": 442256,
+          "cache_write": 0,
+          "total": 0,
+          "cost": 0.0,
+          "session_id": "ses_e9ba0e6d3ffeOOtgPTbeJPm5LY",
+          "model": ""
+        }
+      }
+    },
+    {
+      "wave": 4,
+      "cus": [
+        "cu-008"
+      ],
+      "escalations": 0,
+      "coder_status": 0,
+      "lead_status": 0,
+      "files_changed": {
+        "cu-008": [
+          ".LLMDD/tests/README.md",
+          ".LLMDD/skills/prepare-implementation/SKILL.md",
+          ".LLMDD/tools/run-waves.py",
+          ".LLMDD/tools/cu_scope.py",
+          ".LLMDD/tests/test_cu_boundary.py"
+        ]
+      },
+      "credits": {
+        "cu-008-lead": {
+          "input": 71408,
+          "output": 3751,
+          "reasoning": 3392,
+          "cache_read": 515616,
+          "cache_write": 0,
+          "total": 0,
+          "cost": 0.0,
+          "session_id": "ses_e9b5dd109ffenPP2co9X3Bcz2S",
+          "model": ""
+        },
+        "lead": {
+          "input": 69164,
+          "output": 6623,
+          "reasoning": 13969,
+          "cache_read": 1546848,
+          "cache_write": 0,
+          "total": 0,
+          "cost": 0.0,
+          "session_id": "ses_e9b5c6da5ffe50yqurCaf0Jg9i",
+          "model": ""
+        }
+      }
+    }
+  ],
+  "status": "CONVERGED"
+}
