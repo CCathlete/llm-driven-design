@@ -22,6 +22,10 @@ by pasting the printed command.
   `bugfix-feature-6-enrichment-consumer-poll-contract`). Never batch
   two features in one run.
 
+End result must be successful dry run of wave command. If you didn't reach the end result you fix until you reach a successful dry run of wave command.
+
+DO NOT RUN WAVE COMMAND WITHOUT --dry-run
+
 ## Prerequisites
 
 - Feature spec exists at
