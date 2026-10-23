@@ -1,6 +1,7 @@
 """Regression suite for CU boundary measurement and enforcement."""
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -221,6 +222,131 @@ class TestBoundaryRules(unittest.TestCase):
         breached = RUNNER.boundary_breaches(writes, {"cu-009": parse_no_touch("")})
         self.assertEqual(len(breached), 1)
         self.assertEqual(breached[0].rule, "unenforceable")
+
+
+class TestCorrectionPass(unittest.TestCase):
+    def test_breach_detail_is_scope_correct(self) -> None:
+        breaches = (
+            RUNNER.BoundaryBreach(scope="cu-001", path="src/other.py", rule="shared-write"),
+            RUNNER.BoundaryBreach(scope="cu-002", path="src/shared.py", rule="shared-write"),
+            RUNNER.BoundaryBreach(scope="cu-002", path=".LLMDD/agents/coder.md", rule="no-touch"),
+        )
+        detail1 = RUNNER._breach_detail_for_cu(breaches, "cu-001")
+        self.assertIn("src/other.py", detail1)
+        self.assertNotIn(".LLMDD/agents/coder.md", detail1)
+        detail2 = RUNNER._breach_detail_for_cu(breaches, "cu-002")
+        self.assertIn(".LLMDD/agents/coder.md", detail2)
+
+    def test_correction_logs_are_attributed(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root: Path = Path(raw)
+            log_dir: Path = root / "logs"
+            log_dir.mkdir()
+            (log_dir / "cu-001.attempt-0.log").write_text(_event("write", {"path": str(root / "src" / "a.py")}) + "\n")
+            (log_dir / "cu-001.correction-0.log").write_text(_event("edit", {"path": str(root / "src" / "b.py")}) + "\n")
+            writes = RUNNER.coder_writes("cu-001", log_dir, root)
+            self.assertIn("src/a.py", writes.paths)
+            self.assertIn("src/b.py", writes.paths)
+
+
+class TestCUProductionGate(unittest.TestCase):
+    """Hard gates: force a correct CU against DTR/seam/impl/tests/proof/tracking."""
+
+    def setUp(self) -> None:
+        if os.environ.get("CU_BOUNDARY_SKIP_GATE") == "1":
+            self.skipTest("gate skipped")
+        self.root = ROOT
+        self.itr_root = self.root / ".LLMDD" / "ITRS" / "feat-9-enforce-cu-boundary-redirect"
+        self.batch_path = self.root / ".LLMDD" / "ITRS" / "feat-9-enforce-cu-boundary-redirect.batch.json"
+        self.dtr_path = self.root / ".LLMDD" / "DTRS" / "feat-9-enforce-cu-boundary-redirect" / "repo.dtr"
+        self.spec_path = self.root / ".LLMDD" / "spec-driven" / "features" / "feat-9-enforce-cu-boundary-redirect.md"
+
+    def _load_batch(self) -> list[dict]:
+        data = json.loads(self.batch_path.read_text())
+        self.assertIsInstance(data, list)
+        return data
+
+    def _cu_content(self, batch: list[dict], cu_id: str) -> str:
+        for c in batch:
+            if c.get("cu-id") == cu_id:
+                self.assertEqual(c.get("cu-type"), "regular")
+                coords = c.get("dtr-coordinates", [])
+                self.assertIsInstance(coords, list)
+                self.assertGreater(len(coords), 0)
+                content = c.get("content", "")
+                self.assertIsInstance(content, str)
+                self.assertGreater(len(content), 200)
+                return content
+        self.fail(f"missing CU {cu_id}")
+
+    def test_exact_dtr_coordinates_point_to_updated_dtr(self) -> None:
+        batch = self._load_batch()
+        content1 = self._cu_content(batch, "cu-001")
+        content2 = self._cu_content(batch, "cu-002")
+        self.assertIn("FILE..LLMDD/tools/run-waves.py", content1)
+        self.assertIn("CODEX..LLMDD/tools/run-waves.py=FUNCTION:def _breach_detail_for_cu", content1)
+        self.assertIn("CODEX..LLMDD/tools/run-waves.py=FUNCTION:def run_per_cu_lead", content1)
+        self.assertIn("CODEX..LLMDD/tools/run-waves.py=FUNCTION:def run_code_lead", content1)
+        self.assertIn("CODEX..LLMDD/tools/run-waves.py=FUNCTION:async def run_wave_parallel", content1)
+        self.assertIn("FILE..LLMDD/tests/test_cu_boundary.py", content2)
+        self.assertTrue(self.dtr_path.is_file(), "DTR must exist for this feature")
+        dtr = self.dtr_path.read_text()
+        self.assertIn("FILE..LLMDD/tools/run-waves.py", dtr)
+        self.assertIn("CODEX..LLMDD/tools/run-waves.py=FUNCTION:def _breach_detail_for_cu", dtr)
+        self.assertIn("CODEX..LLMDD/tools/run-waves.py=FUNCTION:def run_per_cu_lead", dtr)
+        self.assertIn("CODEX..LLMDD/tools/run-waves.py=FUNCTION:def run_code_lead", dtr)
+        self.assertIn("CODEX..LLMDD/tools/run-waves.py=FUNCTION:async def run_wave_parallel", dtr)
+        self.assertIn("FILE..LLMDD/tests/test_cu_boundary.py", dtr)
+        mtime_cu = self.batch_path.stat().st_mtime
+        mtime_dtr = self.dtr_path.stat().st_mtime
+        self.assertGreaterEqual(mtime_dtr, mtime_cu, "DTR must be updated (>= batch) or rebuilt after coordinate changes")
+
+    def test_correct_production_seam_and_complete_implementation(self) -> None:
+        batch = self._load_batch()
+        content1 = self._cu_content(batch, "cu-001")
+        content2 = self._cu_content(batch, "cu-002")
+        for required in ("IMPLEMENTATION_STEPS", "REQUIREMENTS", "COORDINATES", "ACCEPTANCE"):
+            self.assertIn(required + ":", content1)
+            self.assertIn(required + ":", content2)
+        for fn in ("_breach_detail_for_cu", "_run_coder_correction", "run_wave_parallel", "run_per_cu_lead", "run_code_lead"):
+            self.assertIn(fn, content1)
+        self.assertIn("```python", content1)
+        self.assertIn("```python", content2)
+        self.assertIn("Prove:", content1)
+        self.assertIn("Prove:", content2)
+        self.assertIn("Do NOT touch:", content1)
+        self.assertIn("Do NOT touch:", content2)
+        self.assertIn("Stop when:", content1)
+        self.assertIn("Stop when:", content2)
+        self.assertIn("no try/except", content1.lower())
+        self.assertIn("same model", content1.lower())
+        self.assertIn("correction", content1.lower())
+        self.assertIn("unattributed", content1.lower())
+
+    def test_exact_test_behaviour_mapping_and_executable_proof(self) -> None:
+        batch = self._load_batch()
+        content2 = self._cu_content(batch, "cu-002")
+        self.assertIn("TestCorrectionPass", content2)
+        self.assertIn("test_breach_detail_is_scope_correct", content2)
+        self.assertIn("test_correction_logs_are_attributed", content2)
+        self.assertIn("python3 -m unittest", content2)
+        self.assertIn("discover", content2)
+        self.assertIn(".LLMDD/tests", content2)
+        env = os.environ.copy()
+        env["CU_BOUNDARY_SKIP_GATE"] = "1"
+        proc = subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", ".LLMDD/tests", "-p", "test_cu_boundary.py", "-v"], cwd=self.root, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
+        self.assertEqual(proc.returncode, 0, proc.stdout[-4000:].decode(errors="replace"))
+
+    def test_guaranteed_tracked_final_source(self) -> None:
+        proc = subprocess.run(["git", "-C", str(self.root), "ls-files", ".LLMDD/tests/test_cu_boundary.py", ".LLMDD/tools/run-waves.py", ".LLMDD/ITRS/feat-9-enforce-cu-boundary-redirect.batch.json", ".LLMDD/spec-driven/features/feat-9-enforce-cu-boundary-redirect.md"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self.assertEqual(proc.returncode, 0)
+        out = proc.stdout.decode()
+        self.assertIn(".LLMDD/tests/test_cu_boundary.py", out)
+        self.assertIn(".LLMDD/tools/run-waves.py", out)
+        self.assertIn(".LLMDD/ITRS/feat-9-enforce-cu-boundary-redirect.batch.json", out)
+        self.assertIn(".LLMDD/spec-driven/features/feat-9-enforce-cu-boundary-redirect.md", out)
+        proc2 = subprocess.run(["git", "-C", str(self.root), "diff", "--name-only"], stdout=subprocess.PIPE)
+        self.assertEqual(proc2.stdout.strip(), b"", "no unstaged changes")
 
 
 if __name__ == "__main__":
