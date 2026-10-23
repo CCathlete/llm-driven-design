@@ -920,22 +920,23 @@ def _repo_relative(project_dir: Path, raw: str) -> str | None:
 def coder_writes(log_prefix: str, log_dir: Path, project_dir: Path) -> CoderWrites:
     found: list[str] = []
     log_file: Path
-    for log_file in sorted(log_dir.glob(f"{log_prefix}.attempt-*.log")):
-        opened: Ok[typing.TextIO] | Err[Exception] = _open_file(log_file)
-        if isinstance(opened, Err):
-            continue
-        handle: typing.TextIO = opened.value
-        line: str
-        for line in handle:
-            parsed: Ok[JsonEvent] | Err[ValueError] = _parse_event_line(line.strip())
-            if isinstance(parsed, Err):
+    for pattern in (f"{log_prefix}.attempt-*.log", f"{log_prefix}.correction-*.log"):
+        for log_file in sorted(log_dir.glob(pattern)):
+            opened: Ok[typing.TextIO] | Err[Exception] = _open_file(log_file)
+            if isinstance(opened, Err):
                 continue
-            raw: str
-            for raw in _tool_candidates(parsed.value):
-                relative: str | None = _repo_relative(project_dir, raw)
-                if relative is not None:
-                    found.append(relative)
-        handle.close()
+            handle: typing.TextIO = opened.value
+            line: str
+            for line in handle:
+                parsed: Ok[JsonEvent] | Err[ValueError] = _parse_event_line(line.strip())
+                if isinstance(parsed, Err):
+                    continue
+                raw: str
+                for raw in _tool_candidates(parsed.value):
+                    relative: str | None = _repo_relative(project_dir, raw)
+                    if relative is not None:
+                        found.append(relative)
+            handle.close()
     return CoderWrites(cu_id=log_prefix, paths=tuple(dict.fromkeys(found)))
 
 
