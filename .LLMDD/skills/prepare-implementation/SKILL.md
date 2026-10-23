@@ -80,7 +80,7 @@ accepted with `--yaml-content`). First two entries are always
 
 Every regular CU content carries all four labeled sections with
 implementation-grade detail (see `compile-itr` + 
-`validate-implementation-steps`):
+`review-implementation-steps`):
 
 - **REQUIREMENTS** — slice of the feature this CU delivers.
 - **COORDINATES** — exact DTR keys touched, verified against the

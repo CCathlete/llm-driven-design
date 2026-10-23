@@ -1,9 +1,9 @@
 ---
-name: validate-implementation
+name: review-implementation
 description: Review a completed wave run against its requirements — inspect the implementation diff, wave logs and feedback, re-run acceptance tests independently, and when everything is green mark linked bugs Resolved and features Implemented, then commit. Use after run-waves.py finishes all waves for a feature.
 ---
 
-# validate-implementation
+# review-implementation
 
 Post-implementation review for WORKFLOW STEP5 (IMPLEMENT_CUS) into STEP6/7
 (VERIFY / E2E VERIFY). The agent verifies a finished wave run for one
