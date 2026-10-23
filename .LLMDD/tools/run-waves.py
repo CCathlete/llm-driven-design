@@ -1380,7 +1380,8 @@ VERIFICATION_DETAILS=CU not implemented
 def run_code_lead(wave: int, num_waves: int, model: str, max_iterations: int,
                   feedback_dir: Path, log_dir: Path, timeout: int,
                   project_dir: Path, wave_cus: list[str],
-                  fallback_models: Sequence[str] = ()) -> tuple[int, TokenUsage]:
+                  fallback_models: Sequence[str] = (),
+                  unattributed_context: str = "") -> tuple[int, TokenUsage]:
     colour: str = C.BR_MAG
     prefix: str = "[LEAD]"
     usage: TokenUsage = TokenUsage()
@@ -1389,24 +1390,34 @@ def run_code_lead(wave: int, num_waves: int, model: str, max_iterations: int,
 
     if is_final:
         commit_instruction: str = (
-            f"\n7. Read COMMIT_MESSAGE fields from all feedback files across all waves\n"
-            f"8. Consolidate into a single commit message\n"
-            f"9. Stage all changes and commit with the consolidated message\n"
+            f"\n8. Read COMMIT_MESSAGE fields from all feedback files across all waves\n"
+            f"9. Consolidate into a single commit message\n"
+            f"10. Stage all changes and commit with the consolidated message\n"
         )
     else:
         commit_instruction = (
-            f"\n7. Prepare a COMMIT_MESSAGE for this wave in {feedback_dir}/wave-{wave}-commit.txt\n"
-            f"8. Do NOT commit \u2014 the final wave lead will commit\n"
+            f"\n8. Prepare a COMMIT_MESSAGE for this wave in {feedback_dir}/wave-{wave}-commit.txt\n"
+            f"9. Do NOT commit \u2014 the final wave lead will commit\n"
         )
+
+    if unattributed_context:
+        u: str = (
+            f"\nUNATTRIBUTED CHANGES (no owning CU):\n"
+            f"{unattributed_context}\n\n"
+            f"These changes were made by no CU in this wave. Routes to the wave lead per Rule 3.\n\n"
+        )
+    else:
+        u = ""
 
     prompt: str = (
         f"You are the code lead for wave {wave}.\n\n"
         f"1. Read feedback files for this wave\u2019s CUs: {', '.join(wave_cus)}\n"
         f"2. For any CU with STATUS=ESCALATION: read the CU frame file and implement it yourself\n"
         f"3. Write a feedback file for each escalated CU you implement\n"
-        f"4. Run verification tests for all implemented CUs\n"
-        f"5. Fix any test failures\n"
-        f"6. Write verification report to {feedback_dir}/wave-{wave}-verification.txt\n"
+        f"4. {u}"
+        f"5. Run verification tests for all implemented CUs\n"
+        f"6. Fix any test failures\n"
+        f"7. Write verification report to {feedback_dir}/wave-{wave}-verification.txt\n"
         f"{commit_instruction}\n"
         f"Max fix iterations: {max_iterations}"
     )
@@ -1473,18 +1484,26 @@ def run_code_lead(wave: int, num_waves: int, model: str, max_iterations: int,
 def run_per_cu_lead(cu_id: str, cu_file: Path, model: str, max_iterations: int,
                      feedback_dir: Path, log_dir: Path, timeout: int,
                      project_dir: Path,
-                     fallback_models: Sequence[str] = ()) -> Ok[tuple[int, TokenUsage]] | Err[Exception]:
-    """Run code lead for a single escalated CU immediately.
-    Returns Ok((rc, usage)) or Err."""
+                     fallback_models: Sequence[str] = (),
+                     breach_context: str = "") -> Ok[tuple[int, TokenUsage]] | Err[Exception]:
     colour: str = C.BR_MAG
     prefix: str = f"[LEAD-{cu_id}]"
     usage: TokenUsage = TokenUsage()
+
+    if breach_context:
+        bc: str = (
+            f"\nBOUNDARY VIOLATIONS (why escalated):\n"
+            f"{breach_context}\n\n"
+        )
+    else:
+        bc = ""
 
     prompt: str = (
         f"You are the code lead. CU {cu_id} was escalated by the coder.\n\n"
         f"1. {_cu_read_instructions(cu_file)}\n"
         f"2. Read the escalation feedback at {feedback_dir / f'{cu_id}.feedback.txt'}\n"
-        f"3. Implement the CU yourself (the coder failed)\n"
+        f"{bc}"
+        f"3. Implement the CU yourself (the coder failed). Stay inside the CU scope.\n"
         f"4. Write updated feedback to {feedback_dir / f'{cu_id}.feedback.txt'}\n"
         f"5. Do NOT commit \u2014 the final wave lead will commit\n\n"
         f"Max fix iterations: {max_iterations}"
@@ -1732,6 +1751,25 @@ def _paths_against(paths: Sequence[str], guards: dict[str, NoTouch],
     return tuple(found)
 
 
+def _unattributed_detail(feedback_dir: Path) -> str:
+    """Rule 3 detail: wave-scoped breach lines from the last report."""
+    text: str
+    match _read_file_text(feedback_dir / "boundary-breaches.txt"):
+        case Ok(text):
+            blocks: list[str] = []
+            block: str
+            for block in text.strip().split("\n\n"):
+                if "SCOPE=wave" not in block:
+                    continue
+                fields: list[str] = [
+                    line.strip() for line in block.strip().splitlines()
+                    if line.strip()]
+                blocks.append(" ".join(fields))
+            return "\n".join(blocks)
+        case Err(_):
+            return ""
+
+
 def _escalated_in(wave_cus: Sequence[str], feedback_dir: Path) -> set[str]:
     """CU ids whose feedback marks STATUS=ESCALATION."""
     found: set[str] = set()
@@ -1752,14 +1790,11 @@ def _breach_detail_for_cu(breaches: Sequence[BoundaryBreach], cu_id: str) -> str
     lines: list[str] = []
     b: BoundaryBreach
     for b in breaches:
-        if b.scope == cu_id or b.rule == "shared-write" or (b.rule.startswith("unattributed:") and False):
+        if b.scope == cu_id and b.rule in ("no-touch", "shared-write"):
             lines.append(f"SCOPE={b.scope} RULE={b.rule} PATH={b.path}")
-        elif b.scope == cu_id:
+            continue
+        if b.rule == "shared-write" and b.scope == cu_id:
             lines.append(f"SCOPE={b.scope} RULE={b.rule} PATH={b.path}")
-    if not lines:
-        for b in breaches:
-            if b.scope == cu_id:
-                lines.append(f"SCOPE={b.scope} RULE={b.rule} PATH={b.path}")
     return "\n".join(lines)
 
 
@@ -1947,61 +1982,108 @@ async def run_wave_parallel(
     breaches, written = enforce_boundary(
         per_cu_writes, project_dir, stash_ref, baseline_dirty, guards, feedback_dir)
 
-    # Correction pass: prompt original coder (same model) to fix out of scope
-    # Do not auto-escalate. Try up to 3 times with same model, no fallbacks.
     breached_cus: set[str] = set()
     b: BoundaryBreach
     for b in breaches:
         if b.scope != "wave" and b.rule in ("no-touch", "shared-write"):
             breached_cus.add(b.scope)
-        elif b.scope != "wave" and b.rule == "lead":
-            breached_cus.add(b.scope)
     model_by_cu: dict[str, str] = {}
-    for cu_id, cu_file, fut in coder_futures:
-        try:
-            res = fut.result(timeout=0)
-        except Exception:
-            res = None
-        if isinstance(res, Ok):
-            model_by_cu[cu_id] = res.value.model_used
-    loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
-    with ThreadPoolExecutor(max_workers=1) as cpool:
-        for cu_id in sorted(breached_cus):
-            if cu_id not in model_by_cu or not model_by_cu[cu_id]:
+    cu_id_c: str
+    cu_file_c2: Path
+    fut_c: asyncio.Future[Ok[CoderOutput] | Err[Exception]]
+    for cu_id_c, cu_file_c2, fut_c in coder_futures:
+        res_m: Ok[CoderOutput] | Err[Exception] = await future_result(fut_c)
+        co: CoderOutput
+        match res_m:
+            case Ok(co):
+                if co.model_used:
+                    model_by_cu[cu_id_c] = co.model_used
+            case Err(_):
+                pass
+    colour_by_cu: dict[str, str] = {}
+    cidx: int
+    cu_id_c2: str
+    _cu_file_c2: Path
+    for cidx, (cu_id_c2, _cu_file_c2) in enumerate(cu_files):
+        cc: str
+        _cp: str
+        cc, _cp = CODER_COLOURS[cidx % len(CODER_COLOURS)]
+        colour_by_cu[cu_id_c2] = cc
+    correction_failed: set[str] = set()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as cpool:
+        cu_corr: str
+        for cu_corr in sorted(breached_cus):
+            if cu_corr not in model_by_cu or not model_by_cu[cu_corr]:
                 continue
-            cu_file_c: Path | None = None
-            for cid, cfile, _f in cu_files:
-                if cid == cu_id:
-                    cu_file_c = cfile
+            cu_file_c3: Path | None = None
+            cid3: str
+            cfile3: Path
+            for cid3, cfile3 in cu_files:
+                if cid3 == cu_corr:
+                    cu_file_c3 = cfile3
                     break
-            if cu_file_c is None:
+            if cu_file_c3 is None:
                 continue
-            for attempt in range(3):
-                per_cu_writes = []
-                for wc_id, wc_file in cu_files:
-                    per_cu_writes.append(coder_writes(wc_id, log_dir, project_dir))
-                breaches, written = enforce_boundary(
-                    per_cu_writes, project_dir, stash_ref, baseline_dirty, guards, feedback_dir)
-                if not breaches:
+            attempts_made: int = 0
+            attempt_c: int
+            for attempt_c in range(3):
+                attempts_made = attempt_c + 1
+                per_cu_writes_c: list[CoderWrites] = []
+                wc_id_c: str
+                wc_file_c: Path
+                for wc_id_c, wc_file_c in cu_files:
+                    per_cu_writes_c.append(coder_writes(wc_id_c, log_dir, project_dir))
+                breaches_c: Sequence[BoundaryBreach]
+                written_c: Sequence[str]
+                breaches_c, written_c = enforce_boundary(
+                    per_cu_writes_c, project_dir, stash_ref, baseline_dirty, guards, feedback_dir)
+                if not breaches_c:
                     break
-                colour_code_c, _ = CODER_COLOURS[list(model_by_cu.keys()).index(cu_id) % len(CODER_COLOURS)]
-                prefix_c = f"[{cu_id}]"
-                fut_c = loop.run_in_executor(
-                    cpool, _run_coder_correction, cu_file_c, cu_id,
-                    model_by_cu[cu_id], breaches, feedback_dir, log_dir,
-                    1800, project_dir, colour_code_c, prefix_c)
-                try:
-                    res_c = await fut_c
-                except Exception as e:
-                    _fail(f"Correction failed for {cu_id}: {e}")
+                still: bool = False
+                bb: BoundaryBreach
+                for bb in breaches_c:
+                    if bb.scope == cu_corr and bb.rule in ("no-touch", "shared-write"):
+                        still = True
+                        break
+                if not still:
                     break
-                if isinstance(res_c, Err):
-                    break
-            per_cu_writes = []
-            for wc_id, wc_file in cu_files:
-                per_cu_writes.append(coder_writes(wc_id, log_dir, project_dir))
-            breaches, written = enforce_boundary(
-                per_cu_writes, project_dir, stash_ref, baseline_dirty, guards, feedback_dir)
+                fut_cc: asyncio.Future[Ok[CoderOutput] | Err[Exception]] = loop.run_in_executor(
+                    cpool, _run_coder_correction, cu_file_c3, cu_corr,
+                    model_by_cu[cu_corr], breaches_c, feedback_dir, log_dir,
+                    1800, project_dir, colour_by_cu.get(cu_corr, C.BR_CYN), f"[{cu_corr}]")
+                res_cc: Ok[CoderOutput] | Err[Exception] = await future_result(fut_cc)
+                e_c: Exception
+                match res_cc:
+                    case Ok(_):
+                        pass
+                    case Err(e_c):
+                        _fail(f"Correction failed for {cu_corr}: {e_c}")
+                        break
+            if attempts_made >= 3:
+                per_cu_writes_c2: list[CoderWrites] = []
+                wc_id_c2: str
+                wc_file_c2: Path
+                for wc_id_c2, wc_file_c2 in cu_files:
+                    per_cu_writes_c2.append(coder_writes(wc_id_c2, log_dir, project_dir))
+                breaches_c2: Sequence[BoundaryBreach]
+                written_c2: Sequence[str]
+                breaches_c2, written_c2 = enforce_boundary(
+                    per_cu_writes_c2, project_dir, stash_ref, baseline_dirty, guards, feedback_dir)
+                still2: bool = False
+                bb2: BoundaryBreach
+                for bb2 in breaches_c2:
+                    if bb2.scope == cu_corr and bb2.rule in ("no-touch", "shared-write"):
+                        still2 = True
+                        break
+                if still2:
+                    correction_failed.add(cu_corr)
+    per_cu_writes = []
+    wc_id: str
+    wc_file: Path
+    for wc_id, wc_file in cu_files:
+        per_cu_writes.append(coder_writes(wc_id, log_dir, project_dir))
+    breaches, written = enforce_boundary(
+        per_cu_writes, project_dir, stash_ref, baseline_dirty, guards, feedback_dir)
 
     if breaches:
         all_passed = False
@@ -2012,25 +2094,39 @@ async def run_wave_parallel(
     text: str
     lead_rc: int
     lead_usage: TokenUsage
+    breach_detail_by_cu: dict[str, str] = {}
+    for cu_id in sorted(set([b.scope for b in breaches if b.scope not in ("wave",)])):
+        breach_detail_by_cu[cu_id] = _breach_detail_for_cu(breaches, cu_id)
+    cf: str
+    for cf in sorted(correction_failed):
+        if cf not in breach_detail_by_cu:
+            breach_detail_by_cu[cf] = _breach_detail_for_cu(breaches, cf)
     for cu_id, cu_file, _leftover in coder_futures:
         if no_per_cu_lead:
             continue
+        is_esc: bool = False
         match _read_file_text(feedback_dir / f"{cu_id}.feedback.txt"):
             case Ok(text) if "STATUS=ESCALATION" in text:
-                escalated_cus.append(cu_id)
-                _warn(f"Escalation detected: {cu_id}")
-                match run_per_cu_lead(
-                    cu_id, cu_file, lead_model, max_fix_iterations,
-                    feedback_dir, log_dir, lead_timeout, project_dir,
-                    lead_fallbacks,
-                ):
-                    case Ok((lead_rc, lead_usage)):
-                        tracker.accumulate(lead_usage)
-                        wc.coders[f"{cu_id}-lead"] = lead_usage
-                    case Err(e):
-                        _fail(f"Lead failed on {cu_id}: {e}")
+                is_esc = True
             case _:
                 pass
+        if not is_esc and cu_id in correction_failed:
+            is_esc = True
+        if is_esc:
+            if cu_id not in escalated_cus:
+                escalated_cus.append(cu_id)
+            _warn(f"Escalation detected: {cu_id}")
+            match run_per_cu_lead(
+                cu_id, cu_file, lead_model, max_fix_iterations,
+                feedback_dir, log_dir, lead_timeout, project_dir,
+                lead_fallbacks,
+                breach_context=breach_detail_by_cu.get(cu_id, ""),
+            ):
+                case Ok((lead_rc, lead_usage)):
+                    tracker.accumulate(lead_usage)
+                    wc.coders[f"{cu_id}-lead"] = lead_usage
+                case Err(e):
+                    _fail(f"Lead failed on {cu_id}: {e}")
 
     guard_breaches: list[BoundaryBreach] = []
     escalated_set: set[str] = set(escalated_cus)
@@ -2256,6 +2352,7 @@ async def main_async(args: argparse.Namespace) -> int:
             wave_num, num_waves, args.lead_model, args.max_fix_iterations,
             feedback_dir, log_dir, args.lead_timeout,
             project_dir, wave_cus, args.lead_fallbacks,
+            unattributed_context=_unattributed_detail(feedback_dir),
         )
         tracker.accumulate(lead_usage)
         lead_ok: bool = lead_rc == 0

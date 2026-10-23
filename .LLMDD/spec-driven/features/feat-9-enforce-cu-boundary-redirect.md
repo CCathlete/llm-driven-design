@@ -59,6 +59,18 @@ CUs assigned at `cu-001` (runner hardening + wiring) and `cu-002`
 (regression tests). ITR directory:
 `.LLMDD/ITRS/feat-9-enforce-cu-boundary-redirect/`.
 
+Wave 1 (`cu-001`) was run and delivered the hardened correction pass. Two
+latent defects carried in the direct edit were fixed by that CU: a bare
+`ThreadPoolExecutor` reference with only `concurrent.futures` imported
+(`NameError` on the first breached wave) and a three-name unpack of the
+two-element `cu_files` tuple (`ValueError` on every correction attempt).
+The CU flagged one gap it could not close — the `run_code_lead` call site
+in `main_async` was outside its coordinates — so `_unattributed_detail`
+now reads the wave-scoped breach lines and passes them as
+`unattributed_context` at that call site. The regression tests were added
+under `TestCorrectionPass`; the production gates live under
+`TestCUProductionGate` and skip when `CU_BOUNDARY_SKIP_GATE=1`.
+
 ## Acceptance criteria
 
 1. A CU with an owned (`no-touch`) or `shared-write` breach is corrected
