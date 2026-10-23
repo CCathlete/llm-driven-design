@@ -86,3 +86,14 @@ presence does not imply type agreement.
 
 The new spec file. Design discussion continues against it; implementation
 starts only after the Designer approves the criteria and tests.
+
+
+## Skill validation
+
+Before creating the spec, run the deterministic validator to ensure all steps are followed:
+
+```bash
+python3 .LLMDD/tools/skill-check.py feature --print-prompt
+```
+
+The Advisor must execute every step from that prompt in order and report a checklist at the end.

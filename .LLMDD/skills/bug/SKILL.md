@@ -93,3 +93,14 @@ Leave as "Pending" while Open.
 
 The new spec file. Triage and fixing proceed against it; closure requires
 the Fix summary and Tests sections filled in.
+
+
+## Skill validation
+
+Before creating the spec, run the deterministic validator to ensure all steps are followed:
+
+```bash
+python3 .LLMDD/tools/skill-check.py bug --print-prompt
+```
+
+The Advisor must execute every step from that prompt in order and report a checklist at the end.
