@@ -1745,6 +1745,111 @@ def _escalated_in(wave_cus: Sequence[str], feedback_dir: Path) -> set[str]:
     return found
 
 
+# ── CU boundary correction pass ───────────────────────────────────
+
+def _breach_detail_for_cu(breaches: Sequence[BoundaryBreach], cu_id: str) -> str:
+    lines: list[str] = []
+    b: BoundaryBreach
+    for b in breaches:
+        if b.scope == cu_id or b.rule == "shared-write" or (b.rule.startswith("unattributed:") and False):
+            lines.append(f"SCOPE={b.scope} RULE={b.rule} PATH={b.path}")
+        elif b.scope == cu_id:
+            lines.append(f"SCOPE={b.scope} RULE={b.rule} PATH={b.path}")
+    if not lines:
+        for b in breaches:
+            if b.scope == cu_id:
+                lines.append(f"SCOPE={b.scope} RULE={b.rule} PATH={b.path}")
+    return "\n".join(lines)
+
+
+def _run_coder_correction(cu_file: Path, cu_id: str, model: str,
+                          breaches: Sequence[BoundaryBreach],
+                          feedback_dir: Path, log_dir: Path,
+                          timeout: int, project_dir: Path,
+                          colour_code: str, prefix: str) -> Ok[CoderOutput] | Err[Exception]:
+    detail: str = _breach_detail_for_cu(breaches, cu_id)
+    prompt: str = (
+        f"CORRECTION PASS for CU {cu_id}.\n"
+        f"You went out of scope. Fix ONLY these violations:\n"
+        f"{detail}\n\n"
+        f"Rules:\n"
+        f"1. {_cu_read_instructions(cu_file)}\n"
+        f"2. Fix ONLY the listed paths. Revert or move out-of-scope changes.\n"
+        f"3. Do NOT change in-scope files unnecessarily.\n"
+        f"4. Do NOT read other CU folders.\n"
+        f"5. Write feedback to {feedback_dir / f'{cu_id}.feedback.txt'} if needed.\n"
+        f"6. Do NOT commit.\n"
+        f"Your scope is EXACTLY one CU: {cu_id}.\n"
+    )
+    combined_usage: TokenUsage = TokenUsage()
+    files_changed: list[str] = []
+    attempt: int
+    for attempt in range(3):
+        log_file: Path = log_dir / f"{cu_id}.correction-{attempt}.log"
+        attempt_usage: TokenUsage = TokenUsage()
+        cmd: list[str] = [
+            "opencode", "run",
+            "--model", model,
+            "--agent", "llmdd/coder",
+            "--format", "json",
+            "--auto",
+            prompt,
+        ]
+        log_fh: typing.TextIO
+        match _open_file(log_file, "w"):
+            case Ok(log_fh):
+                match _stream_process_json(cmd, log_fh, colour_code, prefix,
+                                           timeout, project_dir, attempt_usage):
+                    case Ok(rc):
+                        stream_rc = rc
+                    case Err(e):
+                        log_fh.close()
+                        return Err(e)
+                log_fh.close()
+            case Err(e):
+                return Err(e)
+        combined_usage.input += attempt_usage.input
+        combined_usage.output += attempt_usage.output
+        combined_usage.reasoning += attempt_usage.reasoning
+        combined_usage.cache_read += attempt_usage.cache_read
+        combined_usage.cache_write += attempt_usage.cache_write
+        combined_usage.total += attempt_usage.total
+        combined_usage.cost += attempt_usage.cost
+        if attempt_usage.session_id:
+            combined_usage.session_id = attempt_usage.session_id
+        files_changed = list(coder_writes(cu_id, log_dir, project_dir).paths)
+        text: str
+        match _read_file_text(log_file):
+            case Ok(text):
+                lowered_text: str = text.lower()
+                is_refusal: bool = False
+                p: str
+                for p in _REFUSAL_PATTERNS:
+                    if p.lower() in lowered_text:
+                        is_refusal = True
+                        break
+                is_error_lines: bool = False
+                line: str
+                ev: JsonEvent
+                for line in text.splitlines():
+                    parsed_line: Ok[JsonEvent] | Err[ValueError] = _parse_event_line(line)
+                    if isinstance(parsed_line, Err):
+                        continue
+                    ev = parsed_line.value
+                    if ev.get("type") == "error":
+                        is_error_lines = True
+                        break
+            case Err(_):
+                is_refusal = False
+                is_error_lines = False
+        is_error: bool = is_error_lines if stream_rc == 0 else False
+        succeeded: bool = stream_rc == 0 and not is_refusal and not is_error
+        if succeeded:
+            break
+    return Ok(CoderOutput(rc=stream_rc, files_changed=files_changed,
+                          usage=combined_usage, model_used=model))
+
+
 # ── Parallel wave execution ──────────────────────────────────────
 
 async def run_wave_parallel(
@@ -1840,6 +1945,63 @@ async def run_wave_parallel(
     written: Sequence[str]
     breaches, written = enforce_boundary(
         per_cu_writes, project_dir, stash_ref, baseline_dirty, guards, feedback_dir)
+
+    # Correction pass: prompt original coder (same model) to fix out of scope
+    # Do not auto-escalate. Try up to 3 times with same model, no fallbacks.
+    breached_cus: set[str] = set()
+    b: BoundaryBreach
+    for b in breaches:
+        if b.scope != "wave" and b.rule in ("no-touch", "shared-write"):
+            breached_cus.add(b.scope)
+        elif b.scope != "wave" and b.rule == "lead":
+            breached_cus.add(b.scope)
+    model_by_cu: dict[str, str] = {}
+    for cu_id, cu_file, fut in coder_futures:
+        try:
+            res = fut.result(timeout=0)
+        except Exception:
+            res = None
+        if isinstance(res, Ok):
+            model_by_cu[cu_id] = res.value.model_used
+    loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
+    with ThreadPoolExecutor(max_workers=1) as cpool:
+        for cu_id in sorted(breached_cus):
+            if cu_id not in model_by_cu or not model_by_cu[cu_id]:
+                continue
+            cu_file_c: Path | None = None
+            for cid, cfile, _f in cu_files:
+                if cid == cu_id:
+                    cu_file_c = cfile
+                    break
+            if cu_file_c is None:
+                continue
+            for attempt in range(3):
+                per_cu_writes = []
+                for wc_id, wc_file in cu_files:
+                    per_cu_writes.append(coder_writes(wc_id, log_dir, project_dir))
+                breaches, written = enforce_boundary(
+                    per_cu_writes, project_dir, stash_ref, baseline_dirty, guards, feedback_dir)
+                if not breaches:
+                    break
+                colour_code_c, _ = CODER_COLOURS[list(model_by_cu.keys()).index(cu_id) % len(CODER_COLOURS)]
+                prefix_c = f"[{cu_id}]"
+                fut_c = loop.run_in_executor(
+                    cpool, _run_coder_correction, cu_file_c, cu_id,
+                    model_by_cu[cu_id], breaches, feedback_dir, log_dir,
+                    1800, project_dir, colour_code_c, prefix_c)
+                try:
+                    res_c = await fut_c
+                except Exception as e:
+                    _fail(f"Correction failed for {cu_id}: {e}")
+                    break
+                if isinstance(res_c, Err):
+                    break
+            per_cu_writes = []
+            for wc_id, wc_file in cu_files:
+                per_cu_writes.append(coder_writes(wc_id, log_dir, project_dir))
+            breaches, written = enforce_boundary(
+                per_cu_writes, project_dir, stash_ref, baseline_dirty, guards, feedback_dir)
+
     if breaches:
         all_passed = False
 
