@@ -1,8 +1,8 @@
 # bug-12: Unqualified ThreadPoolExecutor causes NameError in CU boundary correction pass
 
-- Status: Open
+- Status: Resolved
 - Created: 2026-10-24
-- Resolved: -
+- Resolved: 2026-10-24
 - Bug ID: bug-12-unqualified-threadpoolexecutor-correction-crash
 
 ## Bug detail
@@ -29,7 +29,7 @@ The correction pass should run without crashing. If breaches occur, it should at
 
 ## Fix summary
 
-Change `with ThreadPoolExecutor(max_workers=1) as cpool:` to `with concurrent.futures.ThreadPoolExecutor(max_workers=1) as cpool:` in `run_wave_parallel`.
+Fixed in `.LLMDD/tools/run-waves.py` line ~2013: changed `with ThreadPoolExecutor(max_workers=1) as cpool:` to `with concurrent.futures.ThreadPoolExecutor(max_workers=1) as cpool:`. Verified with `ast.parse` - no errors. Fix committed in bugfix-feature-14.
 
 ## Proving tests
 

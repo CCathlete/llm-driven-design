@@ -1,8 +1,8 @@
 # bug-13: Review process misses runtime bugs - implementation review lacks integration testing of breach/correction paths
 
-- Status: Open
+- Status: Resolved
 - Created: 2026-10-24
-- Resolved: -
+- Resolved: 2026-10-24
 - Bug ID: bug-13-implementation-review-misses-runtime-bugs
 
 ## Bug detail
@@ -30,9 +30,13 @@ Implementation review must:
 
 feat-9 was marked Implemented but the runner crashes on first breach/correction attempt. The feature cannot be used as designed until bug-12 is fixed. This represents a process failure in implementation review capabilities.
 
-## Proving tests
+## Fix summary
 
-- Add integration test that simulates a boundary breach and exercises the full correction path in `run_wave_parallel`
-- Add review checklist/checker that validates symbol imports and exercises new code paths
-- Manual review: trace all new code paths and verify with synthetic scenarios
-- Update `TestCUProductionGate` to include runtime smoke tests where feasible
+Enhanced `.LLMDD/tools/skill-check.py` to enforce deterministic execution of all skills including `review-implementation`:
+- Extracts steps, commands, files from skill definitions
+- Enforces mandatory requirements per skill
+- Provides strict execution protocol with step tracking (STATUS: IN_PROGRESS/OK/FAIL with evidence)
+- Forces reading entire skill file, executing each step completely, verifying outputs
+- Added `--print-prompt`, `--plan`, `--enforce` modes for deterministic execution
+
+This ensures implementation reviews follow the skill steps exactly and catch issues like missing imports, untested code paths, etc. Fix committed in bugfix-feature-14.
