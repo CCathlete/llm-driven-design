@@ -213,3 +213,11 @@ git commit -m "Prep: DTR plus ITR frames plus waves for <feature-name> (cu-001..
 
 Committed prep for `<feature-name>` plus the printed wave command —
 the Designer pastes it to start STEP5.
+
+## Book tracking (MANDATORY)
+
+Before committing in the current repo, if the current repo is `llm-driven-design` and `~/Repos/llmdd-book` exists:
+1. Add a summary of changes to the llmdd-book (typically a new subsection under the current-version section of `docs/building-llm-driven-design.md`)
+2. `git -C ~/Repos/llmdd-book add docs/building-llm-driven-design.md`
+3. `git -C ~/Repos/llmdd-book commit -m "docs: <summary>"`
+4. Never push from either repo
