@@ -8,13 +8,40 @@ strict execution plan. It can also verify completion and enforce gates.
 
 import argparse
 import json
+import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
 
 SKILLS_DIR = Path(".LLMDD/skills")
+LLMDD_BOOK_PATH = Path(os.path.expanduser("~/Repos/llmdd-book"))
+
+
+def _get_repo_name() -> str:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=Path.cwd(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=5
+        )
+        if result.returncode == 0:
+            return Path(result.stdout.decode().strip()).name
+    except Exception:
+        pass
+    return Path.cwd().name
+
+
+def _is_llm_driven_design_repo() -> bool:
+    return _get_repo_name() == "llm-driven-design"
+
+
+def _llmdd_book_exists() -> bool:
+    return LLMDD_BOOK_PATH.exists() and LLMDD_BOOK_PATH.is_dir()
 
 
 def _read_skill(name: str) -> str:
@@ -90,9 +117,15 @@ def _build_deterministic_plan(skill: str, text: str) -> dict[str, Any]:
         "commands": commands,
         "files": files,
         "gates": [],
-        "mandatory": []
+        "mandatory": [],
+        "conditional": []
     }
-    plan["mandatory"].append("BOOK_TRACKING_MANDATORY: if cwd repo is llm-driven-design and ~/Repos/llmdd-book exists, update docs/building-llm-driven-design.md with summary and commit in llmdd-book (never push)")
+    # Conditional - only in llm-driven-design repo with llmdd-book present
+    plan["conditional"].append({
+        "condition": "repo == 'llm-driven-design' and llmdd-book exists at ~/Repos/llmdd-book",
+        "description": "BOOK_TRACKING: if condition met, add summary to llmdd-book/docs/building-llm-driven-design.md and commit there (never push)",
+        "check": "check_repo_and_book"
+    })
     
     # Add gates based on skill
     if skill in ["feature", "bug"]:
@@ -127,9 +160,15 @@ def _build_prompt(skill: str, plan: dict[str, Any]) -> str:
     prompt.append("")
     prompt.append(f"## Skill File: {plan['skill_file']}")
     prompt.append("")
-    prompt.append("## MANDATORY REQUIREMENTS")
+    prompt.append("## MANDATORY REQUIREMENTS (ALWAYS enforced regardless of repo)")
     for i, m in enumerate(plan['mandatory'], 1):
         prompt.append(f"{i}. {m}")
+    prompt.append("")
+    prompt.append("## CONDITIONAL REQUIREMENTS")
+    for i, c in enumerate(plan.get('conditional', []), 1):
+        prompt.append(f"C{i}. IF ({c['condition']}): THEN {c['description']}")
+    prompt.append("   - FIRST CHECK: detect current repo name and if ~/Repos/llmdd-book exists")
+    prompt.append("   - IF both true AND repo is llm-driven-design: MUST execute this step before committing")
     prompt.append("")
     prompt.append("## EXTRACTED NUMBERED STEPS")
     for s in plan['steps']:
