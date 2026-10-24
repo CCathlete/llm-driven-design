@@ -72,6 +72,39 @@ now reads the wave-scoped breach lines and passes them as
 under `TestCorrectionPass`; the production gates live under
 `TestCUProductionGate` and skip when `CU_BOUNDARY_SKIP_GATE=1`.
 
+## Errors found during review and wave execution
+
+The following errors were discovered after the feature was prepared/marked implemented:
+
+### 1) Unqualified `ThreadPoolExecutor` causes `NameError` (bug-12)
+- **Location**: `.LLMDD/tools/run-waves.py` in `run_wave_parallel` correction pass
+- **Error**: `NameError: name 'ThreadPoolExecutor' is not defined`
+- **Cause**: Used `ThreadPoolExecutor(max_workers=1)` unqualified while only `import concurrent.futures` exists (no `from concurrent.futures import ThreadPoolExecutor`)
+- **Trigger**: Only when a boundary breach occurs and the correction loop executes
+- **Impact**: Wave runner crashes mid-wave on first breach
+- **Fix**: Use `concurrent.futures.ThreadPoolExecutor(...)` or add the import
+
+### 2) Three-name unpack of two-element `cu_files` tuple (latent, fixed by cu-001)
+- **Location**: Correction pass iteration over `cu_files`
+- **Error**: `ValueError` on unpacking `for cid3, cfile3, _f3 in cu_files:` where `cu_files` is `list[tuple[str, Path]]`
+- **Trigger**: During correction attempts
+- **Status**: Fixed in cu-001
+
+### 3) Review process missed runtime bugs (bug-13)
+- **Issue**: Implementation review trusted CU self-verification and structural gates
+- **Gaps**:
+  - No integration testing of breach/correction code paths (only ast.parse, unit tests, structural gates)
+  - No symbol/import sanity checks (grep for usage vs imports)
+  - Gates validated structure/DTR/coordinates but not runtime behavior
+  - Conflated "CUs committed" with "feature works end-to-end"
+- **Impact**: feat-9 marked Implemented despite broken runtime behavior
+- **Lesson**: Must exercise new branches with synthetic scenarios and trace injected code
+
+### 4) Attributed writes confusion during mid-run changes
+- **Observation**: Files modified/created mid-wave run (e.g. `.LLMDD/ITRS/feat-9-enforce-cu-boundary-redirect.batch.json`, `.LLMDD/tests/test_cu_boundary.py`) were correctly flagged as `unattributed:cu-001` by Rule 3
+- **Cause**: `stash_ref` captured at wave start; changes made after capture appear as unattributed
+- **Note**: This is correct boundary enforcement behavior, not a bug in enforcement logic
+
 ## Acceptance criteria
 
 1. A CU with an owned (`no-touch`) or `shared-write` breach is corrected
