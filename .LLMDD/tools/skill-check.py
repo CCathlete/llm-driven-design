@@ -92,6 +92,7 @@ def _build_deterministic_plan(skill: str, text: str) -> dict[str, Any]:
         "gates": [],
         "mandatory": []
     }
+    plan["mandatory"].append("BOOK_TRACKING_MANDATORY: if cwd repo is llm-driven-design and ~/Repos/llmdd-book exists, update docs/building-llm-driven-design.md with summary and commit in llmdd-book (never push)")
     
     # Add gates based on skill
     if skill in ["feature", "bug"]:
