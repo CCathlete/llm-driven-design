@@ -1,7 +1,8 @@
 # feat-9: Enforce CU boundary correction pass
 
-- Status: In Progress
+- Status: Implemented
 - Created: 2026-10-22
+- Implemented: 2026-10-24
 - Feature ID: feat-9-enforce-cu-boundary-redirect
 
 ## Synopsis
