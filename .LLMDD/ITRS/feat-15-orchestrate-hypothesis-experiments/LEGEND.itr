@@ -1,0 +1,20 @@
+# CU-ID: legend
+# CU-TYPE: LegendCU
+# TIMESTAMP: 2026-11-19T19:23:42.847104796Z
+# DTR-COORDINATES: 
+
+# CU-ID: legend
+# CU-TYPE: LegendCU
+# DTR-COORDINATES: 
+
+LEGEND for feat-15. CU means Computational Unit. CU folder is the per-CU directory named after the cu id. COORDINATES.itr names the baseline DTR keys the CU touches. REQUIREMENTS.itr names the feature criteria the CU delivers. IMPLEMENTATION_STEPS.itr holds numbered steps, each with an exact file path, a complete fenced code block, a Prove line, a Do NOT touch list and a Stop when line. ACCEPTANCE.itr names the spec test ids with commands and expected results. Hypothesis is a candidate correctness claim. Ledger is the SQLite examination store owned by the engine. Gate probability is the configured posterior threshold for a green light. Breakpoint is a DTR coordinate implicated by a failing execution. AdvisorActionRequired is the structured fail-closed result naming missing ledger data. Runtime is python or scala as an execution target.
+
+IMPLEMENTATION_STEPS:
+1. Apply this legend when reading any CU frame in this batch.
+
+Prove: `grep -c 'AdvisorActionRequired' .LLMDD/ITRS/feat-15-orchestrate-hypothesis-experiments/LEGEND.itr` prints 1.
+
+Do NOT touch: hypothesis-engine/src/test/**
+
+Stop when: all terms used in CU frames are defined here.
+

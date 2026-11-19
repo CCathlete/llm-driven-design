@@ -1,0 +1,9 @@
+[
+  {"wave": 1, "description": "Standalone sbt scaffold, embedded ledger schema and fresh-start cleanLedger task.", "cus": ["cu-001"]},
+  {"wave": 2, "description": "Immutable domain vocabulary (needs the sbt project from wave 1 to compile).", "cus": ["cu-002"]},
+  {"wave": 3, "description": "Application ports, DotEnv and self-hosting SQLite ledger over the schema and domain types.", "cus": ["cu-003"]},
+  {"wave": 4, "description": "Process/runtime adapter and result normalizer: both depend only on waves 2-3 and write disjoint files.", "cus": ["cu-004", "cu-005"]},
+  {"wave": 5, "description": "Fail-closed evaluation core, Bayesian math and breakpoint/fix reporting (needs the normalizer from wave 4).", "cus": ["cu-006"]},
+  {"wave": 6, "description": "Injected HypothesisEngine service and thin control CLI binding the lifecycle together.", "cus": ["cu-007"]},
+  {"wave": 7, "description": "Test doubles and all 17-criteria executable proof plus the python execution-target fixture; verification last.", "cus": ["cu-008"]}
+]

@@ -1,0 +1,3 @@
+# ACCEPTANCE: cu-002
+
+Criteria 6 and 7 u2014 `cd hypothesis-engine && sbt -batch compile` exits 0; domain exposes Hypothesis, ExperimentDefinition, RawResult, NormalizedResult, ProbabilityCalculation, Decision, Breakpoint, SuggestedFix and AdvisorActionRequired as immutable values.

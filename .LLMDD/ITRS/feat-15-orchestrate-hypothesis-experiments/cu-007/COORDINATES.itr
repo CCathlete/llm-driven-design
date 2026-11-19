@@ -1,0 +1,3 @@
+# COORDINATES: cu-007
+
+FILE.itr-compiler/src/main/scala/itrcompiler/control/dependency_injection/Container.scala and FILE.itr-compiler/src/main/scala/itrcompiler/control/entry_point/App.scala are the in-repo DI and entry-point references. hypothesis-engine/src/main/scala/hypothesisengine/control/Main.scala is a creation absent from the baseline.

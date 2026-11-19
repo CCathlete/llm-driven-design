@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-008
+
+Deliver executable proof for all 17 feature criteria. Provide test doubles, then specs for the engine contract, ledger evidence and fail-closed validation, Bayesian determinism and gate/report behavior, standalone runtime and fresh-start flag, plus a Python execution-target fixture. Depends on: cu-001 through cu-007 (all production sources exist).

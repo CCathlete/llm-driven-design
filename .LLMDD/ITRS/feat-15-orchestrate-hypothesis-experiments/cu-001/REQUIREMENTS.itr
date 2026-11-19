@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-001
+
+Deliver criteria 16 and 17. Create the standalone Scala sbt project for the Hypothesis Engine, the embedded ledger schema resource, and the build task plus system property that clean the ledger for a fresh start. The engine binary is self-contained: SQLite is linked through a JDBC driver dependency, no external database service is used, and the schema resource is embedded in the artifact. Depends on: nothing.

@@ -1,0 +1,3 @@
+# ACCEPTANCE: cu-001
+
+Criteria 16 and 17 u2014 `cd hypothesis-engine && sbt -batch cleanLedger` and `sbt -batch -Dhypothesis-engine.ledger.fresh=true cleanLedger` both print LEDGER_CLEANED and remove ledger.db; the schema resource has seven CREATE TABLE statements.

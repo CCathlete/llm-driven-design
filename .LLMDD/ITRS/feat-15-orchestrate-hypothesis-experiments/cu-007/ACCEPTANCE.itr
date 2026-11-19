@@ -1,0 +1,3 @@
+# ACCEPTANCE: cu-007
+
+Criteria 2 and 12 u2014 `cd hypothesis-engine && sbt -batch compile` exits 0; HypothesisEngine takes all collaborators by constructor, the CLI contains no business rules, and GREEN_LIGHT, RED_LIGHT and ADVISOR_ACTION_REQUIRED are emitted from one decision value.

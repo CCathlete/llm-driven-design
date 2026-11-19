@@ -1,0 +1,3 @@
+# COORDINATES: cu-004
+
+FILE.itr-compiler/src/main/scala/itrcompiler/infrastructure/filesystem/FileSystem.scala and FILE.itr-compiler/src/main/scala/itrcompiler/infrastructure/environment/Environment.scala are the in-repo infrastructure adapter references. hypothesis-engine/src/main/scala/hypothesisengine/infrastructure/ProcessAdapter.scala is a creation absent from the baseline.

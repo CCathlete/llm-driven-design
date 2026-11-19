@@ -1,0 +1,3 @@
+# COORDINATES: cu-005
+
+FILE.itr-compiler/src/main/scala/itrcompiler/application/services/RequiredPartsValidation.scala is the in-repo validation-service reference. hypothesis-engine/src/main/scala/hypothesisengine/application/ResultNormalizer.scala is a creation absent from the baseline.

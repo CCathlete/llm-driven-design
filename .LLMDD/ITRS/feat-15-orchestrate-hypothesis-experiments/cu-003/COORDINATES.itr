@@ -1,0 +1,3 @@
+# COORDINATES: cu-003
+
+FILE.itr-compiler/src/main/scala/itrcompiler/application/ports/Port.scala and FILE.itr-compiler/src/main/scala/itrcompiler/infrastructure/database/Repository.scala are the in-repo port and repository references. All hypothesis-engine application and infrastructure paths are creations absent from the baseline.

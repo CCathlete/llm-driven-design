@@ -1,0 +1,3 @@
+# COORDINATES: cu-001
+
+FILE.itr-compiler/build.sbt and FILE.dtr-builder/build.sbt are the in-repo Scala build references for sbt layout and libraryDependencies. All hypothesis-engine paths are creations absent from this baseline DTR.

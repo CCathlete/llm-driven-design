@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-003
+
+Deliver criteria 5, 6, 7, 8, 9 and 16 at the persistence boundary. Define application ports for process execution, ledger persistence and time. Implement the self-hosting SQLite ledger that materializes the embedded schema next to the binary, persists raw evidence before any calculation, stores all seven ledger record types, and reports exactly which required data is absent. Implement DotEnv walk-up discovery with system overrides and bounded expansion. Depends on: cu-001 (schema resource), cu-002 (domain types).

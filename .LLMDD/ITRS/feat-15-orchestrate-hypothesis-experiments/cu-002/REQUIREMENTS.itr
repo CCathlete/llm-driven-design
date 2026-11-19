@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-002
+
+Deliver criteria 6 and 7 at the type level. Define the immutable domain vocabulary for hypotheses, DTR coordinates, experiment definitions, raw execution results, normalized results, evidence, probability calculations, breakpoints, suggested fixes, advisor action requests and examination decisions. Depends on: cu-001 (the sbt project must exist to compile the source set).

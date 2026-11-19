@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-004
+
+Deliver criteria 1 and 3. Accept the language-independent experiment definition through a circe decoder so both python and scala runtimes are accepted, and launch either target process from command plus working directory with a hard timeout, capturing exit code, stdout, stderr and duration. Depends on: cu-002 (domain types), cu-003 (Clock and ProcessRunner ports).

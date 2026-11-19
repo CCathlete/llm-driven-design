@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-007
+
+Deliver criteria 2 and 12 and bind the whole lifecycle together. Provide a HypothesisEngine service with all dependencies injected through its constructor, and a thin control-layer CLI that reads a hypothesis definition and a JSONL experiment file, executes every experiment, persists raw evidence before evaluation, and prints one of GREEN_LIGHT, RED_LIGHT with breakpoints and fix, or ADVISOR_ACTION_REQUIRED. Depends on: cu-003, cu-004, cu-005, cu-006.

@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-006
+
+Deliver criteria 10, 11, 13, 14 and 15. Fail closed when the ledger lacks required data, update posteriors deterministically, grant a green light only at or above the configured gate probability, and on red light emit DTR coordinates of breakpoints with a derived suggested fix. Depends on: cu-002 (domain), cu-003 (Ledger port), cu-005 (NormalizedResult).

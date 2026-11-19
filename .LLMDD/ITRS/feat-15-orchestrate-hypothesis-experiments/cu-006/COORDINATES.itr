@@ -1,0 +1,3 @@
+# COORDINATES: cu-006
+
+FILE.itr-compiler/src/main/scala/itrcompiler/application/services/Compile.scala and FILE.itr-compiler/src/main/scala/itrcompiler/application/services/CoordinateRules.scala are the in-repo service and coordinate-rule references. hypothesis-engine/src/main/scala/hypothesisengine/application/Examination.scala is a creation absent from the baseline.

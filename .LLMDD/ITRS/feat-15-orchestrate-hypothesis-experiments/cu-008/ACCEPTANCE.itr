@@ -1,0 +1,3 @@
+# ACCEPTANCE: cu-008
+
+Criteria 1 through 17 are proven by HypothesisEngineContractSpec, LedgerSpec, GateSpec and RuntimeSpec plus the python probe, run with `cd hypothesis-engine && sbt -batch test` (all green) and `python3 hypothesis-engine/experiments/python/state/probe.py` (passed true, exit 0).

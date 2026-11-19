@@ -1,0 +1,3 @@
+# COORDINATES: cu-008
+
+FILE.itr-compiler/src/test/scala/itrcompiler/control/cli/CliParserTest.scala is the in-repo ScalaTest reference. All hypothesis-engine test paths and experiment fixtures are creations absent from the baseline.
