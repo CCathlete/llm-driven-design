@@ -2095,7 +2095,7 @@ async def run_wave_parallel(
                 fut_cc: asyncio.Future[Ok[CoderOutput] | Err[Exception]] = loop.run_in_executor(
                     cpool, _run_coder_correction, cu_file_c3, cu_corr,
                     model_by_cu[cu_corr], breaches_c, feedback_dir, log_dir,
-                    1800, project_dir, colour_by_cu.get(cu_corr, C.BR_CYN), f"[{cu_corr}]")
+                    1800, project_dir, colour_by_cu.get(cu_corr, C.BR_CYAN), f"[{cu_corr}]")
                 res_cc: Ok[CoderOutput] | Err[Exception] = await future_result(fut_cc)
                 e_c: Exception
                 match res_cc:
