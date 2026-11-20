@@ -1,4 +1,34 @@
 {
-  "waves": [],
-  "status": "RUNNING"
+  "waves": [
+    {
+      "wave": 1,
+      "cus": [
+        "cu-009"
+      ],
+      "escalations": 0,
+      "coder_status": 1,
+      "lead_status": 0,
+      "files_changed": {
+        "cu-009": [
+          ".LLMDD/tests/test_cu_boundary.py",
+          ".LLMDD/ITRS/bugfix-feature-7-enforce-cu-boundaries/repo.convergence.json",
+          ".LLMDD/tools/run-waves.py"
+        ]
+      },
+      "credits": {
+        "lead": {
+          "input": 90526,
+          "output": 8005,
+          "reasoning": 12274,
+          "cache_read": 2255616,
+          "cache_write": 0,
+          "total": 0,
+          "cost": 0.0,
+          "session_id": "ses_e0550c032ffeMS8A86C3HUByZY",
+          "model": ""
+        }
+      }
+    }
+  ],
+  "status": "NEEDS_ATTENTION"
 }
