@@ -33,6 +33,6 @@ object Fixtures:
   val scalaDefinition: ExperimentDefinition = ExperimentDefinition("EXP-002", hypothesis.id, Runtime.Scala, Vector("sbt", "testOnly", "StateConsistencySpec"), "./experiments/state-scala", 120, "v1")
   def raw(passed: Boolean, detail: String): RawResult = RawResult(
     ExecutionId(java.util.UUID.randomUUID().toString), hypothesis.id, "EXP-001", "v1",
-    Vector("python", "-m", "pytest"), Map("SOURCE_REVISION" -> "abc123"), "abc123", 60,
+    Vector("python", "-m", "pytest"), "abc123", 60,
     if passed then 0 else 1, "{\"passed\":" + passed + ",\"detail\":\"" + detail + "\"}", "", 12L,
     Instant.parse("2026-01-01T00:00:00Z"))

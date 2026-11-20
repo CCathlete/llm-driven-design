@@ -53,7 +53,6 @@ final class ProcessAdapter(clock: Clock) extends ProcessRunner:
       experimentId = definition.experimentId,
       testArtifactVersion = definition.testArtifactVersion,
       command = definition.command,
-      environment = sys.env.toMap,
       sourceRevision = sys.env.getOrElse("SOURCE_REVISION", "unknown"),
       timeoutSeconds = definition.timeoutSeconds,
       exitCode = process.exitValue(),

@@ -44,7 +44,6 @@ final case class RawResult(
   experimentId: String,
   testArtifactVersion: String,
   command: Vector[String],
-  environment: Map[String, String],
   sourceRevision: String,
   timeoutSeconds: Int,
   exitCode: Int,

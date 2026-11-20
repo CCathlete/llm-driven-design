@@ -49,20 +49,19 @@ final class SqliteLedger(dbPath: String = "ledger.db") extends Ledger:
     }.getOrElse(0)
 
   override def saveRaw(result: RawResult): Either[String, Unit] =
-    write("INSERT OR REPLACE INTO executions (id, hypothesis_id, experiment_id, artifact_version, command, environment, revision, timeout_seconds, exit_code, stdout, stderr, duration_millis, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)") { statement =>
+    write("INSERT OR REPLACE INTO executions (id, hypothesis_id, experiment_id, artifact_version, command, revision, timeout_seconds, exit_code, stdout, stderr, duration_millis, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)") { statement =>
       statement.setString(1, ExecutionId.value(result.executionId))
       statement.setString(2, HypothesisId.value(result.hypothesisId))
       statement.setString(3, result.experimentId)
       statement.setString(4, result.testArtifactVersion)
       statement.setString(5, result.command.mkString(" "))
-      statement.setString(6, result.environment.map { case (key, value) => key + "=" + value }.mkString(","))
-      statement.setString(7, result.sourceRevision)
-      statement.setInt(8, result.timeoutSeconds)
-      statement.setInt(9, result.exitCode)
-      statement.setString(10, result.stdout)
-      statement.setString(11, result.stderr)
-      statement.setLong(12, result.durationMillis)
-      statement.setString(13, result.recordedAt.toString)
+      statement.setString(6, result.sourceRevision)
+      statement.setInt(7, result.timeoutSeconds)
+      statement.setInt(8, result.exitCode)
+      statement.setString(9, result.stdout)
+      statement.setString(10, result.stderr)
+      statement.setLong(11, result.durationMillis)
+      statement.setString(12, result.recordedAt.toString)
     }
 
   override def saveNormalized(result: NormalizedResult): Either[String, Unit] =
@@ -116,7 +115,7 @@ final class SqliteLedger(dbPath: String = "ledger.db") extends Ledger:
     val id: String = HypothesisId.value(hypothesisId)
     Using.Manager { use =>
       val conn: Connection = use(connection)
-      val statement: PreparedStatement = use(conn.prepareStatement("SELECT e.id, e.experiment_id, e.artifact_version, e.command, e.environment, e.revision, e.timeout_seconds, e.exit_code, e.stdout, e.stderr, e.duration_millis, e.recorded_at, v.passed, v.detail FROM executions e JOIN evidence v ON v.execution_id = e.id WHERE e.hypothesis_id = ?"))
+      val statement: PreparedStatement = use(conn.prepareStatement("SELECT e.id, e.experiment_id, e.artifact_version, e.command, e.revision, e.timeout_seconds, e.exit_code, e.stdout, e.stderr, e.duration_millis, e.recorded_at, v.passed, v.detail FROM executions e JOIN evidence v ON v.execution_id = e.id WHERE e.hypothesis_id = ?"))
       statement.setString(1, id)
       val resultSet = use(statement.executeQuery())
       val buffer = Vector.newBuilder[(RawResult, NormalizedResult)]
@@ -128,19 +127,15 @@ final class SqliteLedger(dbPath: String = "ledger.db") extends Ledger:
           experimentId = resultSet.getString(2),
           testArtifactVersion = resultSet.getString(3),
           command = resultSet.getString(4).split(" ").toVector,
-          environment = resultSet.getString(5).split(",").filter(_.nonEmpty).map { pair =>
-            val parts: Array[String] = pair.split("=", 2)
-            parts(0) -> parts(1)
-          }.toMap,
-          sourceRevision = resultSet.getString(6),
-          timeoutSeconds = resultSet.getInt(7),
-          exitCode = resultSet.getInt(8),
-          stdout = resultSet.getString(9),
-          stderr = resultSet.getString(10),
-          durationMillis = resultSet.getLong(11),
-          recordedAt = Instant.parse(resultSet.getString(12))
+          sourceRevision = resultSet.getString(5),
+          timeoutSeconds = resultSet.getInt(6),
+          exitCode = resultSet.getInt(7),
+          stdout = resultSet.getString(8),
+          stderr = resultSet.getString(9),
+          durationMillis = resultSet.getLong(10),
+          recordedAt = Instant.parse(resultSet.getString(11))
         )
-        val normalized: NormalizedResult = NormalizedResult(executionId, hypothesisId, resultSet.getInt(13) == 1, resultSet.getString(14))
+        val normalized: NormalizedResult = NormalizedResult(executionId, hypothesisId, resultSet.getInt(12) == 1, resultSet.getString(13))
         buffer += ((raw, normalized))
       buffer.result()
     }.getOrElse(Vector.empty[(RawResult, NormalizedResult)])
