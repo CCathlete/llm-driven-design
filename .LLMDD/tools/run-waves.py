@@ -951,7 +951,8 @@ def coder_writes(log_prefix: str, log_dir: Path, project_dir: Path) -> CoderWrit
 
 
 def wave_writes(project_dir: Path, base_ref: str,
-                baseline_dirty: frozenset[str]) -> Sequence[str]:
+                baseline_dirty: frozenset[str],
+                prior_written: frozenset[str] = frozenset()) -> Sequence[str]:
     changed: list[str] = []
     match _git_run("diff", "--name-only", base_ref, cwd=project_dir):
         case Ok(out):
@@ -964,7 +965,7 @@ def wave_writes(project_dir: Path, base_ref: str,
         case Err(_):
             pass
     unique: frozenset[str] = frozenset(path for path in changed if path)
-    return tuple(sorted(unique - baseline_dirty))
+    return tuple(sorted(unique - baseline_dirty - prior_written))
 
 
 def attribute_writes(wave_paths: Sequence[str],
@@ -1775,11 +1776,12 @@ def enforce_boundary(per_cu: Sequence[CoderWrites], project_dir: Path,
                      base_ref: str, baseline_dirty: frozenset[str],
                      guards: dict[str, NoTouch],
                      feedback_dir: Path,
-                     log_dir: Path) -> tuple[Sequence[BoundaryBreach], Sequence[str]]:
+                     log_dir: Path,
+                     prior_written: frozenset[str] = frozenset()) -> tuple[Sequence[BoundaryBreach], Sequence[str]]:
     """Measure the wave, attribute it to CUs, and apply every rule."""
     scoped: tuple[CoderWrites, ...] = _without_runner_paths(
         per_cu, _runner_relative_roots(project_dir, (feedback_dir, log_dir)))
-    wave_paths: Sequence[str] = wave_writes(project_dir, base_ref, baseline_dirty)
+    wave_paths: Sequence[str] = wave_writes(project_dir, base_ref, baseline_dirty, prior_written)
     attributed: WaveWrites = attribute_writes(wave_paths, scoped)
     breaches: Sequence[BoundaryBreach] = boundary_breaches(attributed, guards)
     if breaches:
@@ -1960,6 +1962,7 @@ async def run_wave_parallel(
     max_fix_iterations: int,
     no_per_cu_lead: bool,
     baseline_dirty: frozenset[str],
+    prior_written: frozenset[str],
 ) -> tuple[dict[str, list[str]], bool, Sequence[str]]:
     """Run all CUs in a wave in parallel via ThreadPoolExecutor.
 
@@ -2036,7 +2039,7 @@ async def run_wave_parallel(
     breaches: Sequence[BoundaryBreach]
     written: Sequence[str]
     breaches, written = enforce_boundary(
-        per_cu_writes, project_dir, stash_ref, baseline_dirty, guards, feedback_dir, log_dir)
+        per_cu_writes, project_dir, stash_ref, baseline_dirty, guards, feedback_dir, log_dir, prior_written)
 
     breached_cus: set[str] = set()
     b: BoundaryBreach
@@ -2092,7 +2095,7 @@ async def run_wave_parallel(
                 breaches_c: Sequence[BoundaryBreach]
                 written_c: Sequence[str]
                 breaches_c, written_c = enforce_boundary(
-                    per_cu_writes_c, project_dir, stash_ref, baseline_dirty, guards, feedback_dir, log_dir)
+                    per_cu_writes_c, project_dir, stash_ref, baseline_dirty, guards, feedback_dir, log_dir, prior_written)
                 if not breaches_c:
                     break
                 still: bool = False
@@ -2124,7 +2127,7 @@ async def run_wave_parallel(
                 breaches_c2: Sequence[BoundaryBreach]
                 written_c2: Sequence[str]
                 breaches_c2, written_c2 = enforce_boundary(
-                    per_cu_writes_c2, project_dir, stash_ref, baseline_dirty, guards, feedback_dir, log_dir)
+                    per_cu_writes_c2, project_dir, stash_ref, baseline_dirty, guards, feedback_dir, log_dir, prior_written)
                 still2: bool = False
                 bb2: BoundaryBreach
                 for bb2 in breaches_c2:
@@ -2139,7 +2142,7 @@ async def run_wave_parallel(
     for wc_id, wc_file in cu_files:
         per_cu_writes.append(coder_writes(wc_id, log_dir, project_dir))
     breaches, written = enforce_boundary(
-        per_cu_writes, project_dir, stash_ref, baseline_dirty, guards, feedback_dir, log_dir)
+        per_cu_writes, project_dir, stash_ref, baseline_dirty, guards, feedback_dir, log_dir, prior_written)
 
     if breaches:
         all_passed = False
@@ -2368,7 +2371,6 @@ async def main_async(args: argparse.Namespace) -> int:
         wave_files_changed: dict[str, list[str]]
         all_passed: bool
         written: Sequence[str]
-        run_written: set[str]
         wave_files_changed, all_passed, written = await run_wave_parallel(
             cu_files, wc, tracker,
             feedback_dir, log_dir, project_dir,
@@ -2379,6 +2381,7 @@ async def main_async(args: argparse.Namespace) -> int:
             args.max_fix_iterations,
             args.no_per_cu_lead,
             baseline_dirty,
+            frozenset(run_written),
         )
         run_written.update(written)
 
