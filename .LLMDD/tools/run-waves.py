@@ -1741,6 +1741,19 @@ def _runner_relative_roots(project_dir: Path, dirs: Sequence[Path]) -> tuple[str
     return tuple(found)
 
 
+def _without_runner_path_strings(paths: Sequence[str],
+                                 roots: Sequence[str]) -> tuple[str, ...]:
+    """Drop runner bookkeeping paths from a flat sequence of repo-relative paths.
+
+    Leads write verification and commit-message files into the runner's own
+    feedback/log directories. Those are protocol artifacts, not CU write
+    targets, so they must not be held against a CU's no-touch guard.
+    """
+    return tuple(
+        path for path in paths
+        if not any(path == root or path.startswith(root + "/") for root in roots))
+
+
 def _without_runner_paths(per_cu: Sequence[CoderWrites],
                           roots: Sequence[str]) -> tuple[CoderWrites, ...]:
     """Drop runner bookkeeping paths from per-CU write attribution.
@@ -1751,12 +1764,10 @@ def _without_runner_paths(per_cu: Sequence[CoderWrites],
     """
     kept: list[CoderWrites] = []
     writes: CoderWrites
-    path: str
     for writes in per_cu:
-        paths: tuple[str, ...] = tuple(
-            path for path in writes.paths
-            if not any(path == root or path.startswith(root + "/") for root in roots))
-        kept.append(CoderWrites(cu_id=writes.cu_id, paths=paths))
+        kept.append(CoderWrites(
+            cu_id=writes.cu_id,
+            paths=_without_runner_path_strings(writes.paths, roots)))
     return tuple(kept)
 
 
@@ -2183,7 +2194,9 @@ async def run_wave_parallel(
             continue
         raw_lead: CoderWrites = coder_writes(f"lead-{lead_cu}", log_dir, project_dir)
         owned: Sequence[BoundaryBreach] = _owned_breaches(
-            CoderWrites(cu_id=lead_cu, paths=raw_lead.paths), guards)
+            CoderWrites(cu_id=lead_cu, paths=_without_runner_path_strings(
+                raw_lead.paths,
+                _runner_relative_roots(project_dir, (feedback_dir, log_dir)))), guards)
         for breach in owned:
             if breach.rule == "no-touch":
                 guard_breaches.append(
@@ -2403,8 +2416,9 @@ async def main_async(args: argparse.Namespace) -> int:
         lead_ok: bool = lead_rc == 0
 
         escalated_ids: set[str] = _escalated_in(wave_cus, feedback_dir)
-        wave_lead_paths: Sequence[str] = coder_writes(
-            f"lead-wave-{wave_num}", log_dir, project_dir).paths
+        wave_lead_paths: Sequence[str] = _without_runner_path_strings(
+            coder_writes(f"lead-wave-{wave_num}", log_dir, project_dir).paths,
+            _runner_relative_roots(project_dir, (feedback_dir, log_dir)))
         lead_guards: dict[str, NoTouch] = {}
         guard_name: str
         guard_path: Path
