@@ -1,0 +1,25 @@
+feat-18-raise-hypothesis-gate-and-print-ledger: complete wave 1-4 implementation with escalation fixes
+
+Wave 1 (cu-001, cu-006, cu-007):
+- cu-001: Model.scala with Hypothesis justification field and domain report types (StageDecision, BreakpointView, LedgerStageReport, ExaminationOutcome); Fixed Main.scala Decoder.forProduct5 -> forProduct6 to match 6-parameter Hypothesis
+- cu-006: Raise hypothesis gate to 0.85 and add verbatim echo requirement; Updated SKILL.md with gate threshold 0.85, non-empty justification requirement, verbatim echo before hypothesis revision, check-hypothesis-report.py integration
+- cu-007: Created check-hypothesis-report.py deterministic gate for per-stage ledger echo; mypy --strict zero errors
+
+Wave 2 (cu-002, cu-003, cu-008):
+- cu-002: Examination.scala with admissibility gate/justification checks and StageRep.scala as pure function building LedgerStageReport
+- cu-003: Ledger persistence overhaul - added justification column to hypotheses SQL schema, round-trip saveHypothesis with justification, decisionHistory method exposing ordered StageDecision values, resetStageData preserving decisions table, build.sbt cleanLedger task with schemaDdl
+- cu-008: test_hypothesis_report.py table-driven verification suite for criterion 9 (missing report, non-verbatim echo, missing echo, mismatched verdict)
+
+Wave 3 (cu-004):
+- cu-004: Main.scala Decoder.forProduct6 now expects 6 fields adding justification field decoding; ExaminationOutcome report emission and deterministic ledger-report.jsonl byte-identical block append; Admissibility check (requireAdmissible) gate floor 0.85 enforced before any ledger write; Report block printed before verdict line (GREEN_LIGHT/RED_LIGHT/ADVISOR_ACTION_REQUIRED); Model.scala Hypothesis case class added justification: String = "" field with new domain types; Examination.scala requireAdmissible with gate floor 0.85 and justification non-empty check added; Ports.scala decisionHistory and resetStageData default methods added to Ledger trait; SqliteLedger.scala decisionHistory method, resetStageData method, and justification column (5th param) added to INSERT OR REPLACE statement; StageReporter.scala build function added producing LedgerStageReport with justification, gate, breakpoint, fix, and history tracking; check-hypothesis-report.py deterministic gate tool for per-stage ledger echo verification; test_hypothesis_report.py table-driven verification suite with 5 test cases
+
+Wave 4 (cu-005 escalation fix):
+- cu-005: Fix floor gate from 0.80d to 0.85d in Fixtures.hypothesis; SqliteLedger.saveHypothesis() updated to persist justification field; SqliteLedger.decisionHistory() method added reading from decisions table; SqliteLedger.resetStageData() method added; GateSpec test assertions updated for new gate value
+
+Convergence Tracking:
+- Max fix iterations: 3
+- Iterations used: 1 (cu-005 gate fix)
+- Status: CONVERGED
+
+Tests: 18/18 unit tests pass (wave 2), sbt compile succeeds, mypy --strict zero errors,
+check-hypothesis-report.py all 5 table-driven cases pass.

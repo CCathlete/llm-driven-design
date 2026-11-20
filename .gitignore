@@ -36,6 +36,10 @@ CU_*_IMPLEMENTATION_STEPS*.itr
 *.convergence.json
 *.logs/
 *.feedback/
+# Hypothesis-engine runtime ledger: created on demand by sbt, never tracked.
+hypothesis-engine/ledger.db
+hypothesis-engine/ledger.db-wal
+hypothesis-engine/ledger.db-shm
 # ---
 .LLMDD/approvals/*
 !.LLMDD/approvals/git-global.json

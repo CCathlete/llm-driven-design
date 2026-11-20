@@ -11,6 +11,7 @@ lazy val schemaDdl: String =
   "CREATE TABLE IF NOT EXISTS decisions (hypothesis_id TEXT, decision TEXT, gate REAL, posterior REAL)"
 
 lazy val cleanLedger = taskKey[Unit]("Reset the embedded ledger for a fresh start")
+lazy val ensureLedger = taskKey[Unit]("Create ledger.db from the embedded schema when absent")
 
 lazy val root = (project in file(".")).settings(
   name := "hypothesis-engine",
@@ -32,5 +33,25 @@ lazy val root = (project in file(".")).settings(
     val schema: java.io.File = baseDirectory.value / "src/main/resources/ledger-schema.sql"
     sbt.IO.write(schema, schemaDdl)
     println("LEDGER_CLEANED fresh=" + fresh)
-  }
+  },
+  ensureLedger := {
+    val db: java.io.File = baseDirectory.value / "ledger.db"
+    if (db.exists()) {
+      println("LEDGER_EXISTS " + db.getAbsolutePath)
+    } else {
+      Class.forName("org.sqlite.JDBC")
+      val conn: java.sql.Connection =
+        java.sql.DriverManager.getConnection("jdbc:sqlite:" + db.getAbsolutePath)
+      try {
+        val stmt: java.sql.Statement = conn.createStatement()
+        try {
+          schemaDdl.split(";").foreach { part: String =>
+            if (part.trim.nonEmpty) stmt.execute(part)
+          }
+        } finally stmt.close()
+        println("LEDGER_CREATED " + db.getAbsolutePath)
+      } finally conn.close()
+    }
+  },
+  Compile / compile := ((Compile / compile) dependsOn ensureLedger).value
 )
