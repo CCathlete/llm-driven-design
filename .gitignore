@@ -40,6 +40,7 @@ CU_*_IMPLEMENTATION_STEPS*.itr
 hypothesis-engine/ledger.db
 hypothesis-engine/ledger.db-wal
 hypothesis-engine/ledger.db-shm
+hypothesis-engine/hypothesis-engine.jar
 # ---
 .LLMDD/approvals/*
 !.LLMDD/approvals/git-global.json
