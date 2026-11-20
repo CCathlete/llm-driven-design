@@ -1,5 +1,0 @@
-# COORDINATES: cu-009
-
-FILE..gitignore
-FILE.hypothesis-engine/build.sbt
-FILE.hypothesis-engine/project/plugins.sbt is a creation absent from the baseline DTR.

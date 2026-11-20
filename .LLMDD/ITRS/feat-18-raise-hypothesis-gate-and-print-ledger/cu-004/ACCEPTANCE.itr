@@ -1,3 +1,5 @@
 # ACCEPTANCE: cu-004
 
-Criteria 5, 7 and 10 and tests T4 u2014 `cd hypothesis-engine && sbt -batch compile` exits 0; each run prints one report block then one verdict line; the block written to the derived ledger-report.jsonl equals the stdout block byte for byte.
+- TJ2 (criterion 14): step 1 verdict line from `java -jar` with no sbt.
+- TJ3 (criterion 15): step 2 creates `/tmp/opencode/fatjar-verify/explicit-ledger.db`, emits a verdict, and creates no `ledger.db` in the scratch cwd.
+- TJ5 (criterion 17): `cd hypothesis-engine && sbt -batch assembly` (cu-001 step 2) and `sbt -batch test` (cu-004 step 3) both exit 0.

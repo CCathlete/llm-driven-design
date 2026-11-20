@@ -1,3 +1,3 @@
 # REQUIREMENTS: cu-004
 
-Deliver criteria 5, 7 and 10 at the control boundary. Decode the required justification field, run the admissibility check before any ledger write, return the decision together with its report, encode the report deterministically, print a block that is byte-identical to the block appended to the feature report file, and keep the three verdict lines unchanged. Depends on: cu-001 (report types), cu-002 (admissibility and StageReporter), cu-003 (decisionHistory and justification column).
+feat-18 Phase 2 criterion 17 and tests TJ2/TJ3/TJ5: prove the assembled jar runs standalone without sbt, that the ledger-path property is honoured from a foreign cwd, and that the existing engine suites remain green. Verification only u2014 no production code changes.

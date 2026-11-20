@@ -1,3 +1,0 @@
-# COORDINATES: cu-008
-
-FILE..LLMDD/tests/test_cu_boundary.py is the exact DTR key for the in-repo pytest style reference. .LLMDD/tests/test_hypothesis_report.py is a creation absent from the baseline DTR.

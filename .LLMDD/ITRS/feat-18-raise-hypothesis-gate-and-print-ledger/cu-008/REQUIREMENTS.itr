@@ -1,3 +1,0 @@
-# REQUIREMENTS: cu-008
-
-Deliver verification for criterion 9 with a table-driven suite covering the passing echo and each fail-closed case: missing report, non-verbatim echo, missing echo and mismatched verdict. Depends on: cu-007 (the checker tool).

@@ -1,3 +1,5 @@
 [
-  {"wave": 1, "description": "Corrective: portable ledger - untrack and ignore runtime db, add sqlite-jdbc to sbt meta-build, and an ensureLedger task that creates ledger.db from schemaDdl when absent (cu-009).", "cus": ["cu-009"]}
+  {"wave": 1, "description": "Assembly build config and jar ignore rule (independent files)", "cus": ["cu-001", "cu-003"]},
+  {"wave": 2, "description": "Explicit ledger-path property (needs stable build.sbt from wave 1)", "cus": ["cu-002"]},
+  {"wave": 3, "description": "E2E verification: standalone jar run, explicit ledger path, suite green", "cus": ["cu-004"]}
 ]

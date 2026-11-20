@@ -1,3 +1,5 @@
 # COORDINATES: cu-004
 
-FILE.hypothesis-engine/src/main/scala/hypothesisengine/control/Main.scala is the exact DTR key amended here.
+- FILE.hypothesis-engine/src/test/scala/hypothesisengine/RuntimeSpec.scala
+- FILE.hypothesis-engine/build.sbt
+- FILE.hypothesis-engine/src/main/scala/hypothesisengine/control/Main.scala

@@ -1,3 +1,0 @@
-# REQUIREMENTS: cu-007
-
-Deliver criterion 9 and the strict typing of criterion 12. Add a deterministic checker that verifies, for the current stage, that the report file holds exactly one matching block, that the block appears verbatim in the conversation record, and that the block decision label matches the verdict line. Fail closed with a named reason on every mismatch. All expected failures are returned as immutable values; the only try-except is the JSON parse at the file boundary. Depends on: nothing.
