@@ -1,0 +1,4 @@
+[
+  {"wave": 1, "description": "Fix final-wave detection in run-waves.py (pure helpers, signature/call site, dry-run observability, mypy no-redef)", "cus": ["cu-001"]},
+  {"wave": 2, "description": "Add bug-11 regression tests (T1 table-driven, T2 dry-run e2e, T3 non-final deferral guard)", "cus": ["cu-002"]}
+]

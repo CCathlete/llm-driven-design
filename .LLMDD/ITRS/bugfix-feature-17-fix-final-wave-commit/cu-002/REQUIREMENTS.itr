@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-002
+
+Add a regression test file for bug-11 proving: (T1) `is_final_wave`/`final_wave_label` identify exactly the last label for [1,2,3], [8], [7,8], [1,2,8]; (T2) an end-to-end --dry-run over a single wave numbered 8 emits the commit instruction and not the deferral; (T3) non-final waves still receive the deferral, so the fix is not an unconditional-commit shortcut. Import the runner's pure helpers so the test exercises the same expression the runner uses.

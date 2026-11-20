@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-001
+
+Fix bug-11: the final wave of a run must be identified by the last wave's LABEL, not by len(waves). Preserve the one-consolidated-commit-per-run design and the non-final deferral. Make the final/non-final decision observable in --dry-run so the acceptance probe can assert it. Remove the redundant annotation that makes `uvx mypy --strict .LLMDD/tools/run-waves.py` fail. All edits live in one file so a single CU owns it.

@@ -1,0 +1,4 @@
+# ACCEPTANCE: cu-002
+
+T1/T2/T3: `uvx pytest -q .LLMDD/tests/test_final_wave_detection.py` -> 3 passed.
+T5: `uvx pytest -q .LLMDD/tests/test_cu_boundary.py` -> 24 passed.

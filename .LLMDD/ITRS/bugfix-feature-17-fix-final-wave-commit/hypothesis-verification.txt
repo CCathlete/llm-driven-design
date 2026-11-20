@@ -1,1 +1,1 @@
-GREEN_LIGHT posterior=0.6666666666666666 gate=0.6
+GREEN_LIGHT posterior=0.875 gate=0.85

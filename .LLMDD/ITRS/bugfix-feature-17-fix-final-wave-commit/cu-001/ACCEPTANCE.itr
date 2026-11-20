@@ -1,0 +1,5 @@
+# ACCEPTANCE: cu-001
+
+T4: `uvx mypy --strict .LLMDD/tools/run-waves.py` -> zero errors (exit 0, no `no-redef`).
+T5: `uvx pytest -q .LLMDD/tests/test_cu_boundary.py` -> 24 passed.
+T2 probe: a single wave numbered 8 under --dry-run prints `Stage all changes and commit with the consolidated message` and not `Do NOT commit`.
