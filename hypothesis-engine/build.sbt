@@ -35,11 +35,11 @@ lazy val root = (project in file(".")).settings(
     println("LEDGER_CLEANED fresh=" + fresh)
   },
   ensureLedger := {
+    Class.forName("org.sqlite.JDBC")
     val db: java.io.File = baseDirectory.value / "ledger.db"
     if (db.exists()) {
       println("LEDGER_EXISTS " + db.getAbsolutePath)
     } else {
-      Class.forName("org.sqlite.JDBC")
       val conn: java.sql.Connection =
         java.sql.DriverManager.getConnection("jdbc:sqlite:" + db.getAbsolutePath)
       try {
@@ -53,5 +53,20 @@ lazy val root = (project in file(".")).settings(
       } finally conn.close()
     }
   },
-  Compile / compile := ((Compile / compile) dependsOn ensureLedger).value
+  Compile / compile := ((Compile / compile) dependsOn ensureLedger).value,
+
+  Compile / mainClass := Some("hypothesisengine.control.Main"),
+  assembly / assemblyJarName := "hypothesis-engine.jar",
+  assembly / assemblyOutputPath := baseDirectory.value / ".." / ".LLMDD" / "tools" / "hypothesis-engine.jar",
+  assembly / assemblyMergeStrategy := {
+    case "META-INF/services/java.sql.Driver" => MergeStrategy.concat
+    case PathList("META-INF", "MANIFEST.MF")   => MergeStrategy.discard
+    case PathList("META-INF", "DEPENDENCIES")  => MergeStrategy.discard
+    case PathList("META-INF", "LICENSE")       => MergeStrategy.discard
+    case PathList("META-INF", "LICENSE.txt")   => MergeStrategy.discard
+    case PathList("META-INF", "NOTICE")        => MergeStrategy.discard
+    case PathList("META-INF", "NOTICE.txt")    => MergeStrategy.discard
+    case PathList("META-INF", xs @ _*)         => MergeStrategy.first
+    case _                                     => MergeStrategy.first
+  }
 )

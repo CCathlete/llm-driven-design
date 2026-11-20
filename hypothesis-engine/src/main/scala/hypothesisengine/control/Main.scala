@@ -77,7 +77,8 @@ object Main:
           error => throw new IllegalArgumentException(error), identity)
       }
     val clock: Clock = new SystemClock
-    val engine: HypothesisEngine = new HypothesisEngine(new ProcessAdapter(clock), new SqliteLedger, clock)
+    val ledgerPath: String = sys.props.getOrElse("hypothesis-engine.ledger.path", "ledger.db")
+    val engine: HypothesisEngine = new HypothesisEngine(new ProcessAdapter(clock), new SqliteLedger(ledgerPath), clock)
     val outcome: ExaminationOutcome = engine.execute(hypothesis, definitions)
     import ReportJson.given
     val block: String = outcome.report.asJson.noSpaces

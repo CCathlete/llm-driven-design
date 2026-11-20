@@ -22,6 +22,7 @@ hs_err_pid*
 # Build with: cs launch sbt -- assembly   (then copy the binary to the module root)
 # Anchored to module roots so nested paths are unaffected.
 /dtr-builder/dtr-builder
+/.LLMDD/tools/hypothesis-engine.jar
 /commit-tool/commit-tool
 /itr-compiler/itr-compiler
 

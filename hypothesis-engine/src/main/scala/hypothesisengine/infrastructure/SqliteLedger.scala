@@ -13,7 +13,11 @@ final class SqliteLedger(dbPath: String = "ledger.db") extends Ledger:
       case Some(stream) => scala.io.Source.fromInputStream(stream).mkString
       case None => ""
 
-  private def connection: Connection = DriverManager.getConnection("jdbc:sqlite:" + dbPath)
+  private def connection: Connection = {
+    val conn: Connection = DriverManager.getConnection("jdbc:sqlite:" + dbPath)
+    conn.setAutoCommit(true)
+    conn
+  }
 
   initializeSchema()
 
