@@ -1,0 +1,6 @@
+# ACCEPTANCE: cu-009
+
+A1: `git check-ignore hypothesis-engine/ledger.db` prints the path; `git ls-files hypothesis-engine/ledger.db` prints nothing.
+A2: `cd hypothesis-engine && rm -f ledger.db && sbt -batch compile` prints `LEDGER_CREATED` and leaves a valid ledger.db (tables queryable).
+A3: A second `cd hypothesis-engine && sbt -batch "show ensureLedger"` prints `LEDGER_EXISTS` and does not recreate or clear the db.
+A4: `cd hypothesis-engine && sbt -batch test` still passes (no regression from the meta-build driver dependency).
