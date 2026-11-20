@@ -1,8 +1,8 @@
 # bug-10: CU scope boundaries are declared but never enforced
 
-- Status: Open
+- Status: Resolved
 - Created: 2026-10-18
-- Resolved: -
+- Resolved: 2026-11-20
 - Bug ID: bug-10-cu-scope-boundaries-not-enforced
 
 ## Bug detail
@@ -155,23 +155,49 @@ cu-001/cu-002 contamination above.
 
 ## Resolution status
 
-Open. No fix merged.
+Resolved 2026-11-20. All three gaps are closed in the shipped tree.
 
 ## Fix summary (Resolved only)
 
-Pending.
+Delivered by `bugfix-feature-7-enforce-cu-boundaries` (Implemented,
+`CONVERGED`): commits `fa50684` (initial boundary enforcement), `bc0573d`
+(cu-001..cu-008: boundary vocabulary, no-touch enforcement, dirty-tree
+refusal, scope vocabulary hardening, per-CU change attribution, per-wave
+boundary enforcement, lead-gate rule, escalation cleanup), `4be0d3a` /
+`dcb364d` (attribution of correction logs), `15dced6` (correction pass and
+unattributed lead context) and `95b2fa8` (exclude runner/lead bookkeeping
+paths from no-touch checks).
+
+- Gap 1: `validate-steps.py` now parses `Do NOT touch:` via the shared
+  `.LLMDD/tools/cu_scope.py` vocabulary and fails a CU whose no-touch set
+  intersects its own declared write paths (F7), naming both sides.
+- Gap 2: prose clauses resolve to matchable globs; `cu_scope.resolve_patterns`
+  expands directories and symlinks, and unenforceable lists fail closed.
+- Gap 3: `run-waves.py` attributes changes per CU (own tool_use writes,
+  wave diff and untracked files minus the per-wave baseline) and enforces
+  three rules — own no-touch, cross-CU shared-write, and unattributed
+  changes against every no-touch in the wave — plus a pre-flight dirty-path
+  refusal and a gate on leads.
 
 ## Tests proving resolution (Resolved only)
 
-Pending. Suggested: (1) negative - a CU whose no-touch list contains its
-own allowlist path fails validation with both sides named; (2) negative -
-an empty or prose-only no-touch list fails validation rather than passing
-substring presence; (3) negative - a Coder run whose diff touches a file
-outside the declared allowlist fails the CU non-zero, naming the offending
-path and the token/CU that permitted it; (4) negative - a CU starting
-with a sibling CU's declared path already dirty in the working tree fails
-before implementation begins; (5) positive - a conforming run still
-passes, with `files_changed` reported as before, so the check is not
-merely stricter; (6) static - the runner contains at least one assertion
-comparing `files_changed` to a declared scope, so the measurement cannot
-be removed without failing.
+Live re-run on 2026-11-20 from the repo root:
+
+- Original bug-10 Gap 1 reproduction (CU listing its own write target as
+  untouchable) now prints `FAIL cu-bad / F7: no-touch list contains this CU
+  own write target: .LLMDD/tools/x.py`, exit 1. Previously `PASS cu-bad`,
+  exit 0.
+- `uvx pytest -q .LLMDD/tests/test_cu_boundary.py` — 24 passed
+  (`.LLMDD/tests/test_cu_boundary.py`, regression suite for measurement and
+  enforcement: parse, glob resolution, attribution, all three breach rules,
+  fail-closed on unenforceable lists).
+- `bugfix-feature-7` convergence: `CONVERGED`, all waves `coder_status=0`,
+  zero escalations.
+
+Designer-approved exception for test T5 (the original suggested `mypy
+--strict` zero-error probe on `validate-steps.py` / `run-waves.py`): skipped
+per explicit Designer approval on 2026-11-20. Note for the record —
+`uvx mypy --strict` currently reports one `no-redef` (`run_written` at
+`run-waves.py:2371`, first bound at 2306); it is a strict-typing cleanup,
+not a functional gap in boundary enforcement, and is left as a minor
+follow-up rather than a blocker to closing this bug.
