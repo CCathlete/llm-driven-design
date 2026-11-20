@@ -31,7 +31,7 @@ final class MemoryLedger(var missing: Vector[String] = Vector.empty) extends Led
     rawRows.zip(normalizedRows).filter((raw, _) => raw.hypothesisId == id).toVector
 
 object Fixtures:
-  val hypothesis: Hypothesis = Hypothesis(HypothesisId("H-001"), "state stays consistent", Vector(DtrCoordinate("TYPE.a.Domain"), DtrCoordinate("FILE.src/a.scala")), 0.80d, 0.50d)
+  val hypothesis: Hypothesis = Hypothesis(HypothesisId("H-001"), "state stays consistent", Vector(DtrCoordinate("TYPE.a.Domain"), DtrCoordinate("FILE.src/a.scala")), 0.85d, 0.50d, "fixture justification for gate regression checks")
   val pythonDefinition: ExperimentDefinition = ExperimentDefinition("EXP-001", hypothesis.id, Runtime.Python, Vector("python", "-m", "pytest"), "./experiments/python/state", 60, "v1")
   val scalaDefinition: ExperimentDefinition = ExperimentDefinition("EXP-002", hypothesis.id, Runtime.Scala, Vector("sbt", "testOnly", "StateConsistencySpec"), "./experiments/state-scala", 120, "v1")
   def raw(passed: Boolean, detail: String): RawResult = RawResult(

@@ -81,11 +81,13 @@ belong in the verify phase, not here.
 1. Write `.LLMDD/ITRS/<feature-name>/<feature-name>.hypotheses.json`:
 
    ```json
-   {"id": "H-<feature-name>-DESIGN", "statement": "...", "dtr_coordinates": ["FILE.a/b.py", "TYPE.x.Y"], "gate_probability_for_correctness": 0.6, "prior": 0.5}
+   {"id": "H-<feature-name>-DESIGN", "statement": "the baseline claim under examination", "dtr_coordinates": ["FILE.a/b.py", "TYPE.x.Y"], "gate_probability_for_correctness": 0.85, "prior": 0.5, "justification": "Advisor-authored reason this claim is worth examining at these coordinates"}
    ```
 
-   - `dtr_coordinates` must be exact keys from the step 2 DTR (absent key =
-     creation); the gate probability is the sole green-light threshold.
+- `dtr_coordinates` must be exact keys from the step 2 DTR (absent key =
+      creation); the gate probability is the sole green-light threshold and the
+      engine rejects any value below 0.85. `justification` is required and must
+      be non-empty; a blank value fails closed before any evaluation.
 2. Write `.LLMDD/ITRS/<feature-name>/<feature-name>.experiments.jsonl`, one
    JSON object per line:
 
@@ -99,32 +101,59 @@ belong in the verify phase, not here.
    - `working_directory` is relative to the engine's own cwd, which is
      `hypothesis-engine/` (step 3 `cd`s there). Use `".."` for the repo root
      so `command` paths like `.LLMDD/tests/<feature-name>/probe.py` resolve.
-3. Reset the engine ledger, then examine (run from the repo root):
-
-   ```sh
-   (cd hypothesis-engine && sbt -batch cleanLedger)
-   (cd hypothesis-engine && sbt -batch "runMain hypothesisengine.control.Main ../.LLMDD/ITRS/<feature-name>/<feature-name>.hypotheses.json ../.LLMDD/ITRS/<feature-name>/<feature-name>.experiments.jsonl")
-   ```
-
-4. Interpret the verdict verbatim:
-
-   - `GREEN_LIGHT posterior=… gate=…` → pass; record the line in
-     `.LLMDD/ITRS/<feature-name>/hypothesis-verification.txt` and proceed to
-     step 4.
-   - `RED_LIGHT … breakpoints=<DTR coords> fix=<text>` → fail. The breakpoints
-     are DTR coordinates: revise the spec/DTR (or the hypotheses) at those
-     coordinates and re-run. Do not draft CUs on a red light.
-   - `ADVISOR_ACTION_REQUIRED missing=… corrections=…` → fail. Supply the named
-     ledger data (fix malformed hypotheses/experiments JSON) and re-run.
-   - Non-zero exit, crash, or no verdict line → fail. Treat as an engine defect;
-     stop and report it.
-
-Store the hypothesis/experiment inputs and the verdict line with the feature's
-ITR artifacts; commit them in step 10. Never proceed to step 4 on a red gate —
-the fix loop has no iteration cap.
-
 ### 4. Draft the batch CU (dummy-proof)
 
+   3. Reset the engine ledger for the first stage, then examine (run from the repo
+    root). Run `cleanLedger` once before the first stage of a hypothesis. On a
+    re-run after a RED or ADVISOR_ACTION_REQUIRED stage, do NOT run
+    `cleanLedger` again: the engine clears that stage's evidence and preserves
+    the decision history so each report can show the full progression.
+
+    ```sh
+    (cd hypothesis-engine && sbt -batch cleanLedger)
+    (cd hypothesis-engine && sbt -batch "runMain hypothesisengine.control.Main ../.LLMDD/ITRS/<feature-name>/<feature-name>.hypotheses.json ../.LLMDD/ITRS/<feature-name>/<feature-name>.experiments.jsonl")
+    ```
+
+    4. Echo the ledger report block before any revision or advance. The engine
+    prints one JSON block to stdout and appends the byte-identical block to
+    `.LLMDD/ITRS/<feature-name>/<feature-name>.ledger-report.jsonl`. Paste that
+    block verbatim into the conversation and append the same block to
+    `.LLMDD/ITRS/<feature-name>/<feature-name>.hypothesis-conversation.md`.
+    You MUST NOT revise the hypothesis, re-run the engine, or advance to
+    top-level step 4 until the current stage's block appears verbatim in both
+    the conversation and the conversation record. Run the deterministic checker
+    as a hard gate:
+
+    ```sh
+    python3 .LLMDD/tools/check-hypothesis-report.py \
+      --report .LLMDD/ITRS/<feature-name>/<feature-name>.ledger-report.jsonl \
+      --conversation .LLMDD/ITRS/<feature-name>/<feature-name>.hypothesis-conversation.md \
+      --stage <stage-number-from-the-report-block> \
+      --verdict <GREEN_LIGHT|RED_LIGHT|ADVISOR_ACTION_REQUIRED>
+    ```
+
+    A `CHECK_FAILED` exit stops the workflow: supply the missing verbatim echo
+    and re-run the checker before interpreting the verdict.
+
+    5. Interpret the verdict verbatim:
+
+    - `GREEN_LIGHT posterior=<value> gate=<value>` u2192 pass; report the GREEN_LIGHT block in
+      the conversation first, record the line in
+      `.LLMDD/ITRS/<feature-name>/hypothesis-verification.txt` and proceed to
+      top-level step 4 (`Draft the batch CU`).
+    - `RED_LIGHT posterior=<value> gate=<value> breakpoints=<DTR coords> fix=<text>` u2192 fail. The breakpoints
+      are DTR coordinates: revise the spec/DTR (or the hypotheses) at those
+      coordinates and re-run from sub-step 3. Do not draft CUs on a red light.
+    - `ADVISOR_ACTION_REQUIRED missing=<names> corrections=<text>` u2192 fail. Supply the named
+      ledger data (a gate of at least 0.85, a non-empty justification, or fix
+      malformed hypotheses/experiments JSON) and re-run from sub-step 3.
+    - Non-zero exit, crash, or no verdict line u2192 fail. Treat as an engine defect;
+      stop and report it.
+
+    Store the hypothesis/experiment inputs, the report file, the conversation
+    record and the verdict line with the feature's ITR artifacts; commit them in
+    step 10. Never proceed to top-level step 4 on a red gate u2014 the fix loop has no
+    iteration cap.
 Write `.LLMDD/ITRS/<feature-name>.batch.json` (JSON array; YAML
 accepted with `--yaml-content`). First two entries are always
 `arch` + `legend`; regular CUs are `cu-001`, `cu-002`, …:

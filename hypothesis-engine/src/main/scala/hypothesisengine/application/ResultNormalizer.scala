@@ -1,7 +1,8 @@
 package hypothesisengine.application
 
+import cats.syntax.either.*
 import hypothesisengine.domain.*
-import io.circe.Decoder
+import io.circe.*
 import io.circe.parser.decode
 
 object ResultNormalizer:
@@ -12,8 +13,8 @@ object ResultNormalizer:
   def validate(raw: RawResult): Either[String, NormalizedResult] =
     val stdout: String = raw.stdout.trim
     val stderr: String = raw.stderr.trim
-    val fromStdout: Either[String, Structured] = decode[Structured](stdout).left.map(_.getMessage)
-    val fromStderr: Either[String, Structured] = decode[Structured](stderr).left.map(_.getMessage)
+    val fromStdout: Either[String, Structured] = decode[Structured](stdout).leftMap(_.getMessage)
+    val fromStderr: Either[String, Structured] = decode[Structured](stderr).leftMap(_.getMessage)
     if stdout.startsWith("{") && fromStdout.isLeft then
       Left("malformed structured result on stdout: " + fromStdout.left.getOrElse("unknown"))
     else if stderr.startsWith("{") && stdout.isEmpty && fromStderr.isLeft then

@@ -100,12 +100,34 @@ final class SqliteLedger(dbPath: String = "ledger.db") extends Ledger:
     }
 
   override def saveHypothesis(hypothesis: Hypothesis): Either[String, Unit] =
-    write("INSERT OR REPLACE INTO hypotheses (id, statement, gate, prior) VALUES (?, ?, ?, ?)") { statement =>
+    write("INSERT OR REPLACE INTO hypotheses (id, statement, gate, prior, justification) VALUES (?, ?, ?, ?, ?)") { statement =>
       statement.setString(1, HypothesisId.value(hypothesis.id))
       statement.setString(2, hypothesis.statement)
       statement.setDouble(3, hypothesis.gate)
       statement.setDouble(4, hypothesis.prior)
+      statement.setString(5, hypothesis.justification)
     }
+
+  override def decisionHistory(hypothesisId: HypothesisId): Vector[StageDecision] = {
+    val id: String = HypothesisId.value(hypothesisId)
+    Using.Manager { use =>
+      val conn: Connection = use(connection)
+      val statement: PreparedStatement = use(conn.prepareStatement("SELECT decision, gate, posterior FROM decisions WHERE hypothesis_id = ? ORDER BY rowid"))
+      statement.setString(1, id)
+      val resultSet = use(statement.executeQuery())
+      val builder = Vector.newBuilder[StageDecision]
+      var stage: Int = 1
+      while resultSet.next() do
+        val decisionStr: String = resultSet.getString(1)
+        val gate: Double = resultSet.getDouble(2)
+        val posterior: Double = resultSet.getDouble(3)
+        builder += StageDecision(stage, posterior, gate, decisionStr)
+        stage = stage + 1
+      builder.result()
+    }.getOrElse(Vector.empty)
+  }
+
+  override def resetStageData(hypothesisId: HypothesisId): Unit = ()
 
   override def saveCoordinates(hypothesisId: HypothesisId, coordinates: Vector[DtrCoordinate]): Either[String, Unit] =
     write("DELETE FROM coordinates WHERE hypothesis_id = ?") { statement =>

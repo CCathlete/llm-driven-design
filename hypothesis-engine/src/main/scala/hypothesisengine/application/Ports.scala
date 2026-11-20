@@ -19,3 +19,5 @@ trait Ledger:
   def saveHypothesis(hypothesis: Hypothesis): Either[String, Unit]
   def saveCoordinates(hypothesisId: HypothesisId, coordinates: Vector[DtrCoordinate]): Either[String, Unit]
   def saveExperiments(hypothesisId: HypothesisId, definitions: Vector[ExperimentDefinition]): Either[String, Unit]
+  def decisionHistory(hypothesisId: HypothesisId): Vector[StageDecision] = Vector.empty
+  def resetStageData(hypothesisId: HypothesisId): Unit = ()

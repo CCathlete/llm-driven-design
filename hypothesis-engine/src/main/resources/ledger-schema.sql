@@ -1,1 +1,7 @@
-CREATE TABLE IF NOT EXISTS hypotheses (id TEXT PRIMARY KEY, statement TEXT, gate REAL, prior REAL);CREATE TABLE IF NOT EXISTS coordinates (hypothesis_id TEXT, coordinate TEXT);CREATE TABLE IF NOT EXISTS experiments (id TEXT PRIMARY KEY, hypothesis_id TEXT, definition TEXT, artifact_version TEXT);CREATE TABLE IF NOT EXISTS executions (id TEXT PRIMARY KEY, hypothesis_id TEXT, experiment_id TEXT, artifact_version TEXT, command TEXT, revision TEXT, timeout_seconds INTEGER, exit_code INTEGER, stdout TEXT, stderr TEXT, duration_millis INTEGER, recorded_at TEXT);CREATE TABLE IF NOT EXISTS evidence (execution_id TEXT, hypothesis_id TEXT, passed INTEGER, detail TEXT);CREATE TABLE IF NOT EXISTS calculations (hypothesis_id TEXT, posterior REAL, calculated_at TEXT);CREATE TABLE IF NOT EXISTS decisions (hypothesis_id TEXT, decision TEXT, gate REAL, posterior REAL)
+CREATE TABLE IF NOT EXISTS hypotheses (id TEXT PRIMARY KEY, statement TEXT, gate REAL, prior REAL, justification TEXT);
+CREATE TABLE IF NOT EXISTS coordinates (hypothesis_id TEXT, coordinate TEXT);
+CREATE TABLE IF NOT EXISTS experiments (id TEXT PRIMARY KEY, hypothesis_id TEXT, definition TEXT, artifact_version TEXT);
+CREATE TABLE IF NOT EXISTS executions (id TEXT PRIMARY KEY, hypothesis_id TEXT, experiment_id TEXT, artifact_version TEXT, command TEXT, revision TEXT, timeout_seconds INTEGER, exit_code INTEGER, stdout TEXT, stderr TEXT, duration_millis INTEGER, recorded_at TEXT);
+CREATE TABLE IF NOT EXISTS evidence (execution_id TEXT, hypothesis_id TEXT, passed INTEGER, detail TEXT);
+CREATE TABLE IF NOT EXISTS calculations (hypothesis_id TEXT, posterior REAL, calculated_at TEXT);
+CREATE TABLE IF NOT EXISTS decisions (hypothesis_id TEXT, decision TEXT, gate REAL, posterior REAL)

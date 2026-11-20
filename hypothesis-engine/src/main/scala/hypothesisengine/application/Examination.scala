@@ -4,9 +4,28 @@ import hypothesisengine.domain.*
 import java.time.Instant
 
 object LedgerValidator {
+  val gateFloor: Double = 0.85d
+
   def requireComplete(missing: Vector[String]): Either[AdvisorActionRequired, Unit] =
     if missing.isEmpty then Right(())
     else Left(AdvisorActionRequired(missing, missing.map(name => "supply " + name + " to the ledger before examination")))
+
+  def requireAdmissible(hypothesis: Hypothesis): Either[AdvisorActionRequired, Unit] =
+    val floorMissing: Vector[String] =
+      if hypothesis.gate >= gateFloor then Vector.empty[String]
+      else Vector("gate_probability_for_correctness >= " + gateFloor.toString)
+    val floorCorrections: Vector[String] =
+      if hypothesis.gate >= gateFloor then Vector.empty[String]
+      else Vector("raise gate_probability_for_correctness to at least " + gateFloor.toString + " (found " + hypothesis.gate.toString + ")")
+    val justificationMissing: Vector[String] =
+      if hypothesis.justification.trim.nonEmpty then Vector.empty[String]
+      else Vector("justification")
+    val justificationCorrections: Vector[String] =
+      if hypothesis.justification.trim.nonEmpty then Vector.empty[String]
+      else Vector("supply a non-empty Advisor-authored justification for the hypothesis")
+    val missing: Vector[String] = floorMissing ++ justificationMissing
+    val corrections: Vector[String] = floorCorrections ++ justificationCorrections
+    if missing.isEmpty then Right(()) else Left(AdvisorActionRequired(missing, corrections))
 }
 
 object BayesianEvaluator {

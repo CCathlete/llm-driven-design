@@ -25,7 +25,8 @@ final case class Hypothesis(
   statement: String,
   coordinates: Vector[DtrCoordinate],
   gate: Double,
-  prior: Double
+  prior: Double,
+  justification: String = ""
 )
 
 final case class ExperimentDefinition(
@@ -86,3 +87,36 @@ enum Decision:
   case Green(hypothesisId: HypothesisId, posterior: Double, gate: Double)
   case Red(hypothesisId: HypothesisId, posterior: Double, gate: Double, breakpoints: Vector[Breakpoint], fix: SuggestedFix)
   case Blocked(reason: AdvisorActionRequired)
+
+final case class StageDecision(
+  stage: Int,
+  posterior: Double,
+  gate: Double,
+  decision: String
+)
+
+final case class BreakpointView(
+  coordinate: String,
+  executionId: String,
+  detail: String
+)
+
+final case class LedgerStageReport(
+  stage: Int,
+  hypothesisId: String,
+  statement: String,
+  dtrCoordinates: Vector[String],
+  justification: String,
+  probabilityForCorrectness: Double,
+  gate: Double,
+  gap: Double,
+  decision: String,
+  breakpoints: Vector[BreakpointView],
+  fix: Option[String],
+  history: Vector[StageDecision]
+)
+
+final case class ExaminationOutcome(
+  decision: Decision,
+  report: LedgerStageReport
+)

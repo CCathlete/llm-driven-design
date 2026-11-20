@@ -14,8 +14,8 @@ class GateSpec extends AnyFunSpec with Matchers:
       first shouldBe second
 
     it("grants green only at or above the configured gate"):
-      ExaminationGate.decide(Fixtures.hypothesis, 0.80d, Vector.empty).isInstanceOf[Decision.Green] shouldBe true
-      ExaminationGate.decide(Fixtures.hypothesis, 0.79d, Vector.empty).isInstanceOf[Decision.Red] shouldBe true
+      ExaminationGate.decide(Fixtures.hypothesis, 0.85d, Vector.empty).isInstanceOf[Decision.Green] shouldBe true
+      ExaminationGate.decide(Fixtures.hypothesis, 0.84d, Vector.empty).isInstanceOf[Decision.Red] shouldBe true
 
     it("reports dtr coordinates of breakpoints with a derived fix on red"):
       val failing: Vector[(RawResult, NormalizedResult)] = Vector((Fixtures.raw(false, "assertion failed"), ResultNormalizer.validate(Fixtures.raw(false, "assertion failed")).toOption.get))
