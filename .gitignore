@@ -25,6 +25,8 @@ hs_err_pid*
 /commit-tool/commit-tool
 /itr-compiler/itr-compiler
 
+/COMMIT_MSG_CONSOLIDATED.txt
+
 CU_*_IMPLEMENTATION_STEPS*.itr
 **/IMPLEMENTATION_STEPS.itr
 
