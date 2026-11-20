@@ -1,0 +1,3 @@
+# COORDINATES: cu-003
+
+FILE.hypothesis-engine/build.sbt, FILE.hypothesis-engine/src/main/resources/ledger-schema.sql, FILE.hypothesis-engine/src/main/scala/hypothesisengine/application/Ports.scala and FILE.hypothesis-engine/src/main/scala/hypothesisengine/infrastructure/SqliteLedger.scala are the exact DTR keys amended here.

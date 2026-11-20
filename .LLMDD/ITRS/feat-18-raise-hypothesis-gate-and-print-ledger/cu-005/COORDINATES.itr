@@ -1,0 +1,3 @@
+# COORDINATES: cu-005
+
+FILE.hypothesis-engine/src/test/scala/hypothesisengine/TestDoubles.scala and FILE.hypothesis-engine/src/test/scala/hypothesisengine/LedgerSeedingSpec.scala are the exact DTR keys amended here. hypothesis-engine/src/test/scala/hypothesisengine/LedgerValidatorSpec.scala and hypothesis-engine/src/test/scala/hypothesisengine/LedgerStageReportSpec.scala are creations absent from the baseline DTR.

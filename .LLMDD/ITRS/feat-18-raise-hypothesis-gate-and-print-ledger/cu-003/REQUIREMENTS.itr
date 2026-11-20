@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-003
+
+Deliver criterion 4 at the persistence boundary and the ledger read needed by criterion 6. Add justification as a column on the existing hypotheses table, round-trip it through saveHypothesis, and expose the ordered decision history for a hypothesis. No new ledger table is introduced; the schema keeps seven tables. Depends on: cu-001 (StageDecision type).

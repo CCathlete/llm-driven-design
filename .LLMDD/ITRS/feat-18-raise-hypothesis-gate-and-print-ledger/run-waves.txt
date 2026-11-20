@@ -1,0 +1,1 @@
+python3 .LLMDD/tools/run-waves.py --itr .LLMDD/ITRS/feat-18-raise-hypothesis-gate-and-print-ledger --app repo --waves .LLMDD/ITRS/feat-18-raise-hypothesis-gate-and-print-ledger/waves.json

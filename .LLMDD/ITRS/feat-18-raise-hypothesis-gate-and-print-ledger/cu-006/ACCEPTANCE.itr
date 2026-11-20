@@ -1,0 +1,3 @@
+# ACCEPTANCE: cu-006
+
+Criteria 1 and 8 and tests T1, T5 u2014 `grep -c 'gate_probability_for_correctness.*0.85' .LLMDD/skills/prepare-implementation/SKILL.md` prints 1 with no 0.6 default; `python3 .LLMDD/tools/skill-check.py prepare-implementation --print-prompt` exits 0 and lists the mandatory paste, the conversation record and the checker.

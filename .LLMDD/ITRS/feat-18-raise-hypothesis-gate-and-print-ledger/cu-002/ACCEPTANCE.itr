@@ -1,0 +1,3 @@
+# ACCEPTANCE: cu-002
+
+Criteria 2, 3, 5, 6 and 10 and tests T2, T4 u2014 `cd hypothesis-engine && sbt -batch compile` exits 0; requireAdmissible at gate 0.849 returns a left with a named floor datum; a blank justification returns a left; StageReporter.build appends one StageDecision to the prior history.

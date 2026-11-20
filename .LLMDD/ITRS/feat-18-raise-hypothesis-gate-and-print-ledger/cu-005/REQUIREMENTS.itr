@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-005
+
+Deliver verification for criteria 2 through 7 and the regression in criterion 10. Amend the shared fixtures for the new justification field and the floor gate, keep every pre-existing assertion on ExaminationGate and the Bayesian evaluator unchanged, and add specs for the floor, justification round-trip, fail-closed row counts and the three-stage cumulative report. Depends on: cu-001 through cu-004.

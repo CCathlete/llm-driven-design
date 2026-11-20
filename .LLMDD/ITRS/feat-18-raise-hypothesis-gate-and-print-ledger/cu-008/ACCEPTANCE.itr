@@ -1,0 +1,3 @@
+# ACCEPTANCE: cu-008
+
+Criterion 9 and test T6 u2014 `uvx pytest -q .LLMDD/tests/test_hypothesis_report.py` exits 0; a verbatim echo passes while a missing file, a non-verbatim echo, a missing echo and a mismatched verdict each exit non-zero with the named reason.

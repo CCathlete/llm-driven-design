@@ -1,0 +1,6 @@
+[
+  {"wave": 1, "description": "Independent foundations in parallel: immutable domain vocabulary and report types (cu-001), prepare-implementation skill contract (cu-006), and the deterministic checker tool (cu-007) write disjoint files.", "cus": ["cu-001", "cu-006", "cu-007"]},
+  {"wave": 2, "description": "Admissibility floor and StageReporter over the new domain (cu-002), ledger schema and persistence with decision history (cu-003), and checker tests over cu-007 (cu-008) write disjoint files.", "cus": ["cu-002", "cu-003", "cu-008"]},
+  {"wave": 3, "description": "Control CLI decoding, stage reset, deterministic report emission and verdict lines (cu-004) needs the application and ledger work from wave 2.", "cus": ["cu-004"]},
+  {"wave": 4, "description": "Engine fixtures plus floor, justification, three-stage report and regression specs, verification last (cu-005).", "cus": ["cu-005"]}
+]

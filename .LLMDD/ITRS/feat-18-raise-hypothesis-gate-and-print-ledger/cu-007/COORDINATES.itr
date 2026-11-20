@@ -1,0 +1,3 @@
+# COORDINATES: cu-007
+
+FILE..LLMDD/tools/check-advisor-approval.py is the exact DTR key for the in-repo checker style reference. .LLMDD/tools/check-hypothesis-report.py is a creation absent from the baseline DTR.

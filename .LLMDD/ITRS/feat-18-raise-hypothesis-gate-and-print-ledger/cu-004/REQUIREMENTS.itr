@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-004
+
+Deliver criteria 5, 7 and 10 at the control boundary. Decode the required justification field, run the admissibility check before any ledger write, return the decision together with its report, encode the report deterministically, print a block that is byte-identical to the block appended to the feature report file, and keep the three verdict lines unchanged. Depends on: cu-001 (report types), cu-002 (admissibility and StageReporter), cu-003 (decisionHistory and justification column).

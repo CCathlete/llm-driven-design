@@ -1,0 +1,3 @@
+# COORDINATES: cu-002
+
+FILE.hypothesis-engine/src/main/scala/hypothesisengine/application/Examination.scala is the exact DTR key amended here. hypothesis-engine/src/main/scala/hypothesisengine/application/StageReporter.scala is a creation absent from the baseline DTR.
