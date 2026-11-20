@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-009
+
+Deliver bugfix-feature-7 Phase 2 acceptance criteria 6-9. Thread the run-level accumulated written-paths set (run_written) into wave measurement so a wave never re-attributes files written by earlier waves of the same run as unattributed breaches. wave_writes gains a prior_written exclusion set and subtracts it; enforce_boundary forwards it; run_wave_parallel accepts it and all four enforcement call sites pass it; main_async supplies frozenset(run_written) and the redundant run_written re-annotation is removed. Add regression tests. Follow ARCH.PYTHON.*: explicit annotations at first binding, no typing.Any, no bare generics, no try/except for expected failures.

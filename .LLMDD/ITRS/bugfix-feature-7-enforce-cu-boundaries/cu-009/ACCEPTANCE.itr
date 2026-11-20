@@ -1,0 +1,6 @@
+# ACCEPTANCE: cu-009
+
+P2-T1 wave_writes drops a path listed in prior_written while retaining an untracked path not in it; proven by TestPriorWrittenExclusion.test_wave_writes_drops_prior_written.
+P2-T2 enforce_boundary with a prior-written guarded path produces no unattributed breach, while the same path without the exclusion still does; proven by TestPriorWrittenExclusion.test_enforce_boundary_ignores_prior_written_guard.
+P2-T3 the full test_cu_boundary.py suite passes with zero failures and zero errors.
+P2-T4 prior_written appears in wave_writes, enforce_boundary, run_wave_parallel and all four enforcement call sites; main_async passes frozenset(run_written); the redundant run_written re-annotation is gone; ast.parse succeeds on both edited files.
