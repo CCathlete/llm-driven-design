@@ -16,3 +16,6 @@ trait Ledger:
   def missingFor(hypothesis: Hypothesis, experiments: Vector[ExperimentDefinition]): Vector[String]
   def resultsFor(hypothesisId: HypothesisId): Vector[(RawResult, NormalizedResult)]
   def saveNormalized(result: NormalizedResult): Either[String, Unit]
+  def saveHypothesis(hypothesis: Hypothesis): Either[String, Unit]
+  def saveCoordinates(hypothesisId: HypothesisId, coordinates: Vector[DtrCoordinate]): Either[String, Unit]
+  def saveExperiments(hypothesisId: HypothesisId, definitions: Vector[ExperimentDefinition]): Either[String, Unit]

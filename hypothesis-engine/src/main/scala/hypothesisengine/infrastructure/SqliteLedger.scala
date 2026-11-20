@@ -99,6 +99,44 @@ final class SqliteLedger(dbPath: String = "ledger.db") extends Ledger:
       statement.setDouble(4, posterior)
     }
 
+  override def saveHypothesis(hypothesis: Hypothesis): Either[String, Unit] =
+    write("INSERT OR REPLACE INTO hypotheses (id, statement, gate, prior) VALUES (?, ?, ?, ?)") { statement =>
+      statement.setString(1, HypothesisId.value(hypothesis.id))
+      statement.setString(2, hypothesis.statement)
+      statement.setDouble(3, hypothesis.gate)
+      statement.setDouble(4, hypothesis.prior)
+    }
+
+  override def saveCoordinates(hypothesisId: HypothesisId, coordinates: Vector[DtrCoordinate]): Either[String, Unit] =
+    write("DELETE FROM coordinates WHERE hypothesis_id = ?") { statement =>
+      statement.setString(1, HypothesisId.value(hypothesisId))
+    }.flatMap { _ =>
+      coordinates.foldLeft[Either[String, Unit]](Right(())) { (acc, coordinate) =>
+        acc.flatMap { _ =>
+          write("INSERT INTO coordinates (hypothesis_id, coordinate) VALUES (?, ?)") { statement =>
+            statement.setString(1, HypothesisId.value(hypothesisId))
+            statement.setString(2, DtrCoordinate.value(coordinate))
+          }
+        }
+      }
+    }
+
+  override def saveExperiments(hypothesisId: HypothesisId, definitions: Vector[ExperimentDefinition]): Either[String, Unit] =
+    write("DELETE FROM experiments WHERE hypothesis_id = ?") { statement =>
+      statement.setString(1, HypothesisId.value(hypothesisId))
+    }.flatMap { _ =>
+      definitions.foldLeft[Either[String, Unit]](Right(())) { (acc, definition) =>
+        acc.flatMap { _ =>
+          write("INSERT OR REPLACE INTO experiments (id, hypothesis_id, definition, artifact_version) VALUES (?, ?, ?, ?)") { statement =>
+            statement.setString(1, definition.experimentId)
+            statement.setString(2, HypothesisId.value(definition.hypothesisId))
+            statement.setString(3, definition.command.mkString(" "))
+            statement.setString(4, definition.testArtifactVersion)
+          }
+        }
+      }
+    }
+
   override def missingFor(hypothesis: Hypothesis, experiments: Vector[ExperimentDefinition]): Vector[String] =
     val id: String = HypothesisId.value(hypothesis.id)
     val missing: Vector[String] = Vector(

@@ -23,6 +23,9 @@ final class MemoryLedger(var missing: Vector[String] = Vector.empty) extends Led
   override def saveNormalized(result: NormalizedResult): Either[String, Unit] = { normalizedRows += result; Right(()) }
   override def saveCalculation(calculation: ProbabilityCalculation): Either[String, Unit] = { calculationRows += calculation; Right(()) }
   override def saveDecision(id: HypothesisId, decision: Decision): Either[String, Unit] = { decisionRows += ((id, decision)); Right(()) }
+  override def saveHypothesis(hypothesis: Hypothesis): Either[String, Unit] = Right(())
+  override def saveCoordinates(hypothesisId: HypothesisId, coordinates: Vector[DtrCoordinate]): Either[String, Unit] = Right(())
+  override def saveExperiments(hypothesisId: HypothesisId, definitions: Vector[ExperimentDefinition]): Either[String, Unit] = Right(())
   override def missingFor(hypothesis: Hypothesis, experiments: Vector[ExperimentDefinition]): Vector[String] = missing
   override def resultsFor(id: HypothesisId): Vector[(RawResult, NormalizedResult)] =
     rawRows.zip(normalizedRows).filter((raw, _) => raw.hypothesisId == id).toVector

@@ -9,6 +9,9 @@ import java.nio.file.{Files, Paths}
 
 final class HypothesisEngine(runner: ProcessRunner, ledger: Ledger, clock: Clock):
   def execute(hypothesis: Hypothesis, definitions: Vector[ExperimentDefinition]): Decision =
+    ledger.saveHypothesis(hypothesis)
+    ledger.saveCoordinates(hypothesis.id, hypothesis.coordinates)
+    ledger.saveExperiments(hypothesis.id, definitions)
     definitions.foreach { definition =>
       val raw: RawResult = runner.run(definition)
       ledger.saveRaw(raw)
