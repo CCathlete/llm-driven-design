@@ -162,3 +162,49 @@ Terms: a *stage* is one engine invocation for a hypothesis; the report file is
 
 Language note: engine work is Scala, so `ARCH.PYTHON.SCOPE` and its mypy probe do
 not apply to engine code; the new checker is Python and is covered by T9.
+
+## Phase 2 — self-contained fat jar for the hypothesis engine
+
+Motivation: the engine is currently source-distributed and run via
+`sbt -batch runMain`, so it cannot be handed to a machine without an sbt/JDK
+toolchain or downloaded as a release artifact. This phase makes it a single
+self-contained executable jar, matching the distribution model already used for
+`dtr-builder`, `commit-tool` and `itr-compiler` (fat JARs published as GitHub
+Releases, never tracked in git). This work is LLMDD distribution consistency,
+not new engine behaviour.
+
+Acceptance criteria (continuing from phase 1):
+
+13. `hypothesis-engine/project/plugins.sbt` declares the `sbt-assembly` plugin;
+    `hypothesis-engine/build.sbt` sets `Compile / mainClass` to
+    `hypothesisengine.control.Main` and `assembly / assemblyJarName` to a
+    deterministic name (e.g. `hypothesis-engine.jar`).
+14. `cd hypothesis-engine && sbt -batch assembly` exits 0 and produces a
+    self-contained jar containing all runtime dependencies (sqlite-jdbc, circe)
+    and the `ledger-schema.sql` resource. `java -jar <jar>` on a hypotheses +
+    experiments pair runs the engine without sbt on PATH.
+15. The engine accepts an explicit ledger path via JVM property
+    `-Dhypothesis-engine.ledger.path=<path>`, read in `Main.scala` and passed to
+    `new SqliteLedger(path)`; the default remains `ledger.db` for source runs.
+    Running the jar from any cwd with the property set writes the ledger to
+    exactly that path, creating it when absent — no CWD-fragile split.
+16. `.gitignore` ignores the assembled jar at the module root (anchored), so the
+    binary is a release artifact and never tracked.
+17. Verification stays green: `cd hypothesis-engine && sbt -batch assembly` and
+    `sbt -batch test` pass; a jar run with the ledger-path property emits a
+    verdict line and creates the ledger at the given path.
+
+Tests (phase 2):
+
+- TJ1 (criterion 13, static + build): grep `plugins.sbt` for `sbt-assembly`,
+  `build.sbt` for `mainClass` and `assemblyJarName`;
+  `cd hypothesis-engine && sbt -batch assembly` exits 0.
+- TJ2 (criterion 14, runtime): `java -jar hypothesis-engine.jar <hypotheses>
+  <experiments>` from a temp cwd runs without sbt and prints a verdict line.
+- TJ3 (criterion 15, runtime): run the jar with
+  `-Dhypothesis-engine.ledger.path=<tmp>` from a different cwd; the ledger
+  appears at exactly that path (created when absent) and not at the cwd.
+- TJ4 (criterion 16, static): `git check-ignore hypothesis-engine/<jar>` prints
+  the path; the jar is never staged.
+- TJ5 (criterion 17, suites): `sbt -batch assembly` and `sbt -batch test` green.
+
