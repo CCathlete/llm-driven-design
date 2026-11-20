@@ -1,7 +1,8 @@
 # feat-15: Hypothesis Engine owns the experiment execution lifecycle
 
-- Status: Proposed
+- Status: Implemented
 - Created: 2026-11-19
+- Implemented: 2026-11-20
 - Feature ID: feat-15-orchestrate-hypothesis-experiments
 
 ## Synopsis
@@ -63,12 +64,34 @@ Scope (out):
 
 ## Implementation status
 
-Proposed — not implemented. No CUs assigned and no ITR directory created yet.
-On approval: design CUs, compile with `itr-compiler` into
-`itr-buffer/feat-15-orchestrate-hypothesis-experiments.itr/` (or the v9 ITR
-location), record implementing commit(s) here, move status to In Progress when
-CUs are assigned, then to Implemented once waves are green and E2E verify
-passes.
+Implemented. Compiled ITR at
+`.LLMDD/ITRS/feat-15-orchestrate-hypothesis-experiments/` (8 CUs, 7 waves).
+All 8 CUs were implemented and committed in `6ebb72a`; the wave-runner
+lead-bookkeeping fix landed in `95b2fa8`.
+
+Two follow-up corrections were made after the wave run and verified green:
+environment capture was removed from `RawResult` and the ledger end to end
+(`3fdbf75`, Designer-directed — see book 9.38), and `Main.execute` was fixed to
+seed hypothesis/coordinates/experiments so a fresh ledger can actually reach a
+verdict (`c9e9351`, book 9.39, new `LedgerSeedingSpec`). The `prepare-implementation`
+hypothesis hard gate (`7811007`, book 9.39) and the `waves-done-broken` skill
+(`ef08f03`, book 9.40) build on this engine.
+
+Verification at close: `cd hypothesis-engine && sbt -batch test` → 18/18 pass,
+compile OK; a fresh-ledger CLI run prints `GREEN_LIGHT posterior=0.666… gate=0.6`
+with all seven ledger tables populated.
+
+Acknowledged deviation: criterion 8 and test 8 name `environment` as recorded
+reproducibility metadata. The whole-environment map is deliberately *not*
+persisted — it leaked every process secret into the ledger and its comma parser
+crashed on ordinary values. `sourceRevision` (the single `SOURCE_REVISION`
+provenance scalar), command, timeout and exit status are still recorded; the
+Designer explicitly authorised dropping the environment blob. The static
+assertion in test 8 should be read against that decision.
+
+Known stale state: `repo.convergence.json` reads `NEEDS_ATTENTION` because it
+was written by the old `run-waves.py` before the lead-bookkeeping fix; it is a
+phantom breach, not unfinished work, and no re-run is required.
 
 ## Acceptance criteria
 
