@@ -1,14 +1,15 @@
 ---
 name: prepare-implementation
-description: Run the full pre-implementation chain for one feature — commit pending specs, build DTR, draft a dummy-proof batch CU, compile ITR, plan waves, write the wave command to a txt file, print it, and commit. Use when the Designer says implementation is ready to be prepared.
+description: Run the full pre-implementation chain for one feature — commit pending specs, build DTR, validate the feature hypotheses with the Hypothesis Engine (hard gate), draft a dummy-proof batch CU, compile ITR, plan waves, write the wave command to a txt file, print it, and commit. Use when the Designer says implementation is ready to be prepared.
 ---
 
 # prepare-implementation
 
 End-to-end prep for WORKFLOW STEP5 (IMPLEMENT_CUS). Chains the
 single-purpose skills in order: spec commit → `build-dtr` →
-batch CU → `compile-itr` → waves plan → dry-run fix loop →
-`run-waves.txt` → print → commit. The agent does everything up to
+hypothesis validation (hard gate) → batch CU → `compile-itr` →
+waves plan → dry-run fix loop → `run-waves.txt` → print → commit.
+The agent does everything up to
 (not including) executing `run-waves.py` — the Designer runs that
 by pasting the printed command.
 
@@ -64,7 +65,65 @@ Verify with `git status --short -- <those paths>` (must be empty).
 - Never hand-edit the `.dtr`. Confirm exit 0 and the summary counts,
   and that the `ARCH=` line matches project constraints.
 
-### 3. Draft the batch CU (dummy-proof)
+### 3. Validate the feature hypotheses (hard gate)
+
+Before any batch CU is written, run the feature's own hypotheses through the
+Hypothesis Engine. The engine — not the agent — owns execution, evidence and
+the green-light decision; the agent only supplies hypotheses, DTR coordinates,
+predictions and experiment definitions. This is a hard gate: no batch CU is
+drafted until the engine returns `GREEN_LIGHT`.
+
+At prep time the implementation does not exist yet, so the experiments are
+prep-runnable probes against the current baseline (DTR/spec checks, static
+boundary checks, small scripts). Acceptance tests that need the new code
+belong in the verify phase, not here.
+
+1. Write `.LLMDD/ITRS/<feature-name>/<feature-name>.hypotheses.json`:
+
+   ```json
+   {"id": "H-<feature-name>-DESIGN", "statement": "...", "dtr_coordinates": ["FILE.a/b.py", "TYPE.x.Y"], "gate_probability_for_correctness": 0.6, "prior": 0.5}
+   ```
+
+   - `dtr_coordinates` must be exact keys from the step 2 DTR (absent key =
+     creation); the gate probability is the sole green-light threshold.
+2. Write `.LLMDD/ITRS/<feature-name>/<feature-name>.experiments.jsonl`, one
+   JSON object per line:
+
+   ```json
+   {"experiment_id": "EXP-001", "hypothesis_id": "H-<feature-name>-DESIGN", "runtime": "python", "command": ["python3", ".LLMDD/tests/<feature-name>/probe.py"], "working_directory": "..", "timeout_seconds": 60, "test_artifact_version": "v1"}
+   ```
+
+   - `runtime` is `python` or `scala`; `command` is an argv list. Each probe
+     must print `{"passed": true, "detail": "..."}` on stdout (or exit 0) and
+     must not write to the ledger — the engine is the only writer.
+   - `working_directory` is relative to the engine's own cwd, which is
+     `hypothesis-engine/` (step 3 `cd`s there). Use `".."` for the repo root
+     so `command` paths like `.LLMDD/tests/<feature-name>/probe.py` resolve.
+3. Reset the engine ledger, then examine (run from the repo root):
+
+   ```sh
+   (cd hypothesis-engine && sbt -batch cleanLedger)
+   (cd hypothesis-engine && sbt -batch "runMain hypothesisengine.control.Main ../.LLMDD/ITRS/<feature-name>/<feature-name>.hypotheses.json ../.LLMDD/ITRS/<feature-name>/<feature-name>.experiments.jsonl")
+   ```
+
+4. Interpret the verdict verbatim:
+
+   - `GREEN_LIGHT posterior=… gate=…` → pass; record the line in
+     `.LLMDD/ITRS/<feature-name>/hypothesis-verification.txt` and proceed to
+     step 4.
+   - `RED_LIGHT … breakpoints=<DTR coords> fix=<text>` → fail. The breakpoints
+     are DTR coordinates: revise the spec/DTR (or the hypotheses) at those
+     coordinates and re-run. Do not draft CUs on a red light.
+   - `ADVISOR_ACTION_REQUIRED missing=… corrections=…` → fail. Supply the named
+     ledger data (fix malformed hypotheses/experiments JSON) and re-run.
+   - Non-zero exit, crash, or no verdict line → fail. Treat as an engine defect;
+     stop and report it.
+
+Store the hypothesis/experiment inputs and the verdict line with the feature's
+ITR artifacts; commit them in step 10. Never proceed to step 4 on a red gate —
+the fix loop has no iteration cap.
+
+### 4. Draft the batch CU (dummy-proof)
 
 Write `.LLMDD/ITRS/<feature-name>.batch.json` (JSON array; YAML
 accepted with `--yaml-content`). First two entries are always
@@ -100,7 +159,7 @@ python3 .LLMDD/tools/validate-steps.py .LLMDD/ITRS/<feature-name>.batch.json
 All CUs must PASS. FAIL → fix the batch, re-run. Never compile a
 failing batch.
 
-### 4. Compile ITR (`compile-itr`)
+### 5. Compile ITR (`compile-itr`)
 
 ```sh
 .LLMDD/tools/itr-compiler --compile --json-content .LLMDD/ITRS/<feature-name>.batch.json --out-folder .LLMDD/ITRS/<feature-name>/ --dtr .LLMDD/DTRS/<feature-name>/<app>.dtr
@@ -115,7 +174,7 @@ failing batch.
   `IMPLEMENTATION_STEPS.itr`, `ACCEPTANCE.itr`; no blobs, no
   `arch/`/`legend/` subfolders. Repair per that skill when needed.
 
-### 5. Create waves (`run-waves` planning)
+### 6. Create waves (`run-waves` planning)
 
 Author `.LLMDD/ITRS/<feature-name>/waves.json` (regular CUs only —
 `arch`/`legend` excluded), packing as many parallel CUs per wave as
@@ -131,7 +190,7 @@ ordering allows:
 Rules: same-file CUs in different waves (dependency order);
 dependencies flow forward; verification/E2E last.
 
-### 6. Dry-run the waves and fix until green
+### 7. Dry-run the waves and fix until green
 
 Run the dry-run (the agent runs this itself — never the operational
 command, which is the Designer's job):
@@ -144,16 +203,16 @@ Green means all three: exit code 0, wave count and CU assignments
 match `waves.json`, every CU resolves to a frame file. On any
 failure, diagnose and fix, then re-run — repeat until green:
 
-- Unresolvable CU → frame problem: go back to step 4 (recompile
+- Unresolvable CU → frame problem: go back to step 5 (recompile
   with `--force`, re-run `verify-cu-structure`).
 - Wrong wave/CU listing or ordering complaint → plan problem: fix
-  `waves.json` per the step 5 rules and re-run the dry-run.
+  `waves.json` per the step 6 rules and re-run the dry-run.
 - Runner usage error (bad flags, wrong `--app`) → fix the command.
 
-Never proceed to steps 7–9 on a red dry-run. The fix loop has no
+Never proceed to steps 8–10 on a red dry-run. The fix loop has no
 iteration cap — a valid dry-run is mandatory before handoff.
 
-### 7. Write the wave command file
+### 8. Write the wave command file
 
 Write the exact operational command (no `--dry-run`, no
 placeholders, `<feature-name>` and `<app>` filled in) as the sole
@@ -166,16 +225,16 @@ python3 .LLMDD/tools/run-waves.py --itr .LLMDD/ITRS/<feature-name> --app <app> -
 Include non-default flags (`--coder-model`, `--lead-model`, …) on
 the same line when the run needs them.
 
-### 8. Print the wave command
+### 9. Print the wave command
 
-Print the identical one-line command from step 7 as the handoff for
+Print the identical one-line command from step 8 as the handoff for
 the Designer to paste into a terminal (fish). Print only after the
-step 6 dry-run is green. Never print it beforehand.
+step 7 dry-run is green. Never print it beforehand.
 
-### 9. Commit
+### 10. Commit
 
 ```sh
-git add .LLMDD/ITRS/<feature-name>.batch.json .LLMDD/ITRS/<feature-name>/ARCH.itr .LLMDD/ITRS/<feature-name>/LEGEND.itr .LLMDD/ITRS/<feature-name>/cu-*/ .LLMDD/ITRS/<feature-name>/waves.json .LLMDD/ITRS/<feature-name>/run-waves.txt .LLMDD/DTRS/<feature-name>/
+git add .LLMDD/ITRS/<feature-name>/<feature-name>.hypotheses.json .LLMDD/ITRS/<feature-name>/<feature-name>.experiments.jsonl .LLMDD/ITRS/<feature-name>/hypothesis-verification.txt .LLMDD/ITRS/<feature-name>.batch.json .LLMDD/ITRS/<feature-name>/ARCH.itr .LLMDD/ITRS/<feature-name>/LEGEND.itr .LLMDD/ITRS/<feature-name>/cu-*/ .LLMDD/ITRS/<feature-name>/waves.json .LLMDD/ITRS/<feature-name>/run-waves.txt .LLMDD/DTRS/<feature-name>/
 git status --short
 git commit -m "Prep: DTR plus ITR frames plus waves for <feature-name> (cu-001..cu-<NNN>)"
 ```
@@ -189,6 +248,8 @@ git commit -m "Prep: DTR plus ITR frames plus waves for <feature-name> (cu-001..
 
 - Strict order: each step gates the next. A red gate stops the
   chain — fix and re-run from that step, never skip ahead.
+- The step 3 hypothesis gate is hard: never draft or compile a batch CU
+  until the engine returns `GREEN_LIGHT` for the feature's hypotheses.
 - Never hand-edit a baseline DTR (re-run the builder) or a compiled
   frame (fix the batch, recompile).
 - Never `git add -A`; stage only the spec, DTR, batch, frame,
@@ -201,12 +262,15 @@ git commit -m "Prep: DTR plus ITR frames plus waves for <feature-name> (cu-001..
 1. Spec paths clean after step 1.
 2. DTR exists at `.LLMDD/DTRS/<feature-name>/` with `META.GENERATOR`
    and `FILE.`/`CODEX.`/`TYPE.` entries.
-3. `validate-steps.py` PASS for every regular CU.
-4. `verify-cu-structure` four checks pass; compiler exit 0.
-5. Waves dry-run (step 6 loop) exit 0 with expected wave/CU listing.
-6. `run-waves.txt` content == printed command == operational command
+3. Hypothesis gate: engine emitted `GREEN_LIGHT`; inputs + verdict line
+   committed with the feature's ITR artifacts.
+4. `validate-steps.py` PASS for every regular CU.
+5. `verify-cu-structure` four checks pass; compiler exit 0.
+6. Waves dry-run (step 7 loop) exit 0 with expected wave/CU listing.
+7. `run-waves.txt` content == printed command == operational command
    minus nothing.
-7. Final commit contains batch + frames + `waves.json` +
+8. Final commit contains hypothesis inputs + verdict + batch + frames +
+   `waves.json` +
    `run-waves.txt` (+ DTR), and nothing else.
 
 ## Output
