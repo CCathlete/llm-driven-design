@@ -1,3 +1,3 @@
 # ACCEPTANCE: cu-003
 
-- TJ4 (criterion 16): `git check-ignore hypothesis-engine/hypothesis-engine.jar` prints the path, and `git ls-files` does not list it.
+- TJ4 (criterion 16): `git check-ignore .LLMDD/tools/hypothesis-engine.jar` prints the path, and `git ls-files` does not list it.

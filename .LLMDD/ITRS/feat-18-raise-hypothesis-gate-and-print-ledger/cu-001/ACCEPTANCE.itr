@@ -1,4 +1,4 @@
 # ACCEPTANCE: cu-001
 
 - TJ1 (criterion 13): `grep -c 'sbt-assembly' hypothesis-engine/project/plugins.sbt` prints 1; `grep -cE 'Compile / mainClass|assemblyJarName' hypothesis-engine/build.sbt` prints 2; `cd hypothesis-engine && sbt -batch assembly` exits 0.
-- TJ2 (criterion 14, build half): `unzip -l hypothesis-engine/hypothesis-engine.jar` lists `hypothesisengine/control/Main.class`, `org/sqlite/JDBC.class` and `ledger-schema.sql`; `unzip -p hypothesis-engine/hypothesis-engine.jar META-INF/MANIFEST.MF | grep Main-Class` shows `hypothesisengine.control.Main`.
+- TJ2 (criterion 14, build half): `unzip -l .LLMDD/tools/hypothesis-engine.jar` lists `hypothesisengine/control/Main.class`, `org/sqlite/JDBC.class` and `ledger-schema.sql`; `unzip -p .LLMDD/tools/hypothesis-engine.jar META-INF/MANIFEST.MF | grep Main-Class` shows `hypothesisengine.control.Main`.
