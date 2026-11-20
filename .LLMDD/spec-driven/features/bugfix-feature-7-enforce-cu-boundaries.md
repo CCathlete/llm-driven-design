@@ -180,3 +180,64 @@ Measure the CU's change set from the CU's own opencode JSON tool_use events (wri
 - wave 1: cu-004 (cu_scope hardening), cu-005 (run-waves attribution)
 - wave 2: cu-006 (run-waves enforcement)
 Waves plan in .LLMDD/ITRS/bugfix-feature-7-enforce-cu-boundaries/waves.json after compilation.
+
+## Phase 2 — stale wave baseline re-attributes earlier-wave writes (2026-11-20)
+
+Reopened from a live feat-18 run. Every CU reported `COMPLETED`/`PASSED`
+with zero escalations, yet the run ended `NEEDS_ATTENTION`. The surviving
+breach record named the culprit:
+
+```
+SCOPE=wave
+RULE=unattributed:cu-004
+PATH=.gitignore          (also build.sbt, plugins.sbt, Main.scala)
+```
+
+### Root cause
+
+`run_wave_parallel` captures `git rev-parse HEAD` once per wave as
+`stash_ref`. Final waves commit; non-final waves do not, so HEAD never
+advances between waves. At wave 3, `wave_writes(project_dir, stash_ref,
+baseline_dirty)` returns `unique - baseline_dirty`, where `unique` is the
+diff since that stale HEAD plus untracked files. Meanwhile
+`baseline_dirty = frozenset(_dirty_paths(project_dir) - run_written)` has
+already removed every file the earlier waves wrote. Those earlier-wave
+files therefore survive into `wave_paths`, are claimed by no CU in wave 3,
+and fail the unattributed rule against cu-004's no-touch list — a phantom
+breach, not a real violation. `95b2fa8` fixed the same class for lead
+bookkeeping; this is the earlier-wave variant, still open.
+
+### Scope
+
+In — thread the run's accumulated written-paths set (`run_written`) into
+`enforce_boundary` and `wave_writes` and subtract it from the measured wave
+change set; add a regression test. Out — any change to the CU format, any
+recompile of the eight converged frames, any change to the pre-flight
+`_wave_dirty_clashes` check (it already subtracts `run_written` correctly).
+
+### Acceptance criteria (Phase 2)
+
+6. `wave_writes` accepts a `prior_written` exclusion set and returns
+   `unique - baseline_dirty - prior_written`. The parameter defaults to
+   empty so existing three-argument callers stay valid.
+7. `enforce_boundary` accepts and forwards `prior_written` to
+   `wave_writes`; all four of its call sites inside `run_wave_parallel`
+   pass the same set.
+8. `run_wave_parallel` accepts `prior_written` and `main_async` supplies
+   `frozenset(run_written)` at the call site, so a wave never measures
+   files written by earlier waves of the same run.
+9. The redundant `run_written: set[str]` re-annotation inside the wave
+   loop is removed (the outstanding `mypy --strict` no-redef noted in
+   bug-10).
+
+### Tests proving resolution (Phase 2)
+
+- `P2-T1` — `wave_writes` drops a path listed in `prior_written` while
+  retaining an untracked path not in it.
+- `P2-T2` — `enforce_boundary` with a prior-written guarded path produces
+  no unattributed breach; the same path without the exclusion still does.
+- `P2-T3` — the full `test_cu_boundary.py` suite passes with no new failures.
+- `P2-T4` — source check: `prior_written` appears in `wave_writes`,
+  `enforce_boundary`, `run_wave_parallel` and all four enforcement call
+  sites; `main_async` passes `frozenset(run_written)`;
+  `python3 -c ast.parse` succeeds on both edited files.
