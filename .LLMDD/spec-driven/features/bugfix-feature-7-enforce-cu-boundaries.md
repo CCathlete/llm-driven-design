@@ -95,7 +95,11 @@ the measurement that already exists rather than the one you wish existed.
 
 ## Implementation status
 
-Proposed. No CUs drafted; the decomposition below is a proposal.
+Implemented. cu-001..cu-009 compiled and implemented across the
+waves recorded in `.LLMDD/ITRS/bugfix-feature-7-enforce-cu-boundaries/waves.json`;
+linked bug-10 closed Resolved. The decomposition below is the original
+proposal; Phase 2 (stale-wave-baseline phantom) added cu-009 and was
+validated green on 2026-11-21 (see Phase 2 section and bug-10).
 
 ### Proposed decomposition
 
@@ -241,3 +245,25 @@ recompile of the eight converged frames, any change to the pre-flight
   `enforce_boundary`, `run_wave_parallel` and all four enforcement call
   sites; `main_async` passes `frozenset(run_written)`;
   `python3 -c ast.parse` succeeds on both edited files.
+
+
+## Phase 2 validation verdict (2026-11-21) — PASS with artifact caveat
+
+cu-009 (stale-wave-baseline phantom fix) reviewed and closed on live evidence:
+
+- 26/26 `test_cu_boundary.py` tests pass, including the two new
+  `TestPriorWrittenExclusion` cases; `validate-steps.py` PASS on the phase-2
+  batch; `uvx mypy --strict .LLMDD/tools/run-waves.py` clean.
+- All four enforcement call sites pass `prior_written`; the redundant
+  `run_written` re-annotation is gone; `ast.parse` clean on both edited files.
+- cu-009 feedback `STATUS=COMPLETED` / `VERIFICATION_RESULT=PASSED`; zero
+  escalations; wave-1 lead verification report PASS.
+
+Caveat (Designer decision 2026-11-21 to close rather than re-dispatch): the
+phase-2 `repo.convergence.json` still reads `NEEDS_ATTENTION` with
+`coder_status: 1`. That artifact was written by the pre-fix in-memory runner
+during the single wave that installs the fix, so it reports the very phantom
+cu-009 eliminates; a fix run cannot self-correct its own status file. The
+authoritative live tests and feedback are green, so the feature is marked
+Implemented with this discrepancy recorded rather than treated as a red gate.
+A fresh run of the now-fixed runner is expected to converge cleanly.

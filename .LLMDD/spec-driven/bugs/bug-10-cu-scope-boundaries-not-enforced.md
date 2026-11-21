@@ -155,7 +155,7 @@ cu-001/cu-002 contamination above.
 
 ## Resolution status
 
-Resolved 2026-11-20. All three gaps are closed in the shipped tree.
+Resolved 2026-11-20. All three gaps are closed in the shipped tree, and the Phase 2 stale-baseline variant of Gap 3 (phantom `NEEDS_ATTENTION` from earlier-wave writes) is closed as well — see Phase 2 below and the linked feature's Phase 2 section.
 
 ## Fix summary (Resolved only)
 
@@ -194,10 +194,43 @@ Live re-run on 2026-11-20 from the repo root:
 - `bugfix-feature-7` convergence: `CONVERGED`, all waves `coder_status=0`,
   zero escalations.
 
-Designer-approved exception for test T5 (the original suggested `mypy
---strict` zero-error probe on `validate-steps.py` / `run-waves.py`): skipped
-per explicit Designer approval on 2026-11-20. Note for the record —
-`uvx mypy --strict` currently reports one `no-redef` (`run_written` at
-`run-waves.py:2371`, first bound at 2306); it is a strict-typing cleanup,
-not a functional gap in boundary enforcement, and is left as a minor
-follow-up rather than a blocker to closing this bug.
+Designer-approved exception for test T5: the original suggested `mypy --strict`
+probe was skipped at the first close, at which point it reported one `no-redef`
+(`run_written` inside the wave loop). Phase 2 criterion 9 removed that redundant
+re-annotation, and a live re-run on 2026-11-21 reports `Success: no issues found`
+on `run-waves.py`. The exception is now moot; the strict probe is clean.
+
+
+## Phase 2 resolution — phantom NEEDS_ATTENTION from earlier-wave writes (2026-11-21)
+
+The Gap 3 family had one surviving variant: a clean wave run (all CUs
+`COMPLETED`/`PASSED`, zero escalations) still ended `NEEDS_ATTENTION` because
+`wave_writes` measured earlier-wave writes against a stale `stash_ref` and
+attributed them as `unattributed:<cu>` breaches in later waves. Delivered by
+`bugfix-feature-7` Phase 2 (cu-009), commit `a366731`.
+
+Fix: thread the run-level accumulated written-paths set (`run_written`) into
+`wave_writes`, `enforce_boundary` and `run_wave_parallel`, subtract it from
+the measured wave change set, pass `frozenset(run_written)` at the four
+enforcement call sites in `main_async`, and remove the redundant
+`run_written` re-annotation that had been the outstanding `mypy` no-redef.
+
+Tests proving Phase 2 resolution (live re-run 2026-11-21):
+
+- `TestPriorWrittenExclusion.test_wave_writes_drops_prior_written` and
+  `.test_enforce_boundary_ignores_prior_written_guard` — both pass.
+- `python3 -m unittest discover -s .LLMDD/tests -p test_cu_boundary.py` —
+  `Ran 26 tests ... OK`.
+- `python3 .LLMDD/tools/validate-steps.py .LLMDD/ITRS/bugfix-feature-7-enforce-cu-boundaries.phase2.batch.json` — `PASS cu-009`.
+- `uvx mypy --strict .LLMDD/tools/run-waves.py` — `Success: no issues found in 1 source file`.
+- Source audit — `prior_written` in all four enforcement call sites; single
+  `run_written: set[str]` binding (no no-redef); `ast.parse` clean.
+
+Artifact caveat: `repo.convergence.json` for the phase-2 wave still reads
+`NEEDS_ATTENTION` with `coder_status: 1`. This was emitted by the pre-fix
+in-memory runner and is itself the phantom this phase fixes — a single-wave
+fix run cannot self-correct its own status artifact. Designer decided on
+2026-11-21 to close on the live green evidence (26/26 tests, all CU and lead
+feedback PASS, zero escalations) and record this discrepancy rather than
+re-dispatch a coder. A fresh run of the now-fixed runner would be expected
+to write `CONVERGED`.
