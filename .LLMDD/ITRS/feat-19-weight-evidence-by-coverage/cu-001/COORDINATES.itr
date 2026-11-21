@@ -1,0 +1,6 @@
+# COORDINATES: cu-001
+
+- FILE.hypothesis-engine/src/main/scala/hypothesisengine/domain/Model.scala
+- FILE.hypothesis-engine/src/main/scala/hypothesisengine/infrastructure/ProcessAdapter.scala
+- FILE.hypothesis-engine/src/main/scala/hypothesisengine/application/Ports.scala
+- FILE.hypothesis-engine/src/main/scala/hypothesisengine/infrastructure/SqliteLedger.scala

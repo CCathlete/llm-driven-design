@@ -1,0 +1,5 @@
+[
+  {"wave": 1, "description": "Support layer: coordinate field, decoder, Ledger port and SqliteLedger lifecycle (compile-coupled foundation)", "cus": ["cu-001"]},
+  {"wave": 2, "description": "Behaviour layer: coverage evaluator, evidence wiring and init/cleanup subcommands (needs wave 1 to compile)", "cus": ["cu-002"]},
+  {"wave": 3, "description": "Verification: evaluator, mapping and CLI specs plus full sbt suite (needs wave 2 behaviour)", "cus": ["cu-003"]}
+]

@@ -1,0 +1,5 @@
+# COORDINATES: cu-003
+
+- FILE.hypothesis-engine/src/test/scala/hypothesisengine/NewEvaluatorSpec.scala
+- FILE.hypothesis-engine/src/test/scala/hypothesisengine/ExperimentMappingSpec.scala
+- FILE.hypothesis-engine/src/test/scala/hypothesisengine/CliSpec.scala

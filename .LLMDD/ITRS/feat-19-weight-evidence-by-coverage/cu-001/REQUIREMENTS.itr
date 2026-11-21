@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-001
+
+feat-19 criteria 2, 11, 12, 13 (support layer): add the optional `dtr_coordinates` mapping to ExperimentDefinition and decode it with an empty default; add explicit lifecycle operations to the Ledger port and implement them in SqliteLedger. Deliberately do NOT change the evaluator or the CLI - those are later CUs.

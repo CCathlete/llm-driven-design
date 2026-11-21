@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-003
+
+feat-19 verification layer (tests T2-T13): add three ScalaTest specs proving the evaluator model, the coordinate mapping, the CLI lifecycle commands, port-only dispatch and no regression in the legacy examine path. Do NOT change any production source - later failures belong in earlier CUs.

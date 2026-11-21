@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-002
+
+feat-19 criteria 1, 3-8, 9, 10, 14 (behaviour layer): replace the probe-count BayesianEvaluator with the coverage-and-falsification evaluator, feed it experiment-to-coordinate evidence with positional fallback, and add the `init` / `cleanup` subcommands with a testable `Main.run(args): Int` seam while keeping the legacy two-argument examine path byte-for-byte.

@@ -1,0 +1,6 @@
+# ACCEPTANCE: cu-002
+
+- Criteria 1, 3-6, 8 / tests T1, T3-T6: new evaluator object present and concentration absent from Examination.scala.
+- Criterion 7, 14 / tests T7, T13: `cd hypothesis-engine && sbt -batch "testOnly hypothesisengine.GateSpec hypothesisengine.LedgerStageReportSpec"` passes unchanged.
+- Criteria 9-10 / tests T9, T10: `init` and `cleanup` dispatch through the Ledger port; no SQL in control.
+- `cd hypothesis-engine && sbt -batch compile` exits 0.

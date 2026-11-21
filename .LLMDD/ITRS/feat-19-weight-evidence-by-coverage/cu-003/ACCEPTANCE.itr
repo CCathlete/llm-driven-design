@@ -1,0 +1,8 @@
+# ACCEPTANCE: cu-003
+
+- T1: `grep -c concentration hypothesis-engine/src/main/scala/hypothesisengine/application/Examination.scala` prints `0`.
+- T2: `cd hypothesis-engine && sbt -batch "testOnly hypothesisengine.ExperimentMappingSpec"` passes.
+- T3-T6, T8: `cd hypothesis-engine && sbt -batch "testOnly hypothesisengine.NewEvaluatorSpec"` passes.
+- T7, T13: `cd hypothesis-engine && sbt -batch "testOnly hypothesisengine.GateSpec hypothesisengine.LedgerStageReportSpec"` passes.
+- T9-T12: `cd hypothesis-engine && sbt -batch "testOnly hypothesisengine.CliSpec"` passes.
+- Overall language proof: `cd hypothesis-engine && sbt -batch test` exits 0.

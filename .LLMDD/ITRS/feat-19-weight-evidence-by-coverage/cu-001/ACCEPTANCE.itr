@@ -1,0 +1,5 @@
+# ACCEPTANCE: cu-001
+
+- Criterion 2 / test T2: `cd hypothesis-engine && sbt -batch "testOnly hypothesisengine.HypothesisEngineContractSpec"` still passes (decoder round-trip for existing JSONL lines).
+- Criteria 11-13 / tests T10-T12: exercised by the CliSpec created in cu-003; this CU supplies the port and implementation they call.
+- `cd hypothesis-engine && sbt -batch compile` exits 0 with all four files changed.
