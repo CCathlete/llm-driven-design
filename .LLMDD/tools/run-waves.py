@@ -143,6 +143,7 @@ class WaveRecord(TypedDict):
     escalations: int
     coder_status: int
     lead_status: int
+    lead_repairs: list[str]
     files_changed: dict[str, list[str]]
     credits: dict[str, TokenReport]
 class ConvergenceData(TypedDict):
@@ -1619,6 +1620,7 @@ def save_convergence(path: Path, data: ConvergenceData) -> None:
 
 def update_convergence(path: Path, wave_num: int, wave_cus: list[str],
                        escalations: int, coder_ok: bool, lead_ok: bool,
+                       lead_repairs: Sequence[str],
                        files_changed: dict[str, list[str]],
                        credits: dict[str, TokenReport]) -> None:
     data: ConvergenceData = load_convergence(path)
@@ -1627,11 +1629,31 @@ def update_convergence(path: Path, wave_num: int, wave_cus: list[str],
         "escalations": escalations,
         "coder_status": 0 if coder_ok else 1,
         "lead_status": 0 if lead_ok else 1,
+        "lead_repairs": list(lead_repairs),
         "files_changed": files_changed,
         "credits": credits,
     })
     data["status"] = "RUNNING"
     save_convergence(path, data)
+
+
+def final_status(waves: Sequence[WaveRecord]) -> str:
+    """Derive terminal wave status from coder outcomes and escalations only.
+
+    Lead repairs are recorded on each wave record but never fail a wave: the
+    code lead is mandated to repair cross-CU defects, including writes to a
+    CU's Do NOT touch paths.
+    """
+    total_escalations: int = 0
+    failed_waves: int = 0
+    wave: WaveRecord
+    for wave in waves:
+        total_escalations += wave["escalations"]
+        if wave["coder_status"] != 0 or wave["lead_status"] != 0:
+            failed_waves += 1
+    if total_escalations == 0 and failed_waves == 0:
+        return "CONVERGED"
+    return "NEEDS_ATTENTION"
 
 
 # ── CU boundary enforcement ─────────────────────────────────────────
@@ -2431,9 +2453,10 @@ async def main_async(args: argparse.Namespace) -> int:
                     _cu_no_touch(guard_path), project_dir)
         lead_breaches: Sequence[BoundaryBreach] = _paths_against(
             wave_lead_paths, lead_guards, f"lead-wave-{wave_num}")
+        lead_repairs: Sequence[str] = tuple(breach.path for breach in lead_breaches)
         if lead_breaches:
             report_breaches(lead_breaches, feedback_dir)
-            all_passed = False
+            _info(f"Wave {wave_num}: lead repaired {len(lead_repairs)} no-touch path(s); recorded, not failed")
 
         # After wave lead, merge files committed by wave lead into file tracking
         diff_out: str
@@ -2463,7 +2486,7 @@ async def main_async(args: argparse.Namespace) -> int:
         credits_data["lead"] = lead_usage.dict()
         update_convergence(
             convergence_file, wave_num, wave_cus,
-            escalations, all_passed, lead_ok,
+            escalations, all_passed, lead_ok, lead_repairs,
             wave_files_changed, credits_data,
         )
 
@@ -2480,21 +2503,15 @@ async def main_async(args: argparse.Namespace) -> int:
 
     convergence: ConvergenceData = load_convergence(convergence_file)
     total_escalations: int = 0
-    failed_waves: int = 0
     w: WaveRecord
     for w in convergence["waves"]:
         total_escalations += w["escalations"]
-        if w["coder_status"] != 0 or w["lead_status"] != 0:
-            failed_waves += 1
     unique_all: set[str] = set()
     for w in convergence["waves"]:
         for files in w.get("files_changed", {}).values():
             unique_all.update(files)
 
-    if total_escalations == 0 and failed_waves == 0:
-        convergence["status"] = "CONVERGED"
-    else:
-        convergence["status"] = "NEEDS_ATTENTION"
+    convergence["status"] = final_status(convergence["waves"])
     save_convergence(convergence_file, convergence)
 
     status_colour: str = C.BR_GREEN if convergence["status"] == "CONVERGED" else C.BR_RED
