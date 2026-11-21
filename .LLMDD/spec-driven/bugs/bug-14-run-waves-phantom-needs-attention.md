@@ -1,8 +1,8 @@
 # bug-14: run-waves reports NEEDS_ATTENTION when the code lead repairs a cross-CU defect
 
-- Status: Open
+- Status: Resolved
 - Created: 2026-11-21
-- Resolved: -
+- Resolved: 2026-11-21
 - Bug ID: bug-14-run-waves-phantom-needs-attention
 
 ## Bug detail
@@ -94,14 +94,42 @@ never clears it — only a runner fix does.
 
 ## Resolution status
 
-Open. Not resolved. No fixing commit yet; the feature is still reproducible as
-described above. Move to Resolved only when the fix is merged *and* the
-proving tests below pass.
+Resolved (2026-11-21). Fixed in wave commit `cb65ca2` (bugfix-feature-20).
+The lead boundary branch no longer assigns to `all_passed`; it records the
+repaired paths in `lead_repairs` on the wave record and still writes
+`boundary-breaches.txt`. Terminal status is derived by the pure `final_status(waves)`
+function from coder status, lead status and escalations only. All proving tests
+below were re-run live by `review-implementation` and passed.
 
 ## Fix summary (Resolved only)
 
-Pending.
+`.LLMDD/tools/run-waves.py`: added `lead_repairs: list[str]` to `WaveRecord`;
+added a `lead_repairs` parameter to `update_convergence` and persisted it;
+removed `all_passed = False` from the `if lead_breaches:` branch (it now logs
+the repair as recorded-not-failed); added the side-effect-free `final_status`
+function and replaced the inline `failed_waves` computation in `main_async`
+with a call to it. New regression suite
+`.LLMDD/tests/bugfix-feature-20-fix-run-waves-phantom-detection/test_convergence_status.py`
+locks in the distinction: a lead repair with coder=0/lead=0/escalations=0
+converges, while a real coder failure, escalation, or lead-process failure still
+yields NEEDS_ATTENTION.
 
 ## Tests proving resolution (Resolved only)
 
-Pending.
+Re-run live 2026-11-21 from repo root by `review-implementation`:
+
+- T1 `probe.py t1` -> passed=true (lead branch no longer flips all_passed).
+- T2 `probe.py t2` -> passed=true (lead_repairs persisted).
+- T3 `probe.py t3` -> passed=true (pure final_status present).
+- T4 `probe.py t4` -> passed=true (bug-14 scenario converges).
+- T5 `probe.py t5` -> passed=true (real coder failure still fails).
+- T6 `test_convergence_status.py` -> 6 tests run, 6 passed, exit 0.
+- `validate-steps.py` PASS cu-001 and cu-002; AST parse OK; `--help` exit 0.
+- Baseline probes 1/3/4 flipped false, proving the defect is gone.
+
+Follow-up (out of scope, NOT this bug): this run's own `repo.convergence.json`
+still reads NEEDS_ATTENTION because cu-001 needed six coder model-fallback
+attempts and the old runner's sticky `all_passed` was set by an early non-zero
+rc. That is a different runner defect — sticky coder status across fallback
+rotations — which the new `final_status` intentionally still honours. Do not
+reopen bug-14 for it; track it separately.

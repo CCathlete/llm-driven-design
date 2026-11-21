@@ -1,6 +1,6 @@
 # bugfix-feature-20: Fix run-waves phantom NEEDS_ATTENTION
 
-- Status: Proposed
+- Status: Implemented
 - Created: 2026-11-21
 - Feature ID: bugfix-feature-20-fix-run-waves-phantom-detection
 
@@ -70,3 +70,31 @@ ITR frame or runner runtime state, and any Scala source.
 
 T1–T5 are the standalone probe script; T6 is the focused regression suite plus
 the boundary/help smoke checks. All are re-run live by `review-implementation`.
+
+
+## Implementation status
+
+Implemented (2026-11-21). Two waves converged at the CU level (both
+`STATUS=COMPLETED`, `VERIFICATION_RESULT=PASSED`, zero escalations) and the
+implementation landed in wave commit `cb65ca2`: cu-001 made the production fix
+in `.LLMDD/tools/run-waves.py` (record lead repairs in `lead_repairs`, stop
+folding them into `all_passed`, pure `final_status` for terminal status);
+cu-002 added the six-test regression suite. Verified live by
+`review-implementation`: T1–T5 probes passed, T6 suite 6/6, `validate-steps.py`
+PASS for both CUs, AST parse and `--help` exit 0, tree clean after read-only
+probes. bug-14 is Resolved.
+
+Caveat — the run's own `repo.convergence.json` reads NEEDS_ATTENTION
+(wave 1 `coder_status=1`, no `lead_repairs` field). This is expected and not a
+failure of this feature: the runner process was loaded from disk before cu-001
+edited it, so both wave records were written by the OLD code — the absence of
+the `lead_repairs` field is proof. The specific flag came from cu-001's six
+coder model-fallback attempts: an early non-zero rc set the old runner's sticky
+`all_passed=False`, which no later successful attempt cleared. That is a
+separate out-of-scope runner defect (sticky coder status across fallback
+rotations), not the lead-repair defect this feature fixed. Live proof the fix
+works: applying the new `final_status` to a wave with coder=0/lead=0/esc=0 plus
+a recorded lead repair returns CONVERGED (T4), and the six regression tests
+confirm real failures still yield NEEDS_ATTENTION (T5). Follow-up: open a
+separate bug for the sticky-coder-status path if real detection is to be
+complete.
