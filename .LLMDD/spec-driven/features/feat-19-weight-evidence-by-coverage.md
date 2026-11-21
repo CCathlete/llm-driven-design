@@ -26,7 +26,8 @@ the call site in `control/Main.scala`, the experiment-definition decoder
 (`control/Main.scala` / experiment JSONL codec), domain model in
 `domain/Model.scala`, and ScalaTest coverage. Out — the report/ledger JSON shape
 and field names (`probability_for_correctness`, `posterior`, `gate`, `gap`,
-`decision`, `history` all remain; only the numeric value changes), the
+`decision`, `history` all remain; only the numeric value changes, which may
+flip a decision), the
 `check-hypothesis-report.py` contract, the gate floor (`0.85` unchanged), the
 remediation/breakpoint logic, and any Python implementation work. Also in scope: the two ledger-lifecycle
 subcommands (`init`, `ledgerCleanup`) on the CLI and the port operations they need.
@@ -129,7 +130,11 @@ and tests below.
    an experiment set with zero probes yields exactly `prior`.
 7. `ExaminationGate.decide` still yields GREEN only at or above the configured
    gate; the decision/report/ledger JSON field names and the `StageReporter`
-   history shape are unchanged — only the numeric `probability` value differs.
+   history shape are unchanged. The numeric `probability_for_correctness` and
+   the resulting decision are re-derived under coverage scoring from the
+   experiment's declared coordinates: a GREEN obtained by counting probes is
+   not preserved, and fixtures that must still reach GREEN declare complete
+   coordinate coverage so the gate is earned rather than inherited.
 8. The evaluator is deterministic and pure: identical inputs give identical
    scores across runs and across instances; no `Any`, no mutable shared state.
 9. `Main` dispatches `init [path]`, `cleanup <hypothesis-id>` and
@@ -174,9 +179,13 @@ ScalaTest, from `hypothesis-engine/`. Each test maps to a criterion above.
   score `<= prior` and `ExaminationGate.decide` returns `Decision.Red`. Same spec.
 - `T6` (criterion 6) — score with 100 passes on a single coordinate `< 1` and
   `<= ceiling`; zero probes yields exactly `prior`. Same spec.
-- `T7` (criterion 7) — `GateSpec` and `LedgerStageReportSpec` still pass; the
-  report block still contains `probability_for_correctness`, `posterior`,
-  `gate`, `gap`, `decision`, `history`. Commands: `sbt -batch "testOnly hypothesisengine.GateSpec hypothesisengine.LedgerStageReportSpec"`.
+- `T7` (criterion 7) — `GateSpec` and `LedgerStageReportSpec` pass with their
+  evidence fixtures declaring complete coordinate mappings: GREEN in
+  `LedgerStageReportSpec` is earned under coverage scoring (five passes on each
+  of the two declared coordinates, score 0.936 >= 0.85), not inherited from the
+  old probe-count result. The report block still contains
+  `probability_for_correctness`, `posterior`, `gate`, `gap`, `decision`,
+  `history`. Commands: `sbt -batch "testOnly hypothesisengine.GateSpec hypothesisengine.LedgerStageReportSpec"`.
 - `T8` (criterion 8) — evaluator is called twice with identical inputs and the
   scores are equal; `sbt -batch test` is green overall (language proof for Scala).
 
@@ -197,6 +206,8 @@ ScalaTest, from `hypothesis-engine/`. Each test maps to a criterion above.
   examine on the same DB and assert a GREEN or RED decision (not an error).
   `CliSpec`.
 - `T13` (criterion 14) — regression: run the existing two-argument examine
-  fixture and assert the emitted JSON block, appended report line and terminal
-  status line are unchanged from the pre-change fixture. Covered by the full
-  `sbt -batch test` run plus `GateSpec` / `LedgerStageReportSpec`.
+  fixture and assert the emitted JSON block's field names, the appended report
+  line's shape and the terminal status line's format are unchanged; the numeric
+  decision itself is re-derived under coverage scoring and is not required to
+  match the old probe-count outcome. Covered by the full `sbt -batch test` run
+  plus `GateSpec` / `LedgerStageReportSpec`.
