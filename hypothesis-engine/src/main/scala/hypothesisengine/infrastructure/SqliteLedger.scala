@@ -131,7 +131,15 @@ final class SqliteLedger(dbPath: String = "ledger.db") extends Ledger:
     }.getOrElse(Vector.empty)
   }
 
-  override def resetStageData(hypothesisId: HypothesisId): Unit = ()
+  override def resetStageData(hypothesisId: HypothesisId): Unit = {
+    val id: String = HypothesisId.value(hypothesisId)
+    write("DELETE FROM evidence WHERE hypothesis_id = ?") { statement =>
+      statement.setString(1, id)
+    }
+    write("DELETE FROM calculations WHERE hypothesis_id = ?") { statement =>
+      statement.setString(1, id)
+    }
+  }
 
   override def initialize(): Either[String, Unit] =
     initializeSchema()

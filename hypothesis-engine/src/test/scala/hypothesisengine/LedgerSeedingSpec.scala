@@ -21,14 +21,15 @@ final class LedgerSeedingSpec extends AnyFunSuite:
   private def seedDefinitions: Vector[ExperimentDefinition] =
     (1 to 5).map { index =>
       ExperimentDefinition("EXP-SEED-" + index.toString, seedHypothesis.id, Runtime.Python,
-      Vector("python3", "-c", "print(1)"), ".", 30, "v1")
+      Vector("python3", "-c", "print(1)"), ".", 30, "v1",
+      Vector(DtrCoordinate("TYPE.a.Domain")))
     }.toVector
 
   private def passingEvidence: Vector[RawResult] =
     seedDefinitions.zipWithIndex.map { case (definition, index) =>
       RawResult(ExecutionId("exec-seed-" + index.toString), seedHypothesis.id, definition.experimentId, "v1",
         definition.command, "rev", 30, 0,
-        "{\"passed\":true,\"detail\":\"seeded evidence \" + index.toString}", "", 1L,
+        "{\"passed\":true,\"detail\":\"seeded evidence " + index.toString + "\"}", "", 1L,
         Instant.parse("2026-01-01T00:00:00Z"))
     }
 

@@ -22,7 +22,8 @@ final class LedgerStageReportSpec extends AnyFunSpec with Matchers:
   private def definitions: Vector[ExperimentDefinition] =
     (1 to 5).map { index =>
       ExperimentDefinition("EXP-" + index.toString, hypothesis.id, Runtime.Python,
-      Vector("python3", "-c", "print(1)"), ".", 30, "v1")
+      Vector("python3", "-c", "print(1)"), ".", 30, "v1",
+      Vector(DtrCoordinate("FILE.a.scala"), DtrCoordinate("TYPE.b.Domain")))
     }.toVector
 
   private def evidence(passed: Boolean, tag: String): Vector[RawResult] =
