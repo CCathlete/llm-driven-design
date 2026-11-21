@@ -1,0 +1,20 @@
+# CU-ID: arch
+# CU-TYPE: ArchCU
+# TIMESTAMP: 2026-11-21T12:37:14.703896004Z
+# DTR-COORDINATES: 
+
+# CU-ID: arch
+# CU-TYPE: ArchCU
+# DTR-COORDINATES: 
+
+Runner-layer architecture for the LLMDD toolchain. `.LLMDD/tools/run-waves.py` is the orchestration boundary: it owns wave scheduling, coder/lead sessions, convergence bookkeeping and terminal status; it implements no feature logic. Terminal status is a pure projection of coder outcomes and escalations u2014 `final_status(waves)` must be side-effect free and deterministic. Code-lead repairs are a separate, recorded signal (`lead_repairs`) and must never feed coder status or terminal failure, because the lead is mandated to repair cross-CU defects. Regression tests live under `.LLMDD/tests/<feature>/` and import the runner read-only; they never write runner runtime state. Python discipline: annotate every variable at first binding; no `typing.Any` or bare generics; slotted frozen dataclasses for value records; Optional/monadic returns for expected absence. Severity: CRITICAL.
+
+IMPLEMENTATION_STEPS:
+1. Apply these rules to every file authored by this batch.
+
+Prove: `grep -c 'lead_repairs' .LLMDD/tools/run-waves.py` prints at least 4.
+
+Do NOT touch: hypothesis-engine/**, .LLMDD/spec-driven/**
+
+Stop when: terminal status depends only on coder_status, lead_status and escalations, and lead repairs are recorded but non-failing.
+

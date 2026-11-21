@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-002
+
+bugfix-feature-20 T6: add a focused regression suite that locks in the distinction between a recorded lead repair and a real coder failure. The suite imports the runner read-only; it never writes convergence, feedback or log state.

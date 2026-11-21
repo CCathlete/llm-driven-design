@@ -1,0 +1,3 @@
+# ACCEPTANCE: cu-002
+
+- T6: `python3 .LLMDD/tests/bugfix-feature-20-fix-run-waves-phantom-detection/test_convergence_status.py` -> all tests pass, exit 0.

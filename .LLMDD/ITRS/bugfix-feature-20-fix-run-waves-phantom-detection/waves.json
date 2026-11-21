@@ -1,0 +1,4 @@
+[
+  {"wave": 1, "description": "Production fix: stop lead repairs feeding coder/terminal status; record lead_repairs; add pure final_status", "cus": ["cu-001"]},
+  {"wave": 2, "description": "Regression suite importing final_status (depends on wave 1) — lock in lead-repair vs real-failure distinction", "cus": ["cu-002"]}
+]

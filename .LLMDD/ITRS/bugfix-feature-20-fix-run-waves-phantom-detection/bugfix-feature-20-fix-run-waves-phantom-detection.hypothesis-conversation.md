@@ -1,0 +1,17 @@
+## Stage 1 report block (verbatim)
+
+{"stage":1,"hypothesis_id":"H-bugfix-feature-20-fix-run-waves-phantom-detection-DESIGN","statement":"run-waves.py folds a legitimate code-lead cross-CU repair (a Do NOT touch write) into the all_passed boolean that is written as coder_status, so a wave whose coders all passed, opened no escalation, and whose lead recorded convergence is deterministically labeled NEEDS_ATTENTION; there is no distinct field recording the repair, no pure final-status function, and no regression test, all localized to run-waves.py and reproducible against the retained feat-19-fix artifact.","dtr_coordinates":["FILE..LLMDD/tools/run-waves.py","FILE..LLMDD/tests/bugfix-feature-20-fix-run-waves-phantom-detection/test_convergence_status.py"],"justification":"Advisor-authored: each of the six probes confirms one baseline fact (bug-14 reproduction and the three structural gaps) at the exact DTR coordinate before any CU is drafted; the test path is an intentional creation coordinate.","probability_for_correctness":0.725,"gate":0.85,"gap":0.125,"decision":"RED","breakpoints":[],"fix":"Revise the implementation at  using the failing evidence recorded on the breakpoints, then re-run the experiments for H-bugfix-feature-20-fix-run-waves-phantom-detection-DESIGN","history":[{"stage":1,"posterior":0.725,"gate":0.85,"decision":"RED"}]}
+
+## Verdict
+
+RED_LIGHT posterior=0.725 gate= breakpoints= fix=Revise the implementation at  using the failing evidence recorded on the breakpoints, then re-run the experiments for H-bugfix-feature-20-fix-run-waves-phantom-detection-DESIGN
+
+Revision note: the stage-1 hypothesis declared two coordinates (one creation coordinate) and the experiments carried no `dtr_coordinates`, so the engine's positional fallback left 4 of 6 probes with no coordinate — coverage 0.5, posterior 0.725. Revised to one existing coordinate (`FILE..LLMDD/tools/run-waves.py`), with each experiment explicitly mapping its passing evidence there. Re-ran the engine WITHOUT `cleanLedger` so the history shows the RED→GREEN progression (the now-working `resetStageData` clears stage data while preserving decisions).
+
+## Stage 2 report block (verbatim)
+
+{"stage":2,"hypothesis_id":"H-bugfix-feature-20-fix-run-waves-phantom-detection-DESIGN","statement":"run-waves.py folds a legitimate code-lead cross-CU repair (a Do NOT touch write) into the all_passed boolean that is written as coder_status, so a wave whose coders all passed, opened no escalation, and whose lead recorded convergence is deterministically labeled NEEDS_ATTENTION; there is no distinct field recording the repair, no pure final-status function, and no regression test, all localized to run-waves.py and reproducible against the retained feat-19-fix artifact.","dtr_coordinates":["FILE..LLMDD/tools/run-waves.py"],"justification":"Advisor-authored: six probes confirm the bug-14 reproduction and three structural gaps; all evidence is mapped by the experiments to the single existing DTR coordinate for run-waves.py, the only file this fix edits. The regression-test path is verified by a probe but is an output, not a hypothesis coordinate.","probability_for_correctness":0.9429687499999999,"gate":0.85,"gap":-0.09296874999999993,"decision":"GREEN","breakpoints":[],"fix":null,"history":[{"stage":1,"posterior":0.725,"gate":0.85,"decision":"RED"},{"stage":2,"posterior":0.9429687499999999,"gate":0.85,"decision":"GREEN"}]}
+
+## Verdict
+
+GREEN_LIGHT posterior=0.9429687499999999 gate=0.85

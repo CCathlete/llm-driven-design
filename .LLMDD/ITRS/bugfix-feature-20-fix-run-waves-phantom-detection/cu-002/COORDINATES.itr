@@ -1,0 +1,3 @@
+# COORDINATES: cu-002
+
+- FILE..LLMDD/tests/bugfix-feature-20-fix-run-waves-phantom-detection/test_convergence_status.py

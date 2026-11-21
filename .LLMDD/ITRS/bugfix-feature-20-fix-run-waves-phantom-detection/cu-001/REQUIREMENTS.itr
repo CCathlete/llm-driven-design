@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-001
+
+bugfix-feature-20 T1-T5: stop run-waves.py from deriving coder_status and terminal status from a legitimate code-lead boundary repair. Record the repaired paths in a new `lead_repairs` field so they are still detected, extract terminal status into a pure `final_status(waves)` function, and preserve real coder/escalation failures. This is the production fix; no other file is in scope.

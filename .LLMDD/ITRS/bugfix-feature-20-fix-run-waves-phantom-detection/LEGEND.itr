@@ -1,0 +1,20 @@
+# CU-ID: legend
+# CU-TYPE: LegendCU
+# TIMESTAMP: 2026-11-21T12:37:14.711950732Z
+# DTR-COORDINATES: 
+
+# CU-ID: legend
+# CU-TYPE: LegendCU
+# DTR-COORDINATES: 
+
+LEGEND for bugfix-feature-20. CU means Computational Unit. CU folder is the per-CU directory named after the cu id. COORDINATES.itr names the baseline DTR keys the CU touches. REQUIREMENTS.itr names the feature criteria the CU delivers. IMPLEMENTATION_STEPS.itr holds numbered steps, each with an exact file path, a complete fenced code block, a Prove line, a Do NOT touch list and a Stop when line. ACCEPTANCE.itr names the spec test ids with commands and expected results. Convergence is the per-wave record plus terminal status persisted by run-waves.py. coder_status is the wave result derived only from coder outcomes (0 success, 1 failure). lead_status is the wave result derived only from the lead process exit code. Lead repair is a write by the code lead to a path a non-escalated CU listed in Do NOT touch; it is legitimate cross-CU repair work. lead_repairs is the on-disk list of such paths, recorded for detection but never a failure input. final_status is the pure function mapping wave records to CONVERGED or NEEDS_ATTENTION. Phantom NEEDS_ATTENTION is a terminal failure flag produced by a lead repair rather than a coder failure. Boundary breach is the existing report of such a write to boundary-breaches.txt.
+
+IMPLEMENTATION_STEPS:
+1. Apply this legend when reading any CU frame in this batch.
+
+Prove: `grep -c 'lead_repairs' .LLMDD/ITRS/bugfix-feature-20-fix-run-waves-phantom-detection/LEGEND.itr` prints at least 1.
+
+Do NOT touch: .LLMDD/spec-driven/**, hypothesis-engine/**
+
+Stop when: all terms used in CU frames are defined here.
+
