@@ -22,6 +22,8 @@ by pasting the printed command.
   e.g. `feat-4-infra-port-folder-rename`,
   `bugfix-feature-6-enrichment-consumer-poll-contract`). Never batch
   two features in one run.
+- Delegation: @hypothesize is used for hypothesis reasoning and validation
+  tasks, as documented in the @hypothesize skill.
 
 End result must be successful dry run of wave command. If you didn't reach the end result you fix until you reach a successful dry run of wave command.
 
@@ -88,7 +90,7 @@ belong in the verify phase, not here.
       creation); the gate probability is the sole green-light threshold and the
       engine rejects any value below 0.85. `justification` is required and must
       be non-empty; a blank value fails closed before any evaluation.
-2. Write `.LLMDD/ITRS/<feature-name>/<feature-name>.experiments.jsonl`, one
+2. Write `.LLMDD/ITRS/<feature-name>/<feature-name>.probe-results`, one
    JSON object per line:
 
    ```json
@@ -104,14 +106,14 @@ belong in the verify phase, not here.
 ### 4. Draft the batch CU (dummy-proof)
 
    3. Reset the engine ledger for the first stage, then examine (run from the repo
-    root). Run `cleanLedger` once before the first stage of a hypothesis. On a
+    root). Run `clean-up-probe` once before the first stage of a hypothesis. On a
     re-run after a RED or ADVISOR_ACTION_REQUIRED stage, do NOT run
-    `cleanLedger` again: the engine clears that stage's evidence and preserves
+    `clean-up` again: the engine clears that stage's evidence and preserves
     the decision history so each report can show the full progression.
 
     ```sh
-    (cd hypothesis-engine && sbt -batch cleanLedger)
-    (cd hypothesis-engine && sbt -batch "runMain hypothesisengine.control.Main ../.LLMDD/ITRS/<feature-name>/<feature-name>.hypotheses.json ../.LLMDD/ITRS/<feature-name>/<feature-name>.experiments.jsonl")
+    (cd hypothesis-engine && sbt -batch clean-up-probe)
+    (cd hypothesis-engine && sbt -batch "run_main hypothesisengine.control.Main probe-command ../.LLMDD/ITRS/<feature-name>/<feature-name>.hypotheses.json ../.LLMDD/ITRS/<feature-name>/<feature-name>.probe-results")
     ```
 
     4. Echo the ledger report block before any revision or advance. The engine
@@ -263,7 +265,7 @@ step 7 dry-run is green. Never print it beforehand.
 ### 10. Commit
 
 ```sh
-git add .LLMDD/ITRS/<feature-name>/<feature-name>.hypotheses.json .LLMDD/ITRS/<feature-name>/<feature-name>.experiments.jsonl .LLMDD/ITRS/<feature-name>/hypothesis-verification.txt .LLMDD/ITRS/<feature-name>.batch.json .LLMDD/ITRS/<feature-name>/ARCH.itr .LLMDD/ITRS/<feature-name>/LEGEND.itr .LLMDD/ITRS/<feature-name>/cu-*/ .LLMDD/ITRS/<feature-name>/waves.json .LLMDD/ITRS/<feature-name>/run-waves.txt .LLMDD/DTRS/<feature-name>/
+git add .LLMDD/ITRS/<feature-name>/<feature-name>.hypotheses.json .LLMDD/ITRS/<feature-name>/<feature-name>.probe-results .LLMDD/ITRS/<feature-name>/hypothesis-verification.txt .LLMDD/ITRS/<feature-name>.batch.json .LLMDD/ITRS/<feature-name>/ARCH.itr .LLMDD/ITRS/<feature-name>/LEGEND.itr .LLMDD/ITRS/<feature-name>/cu-*/ .LLMDD/ITRS/<feature-name>/waves.json .LLMDD/ITRS/<feature-name>/run-waves.txt .LLMDD/DTRS/<feature-name>/
 git status --short
 git commit -m "Prep: DTR plus ITR frames plus waves for <feature-name> (cu-001..cu-<NNN>)"
 ```
