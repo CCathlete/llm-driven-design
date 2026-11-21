@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-002
+
+feat-19 redesign fix (tests T2, T9-T12): create the two verification specs that the original cu-003 never produced because its own no-touch list forbade them. This CU owns exactly these two new files; do not edit any existing spec or any production source.

@@ -1,0 +1,5 @@
+# ACCEPTANCE: cu-001
+
+- T7: `cd hypothesis-engine && sbt -batch "testOnly hypothesisengine.GateSpec hypothesisengine.LedgerStageReportSpec"` exits 0.
+- T13: `cd hypothesis-engine && sbt -batch test` exits 0 with zero failed tests.
+- No production file appears in the diff for this CU.

@@ -1,0 +1,3 @@
+[
+  {"wave": 1, "description": "Fix cycle: repair stale test fixtures (cu-001) and create the two specs cu-003 never produced (cu-002); independent, test-only, no production code", "cus": ["cu-001", "cu-002"]}
+]

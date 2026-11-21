@@ -1,0 +1,5 @@
+# ACCEPTANCE: cu-002
+
+- T2: `cd hypothesis-engine && sbt -batch "testOnly hypothesisengine.ExperimentMappingSpec"` exits 0.
+- T9-T12: `cd hypothesis-engine && sbt -batch "testOnly hypothesisengine.CliSpec"` exits 0.
+- Overall: `cd hypothesis-engine && sbt -batch test` exits 0.

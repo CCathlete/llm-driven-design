@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-001
+
+feat-19 redesign fix (tests T7 and T13): reconcile two existing ScalaTest fixtures with the coverage-and-falsification scoring this feature deliberately introduces, and repair a malformed JSON literal in LedgerSeedingSpec that the full-suite gate now surfaces. Production source is correct per cu-001 and cu-002 and is out of scope here.

@@ -1,0 +1,20 @@
+# CU-ID: legend
+# CU-TYPE: LegendCU
+# TIMESTAMP: 2026-11-21T10:00:44.829836961Z
+# DTR-COORDINATES: 
+
+# CU-ID: legend
+# CU-TYPE: LegendCU
+# DTR-COORDINATES: 
+
+LEGEND for feat-18. CU means Computational Unit. CU folder is the per-CU directory named after the cu id. COORDINATES.itr names the baseline DTR keys the CU touches. REQUIREMENTS.itr names the feature criteria the CU delivers. IMPLEMENTATION_STEPS.itr holds numbered steps, each with an exact file path, a complete fenced code block, a Prove line, a Do NOT touch list and a Stop when line. ACCEPTANCE.itr names the spec test ids with commands and expected results. Hypothesis is a candidate correctness claim carrying an Advisor-authored justification. Gate floor is the inclusive engine minimum of 0.85 for gate_probability_for_correctness. LedgerStageReport is the read-only per-stage projection of ledger state containing the hypothesis, its coordinates, justification, posterior, gate, gap, decision and cumulative StageDecision history. Stage is one engine invocation, numbered by the count of prior decision records plus one. Conversation record is the feature artifact holding verbatim report echoes. Report echo is the exact report block pasted into the design conversation. Verdict line is the GREEN_LIGHT, RED_LIGHT or ADVISOR_ACTION_REQUIRED line printed by the engine.
+
+IMPLEMENTATION_STEPS:
+1. Apply this legend when reading any CU frame in this batch.
+
+Prove: `grep -c 'LedgerStageReport' .LLMDD/ITRS/feat-18-raise-hypothesis-gate-and-print-ledger/LEGEND.itr` prints 1.
+
+Do NOT touch: hypothesis-engine/src/test/**, .LLMDD/spec-driven/**
+
+Stop when: all terms used in CU frames are defined here.
+
