@@ -36,7 +36,8 @@ final case class ExperimentDefinition(
   command: Vector[String],
   workingDirectory: String,
   timeoutSeconds: Int,
-  testArtifactVersion: String
+  testArtifactVersion: String,
+  dtrCoordinates: Vector[DtrCoordinate] = Vector.empty
 )
 
 final case class RawResult(

@@ -3,6 +3,7 @@ package hypothesisengine.control
 import hypothesisengine.application.*
 import hypothesisengine.domain.*
 import hypothesisengine.infrastructure.*
+import hypothesisengine.infrastructure.ExperimentDefinitionCodec.given
 import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.parser.decode
@@ -49,8 +50,19 @@ final class HypothesisEngine(runner: ProcessRunner, ledger: Ledger, clock: Clock
               blocked
             case Right(_) =>
               val results: Vector[(RawResult, NormalizedResult)] = ledger.resultsFor(hypothesis.id)
-              val posterior: Double = BayesianEvaluator.update(hypothesis.prior, results.map((_._2)))
-              ledger.saveCalculation(BayesianEvaluator.record(hypothesis.id, posterior, clock.now()))
+              val evidence: Vector[(DtrCoordinate, Boolean)] =
+                definitions.zipWithIndex.flatMap { case (definition, index) =>
+                  results.lift(index) match
+                    case None => Vector.empty[(DtrCoordinate, Boolean)]
+                    case Some((_, normalized)) =>
+                      val targets: Vector[DtrCoordinate] =
+                        if definition.dtrCoordinates.nonEmpty then definition.dtrCoordinates
+                        else hypothesis.coordinates.lift(index).toVector
+                      targets.map(coordinate => (coordinate, normalized.passed))
+                }
+              val posterior: Double =
+                CoverageFalsificationEvaluator.update(hypothesis.prior, hypothesis.coordinates, evidence)
+              ledger.saveCalculation(CoverageFalsificationEvaluator.record(hypothesis.id, posterior, clock.now()))
               val decided: Decision = ExaminationGate.decide(hypothesis, posterior, results)
               ledger.saveDecision(hypothesis.id, decided)
               decided
@@ -58,45 +70,88 @@ final class HypothesisEngine(runner: ProcessRunner, ledger: Ledger, clock: Clock
 
 object Main:
   given Decoder[HypothesisId] = Decoder.decodeString.map(HypothesisId.apply)
-  given Decoder[DtrCoordinate] = Decoder.decodeString.map(DtrCoordinate.apply)
   given Decoder[Hypothesis] = Decoder.forProduct6(
     "id", "statement", "dtr_coordinates", "gate_probability_for_correctness", "prior", "justification"
   )(Hypothesis.apply)
 
+  private def ledgerPath: String =
+    sys.props.getOrElse("hypothesis-engine.ledger.path", "ledger.db")
+
+  private def usage(): Unit =
+    System.err.println("usage: Main <hypothesis.json> <experiments.jsonl> | init [path] | cleanup <hypothesis-id>|--all")
+
   def main(args: Array[String]): Unit =
+    val code: Int = run(args)
+    if code != 0 then System.exit(code)
+
+  def run(args: Array[String]): Int =
+    args.headOption match
+      case Some("init") => runInit(args.drop(1).toVector)
+      case Some("cleanup") => runCleanup(args.drop(1).toVector)
+      case _ => runExamine(args)
+
+  private def runInit(rest: Vector[String]): Int =
+    val path: String = rest.headOption.getOrElse(ledgerPath)
+    val ledger: Ledger = new SqliteLedger(path)
+    ledger.initialize() match
+      case Left(error) =>
+        System.err.println("INIT_FAILED " + error)
+        2
+      case Right(_) =>
+        println("INIT_OK path=" + Paths.get(path).toAbsolutePath.normalize.toString)
+        0
+
+  private def runCleanup(rest: Vector[String]): Int =
+    val ledger: Ledger = new SqliteLedger(ledgerPath)
+    rest match
+      case Vector("--all") =>
+        ledger.deleteAllData() match
+          case Left(error) => System.err.println("CLEANUP_FAILED " + error); 2
+          case Right(_) => println("CLEANUP_ALL_OK"); 0
+      case Vector(id) =>
+        ledger.deleteHypothesisData(HypothesisId(id)) match
+          case Left(error) => System.err.println("CLEANUP_FAILED " + error); 2
+          case Right(_) => println("CLEANUP_OK hypothesis=" + id); 0
+      case _ =>
+        usage()
+        2
+
+  private def runExamine(args: Array[String]): Int =
     if args.length < 2 then
-      System.err.println("usage: Main <hypothesis.json> <experiments.jsonl>")
-      System.exit(2)
-    val hypothesisJson: String = new String(Files.readAllBytes(Paths.get(args(0))), "UTF-8")
-    val hypothesis: Hypothesis = decode[Hypothesis](hypothesisJson).fold(
-      error => throw new IllegalArgumentException(error.getMessage), identity)
-    val definitions: Vector[ExperimentDefinition] = Files.readAllLines(Paths.get(args(1)).toAbsolutePath).toArray(new Array[String](0)).toVector
-      .filter(_.trim.nonEmpty)
-      .map { line =>
-        ExperimentDefinitionCodec.parse(line).fold(
-          error => throw new IllegalArgumentException(error), identity)
-      }
-    val clock: Clock = new SystemClock
-    val ledgerPath: String = sys.props.getOrElse("hypothesis-engine.ledger.path", "ledger.db")
-    val engine: HypothesisEngine = new HypothesisEngine(new ProcessAdapter(clock), new SqliteLedger(ledgerPath), clock)
-    val outcome: ExaminationOutcome = engine.execute(hypothesis, definitions)
-    import ReportJson.given
-    val block: String = outcome.report.asJson.noSpaces
-    println(block)
-    val hypothesisPath: String = args(0)
-    val reportPath: java.nio.file.Path = Paths.get(
-      if hypothesisPath.endsWith(".hypotheses.json")
-      then hypothesisPath.stripSuffix(".hypotheses.json") + ".ledger-report.jsonl"
-      else hypothesisPath + ".ledger-report.jsonl"
-    )
-    Files.writeString(reportPath, block + System.lineSeparator, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
-    outcome.decision match
-      case Decision.Green(_, posterior, gate) =>
-        println("GREEN_LIGHT posterior=" + posterior + " gate=" + gate)
-      case Decision.Red(_, posterior, gate, breakpoints, fix) =>
-        println("RED_LIGHT posterior=" + posterior + " gate=" +
-          " breakpoints=" + breakpoints.map(breakpoint => DtrCoordinate.value(breakpoint.coordinate)).mkString("|") +
-          " fix=" + fix.description)
-      case Decision.Blocked(reason) =>
-        println("ADVISOR_ACTION_REQUIRED missing=" + reason.missing.mkString("|") +
-          " corrections=" + reason.corrections.mkString("|"))
+      usage()
+      2
+    else
+      val hypothesisJson: String = new String(Files.readAllBytes(Paths.get(args(0))), "UTF-8")
+      val hypothesis: Hypothesis = decode[Hypothesis](hypothesisJson).fold(
+        error => throw new IllegalArgumentException(error.getMessage), identity)
+      val definitions: Vector[ExperimentDefinition] = Files.readAllLines(Paths.get(args(1)).toAbsolutePath).toArray(new Array[String](0)).toVector
+        .filter(_.trim.nonEmpty)
+        .map { line =>
+          ExperimentDefinitionCodec.parse(line).fold(
+            error => throw new IllegalArgumentException(error), identity)
+        }
+      val clock: Clock = new SystemClock
+      val ledger: Ledger = new SqliteLedger(ledgerPath)
+      val engine: HypothesisEngine = new HypothesisEngine(new ProcessAdapter(clock), ledger, clock)
+      val outcome: ExaminationOutcome = engine.execute(hypothesis, definitions)
+      import ReportJson.given
+      val block: String = outcome.report.asJson.noSpaces
+      println(block)
+      val hypothesisPath: String = args(0)
+      val reportPath: java.nio.file.Path = Paths.get(
+        if hypothesisPath.endsWith(".hypotheses.json")
+        then hypothesisPath.stripSuffix(".hypotheses.json") + ".ledger-report.jsonl"
+        else hypothesisPath + ".ledger-report.jsonl"
+      )
+      Files.writeString(reportPath, block + System.lineSeparator, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
+      outcome.decision match
+        case Decision.Green(_, posterior, gate) =>
+          println("GREEN_LIGHT posterior=" + posterior + " gate=" + gate)
+        case Decision.Red(_, posterior, gate, breakpoints, fix) =>
+          println("RED_LIGHT posterior=" + posterior + " gate=" +
+            " breakpoints=" + breakpoints.map(breakpoint => DtrCoordinate.value(breakpoint.coordinate)).mkString("|") +
+            " fix=" + fix.description)
+        case Decision.Blocked(reason) =>
+          println("ADVISOR_ACTION_REQUIRED missing=" + reason.missing.mkString("|") +
+            " corrections=" + reason.corrections.mkString("|"))
+      0

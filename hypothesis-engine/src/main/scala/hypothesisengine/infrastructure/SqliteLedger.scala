@@ -133,6 +133,28 @@ final class SqliteLedger(dbPath: String = "ledger.db") extends Ledger:
 
   override def resetStageData(hypothesisId: HypothesisId): Unit = ()
 
+  override def initialize(): Either[String, Unit] =
+    initializeSchema()
+    Right(())
+
+  override def deleteHypothesisData(hypothesisId: HypothesisId): Either[String, Unit] =
+    val id: String = HypothesisId.value(hypothesisId)
+    val tables: Vector[String] = Vector("hypotheses", "coordinates", "experiments", "executions", "evidence", "calculations", "decisions")
+    tables.foldLeft[Either[String, Unit]](Right(())) { (acc, table) =>
+      acc.flatMap { _ =>
+        val column: String = if table == "hypotheses" then "id" else "hypothesis_id"
+        write("DELETE FROM " + table + " WHERE " + column + " = ?") { statement =>
+          statement.setString(1, id)
+        }
+      }
+    }
+
+  override def deleteAllData(): Either[String, Unit] =
+    val tables: Vector[String] = Vector("hypotheses", "coordinates", "experiments", "executions", "evidence", "calculations", "decisions")
+    tables.foldLeft[Either[String, Unit]](Right(())) { (acc, table) =>
+      acc.flatMap(_ => write("DELETE FROM " + table)(_ => ()))
+    }
+
   override def saveCoordinates(hypothesisId: HypothesisId, coordinates: Vector[DtrCoordinate]): Either[String, Unit] =
     write("DELETE FROM coordinates WHERE hypothesis_id = ?") { statement =>
       statement.setString(1, HypothesisId.value(hypothesisId))

@@ -1,6 +1,6 @@
 package hypothesisengine
 
-import hypothesisengine.application.{BayesianEvaluator, ExaminationGate, ResultNormalizer}
+import hypothesisengine.application.{CoverageFalsificationEvaluator, ExaminationGate, ResultNormalizer}
 import hypothesisengine.domain.*
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
@@ -8,9 +8,14 @@ import org.scalatest.matchers.should.Matchers
 class GateSpec extends AnyFunSpec with Matchers:
   describe("bayesian evaluation and examination gate"):
     it("is deterministic for identical evidence"):
-      val results: Vector[NormalizedResult] = Vector(Fixtures.raw(true, "a"), Fixtures.raw(false, "b")).map(raw => ResultNormalizer.validate(raw).toOption.get)
-      val first: Double = BayesianEvaluator.update(0.5d, results)
-      val second: Double = BayesianEvaluator.update(0.5d, results)
+      val hypothesis: Hypothesis = Fixtures.hypothesis
+      val coordinates: Vector[DtrCoordinate] = hypothesis.coordinates
+      val evidence: Vector[(DtrCoordinate, Boolean)] = Vector(
+        (coordinates(0), true),
+        (coordinates(1), false)
+      )
+      val first: Double = CoverageFalsificationEvaluator.update(0.5d, coordinates, evidence)
+      val second: Double = CoverageFalsificationEvaluator.update(0.5d, coordinates, evidence)
       first shouldBe second
 
     it("grants green only at or above the configured gate"):

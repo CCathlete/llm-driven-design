@@ -28,16 +28,29 @@ object LedgerValidator {
     if missing.isEmpty then Right(()) else Left(AdvisorActionRequired(missing, corrections))
 }
 
-object BayesianEvaluator {
-  private val concentration: Double = 2.0d
-
-  def update(prior: Double, results: Vector[NormalizedResult]): Double =
-    val passes: Double = results.count(_.passed).toDouble
-    val total: Double = results.length.toDouble
-    (prior * concentration + passes) / (concentration + total)
+object CoverageFalsificationEvaluator {
+  val ceiling: Double = 0.95d
+  private val decay: Double = 0.5d
 
   def record(hypothesisId: HypothesisId, posterior: Double, at: Instant): ProbabilityCalculation =
     ProbabilityCalculation(hypothesisId, posterior, at)
+
+  def update(prior: Double, coordinates: Vector[DtrCoordinate], evidence: Vector[(DtrCoordinate, Boolean)]): Double =
+    if evidence.isEmpty then prior
+    else
+      val grouped: Map[DtrCoordinate, Vector[Boolean]] = evidence.groupMap(_._1)(_._2)
+      val failed: Set[DtrCoordinate] = grouped.collect {
+        case (coordinate, outcomes) if outcomes.contains(false) => coordinate
+      }.toSet
+      def evidenceFor(coordinate: DtrCoordinate): Double =
+        if failed.contains(coordinate) then 0.0d
+        else
+          val passes: Int = grouped.getOrElse(coordinate, Vector.empty).count(identity)
+          if passes == 0 then 0.0d else 1.0d - math.pow(decay, math.min(passes, 52).toDouble)
+      val denominator: Double = coordinates.length.toDouble.max(1.0d)
+      val coverage: Double = coordinates.map(evidenceFor).sum / denominator
+      val score: Double = prior + (ceiling - prior) * coverage
+      if failed.nonEmpty then math.min(score, prior) else score
 }
 
 object RemediationReporter {

@@ -16,10 +16,22 @@ object ExperimentDefinitionCodec:
       case other => Left("unsupported runtime " + other)
   }
   given Decoder[HypothesisId] = Decoder.decodeString.map(HypothesisId.apply)
-  given Decoder[ExperimentDefinition] = Decoder.forProduct7(
-    "experiment_id", "hypothesis_id", "runtime", "command",
-    "working_directory", "timeout_seconds", "test_artifact_version"
-  )(ExperimentDefinition.apply)
+  given Decoder[DtrCoordinate] = Decoder.decodeString.map(DtrCoordinate.apply)
+  given Decoder[ExperimentDefinition] = Decoder.instance { cursor =>
+    for
+      experimentId <- cursor.get[String]("experiment_id")
+      hypothesisId <- cursor.get[HypothesisId]("hypothesis_id")
+      runtime <- cursor.get[Runtime]("runtime")
+      command <- cursor.get[Vector[String]]("command")
+      workingDirectory <- cursor.get[String]("working_directory")
+      timeoutSeconds <- cursor.get[Int]("timeout_seconds")
+      testArtifactVersion <- cursor.get[String]("test_artifact_version")
+      dtrCoordinates <- cursor.get[Option[Vector[DtrCoordinate]]]("dtr_coordinates").map(_.getOrElse(Vector.empty))
+    yield ExperimentDefinition(
+      experimentId, hypothesisId, runtime, command, workingDirectory,
+      timeoutSeconds, testArtifactVersion, dtrCoordinates
+    )
+  }
 
   def parse(json: String): Either[String, ExperimentDefinition] =
     decode[ExperimentDefinition](json).left.map(_.getMessage)

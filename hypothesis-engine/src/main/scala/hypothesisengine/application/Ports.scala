@@ -21,3 +21,6 @@ trait Ledger:
   def saveExperiments(hypothesisId: HypothesisId, definitions: Vector[ExperimentDefinition]): Either[String, Unit]
   def decisionHistory(hypothesisId: HypothesisId): Vector[StageDecision] = Vector.empty
   def resetStageData(hypothesisId: HypothesisId): Unit = ()
+  def initialize(): Either[String, Unit] = Right(())
+  def deleteHypothesisData(hypothesisId: HypothesisId): Either[String, Unit] = Right(())
+  def deleteAllData(): Either[String, Unit] = Right(())

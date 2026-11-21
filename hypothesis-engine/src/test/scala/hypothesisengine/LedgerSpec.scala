@@ -1,6 +1,6 @@
 package hypothesisengine
 
-import hypothesisengine.application.{BayesianEvaluator, LedgerValidator, ResultNormalizer}
+import hypothesisengine.application.{LedgerValidator, ResultNormalizer}
 import hypothesisengine.control.HypothesisEngine
 import hypothesisengine.domain.*
 import org.scalatest.funspec.AnyFunSpec
