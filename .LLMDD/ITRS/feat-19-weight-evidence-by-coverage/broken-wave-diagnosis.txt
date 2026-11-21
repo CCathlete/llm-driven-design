@@ -1,0 +1,72 @@
+feat-19-weight-evidence-by-coverage — waves-done-broken diagnosis (2026-11-21)
+
+REPORTED STATE (confirmed live, not from transcripts)
+- repo.convergence.json: status NEEDS_ATTENTION; wave 1 coder_status=0,
+  wave 2 coder_status=1, wave 3 coder_status=1 with escalations=1.
+- Implementation landed in d15ad7a; prep batch/frames from a0441b2 are present.
+- Live `cd hypothesis-engine && sbt -batch test`: 29 tests run, 26 succeeded,
+  3 failed, exit 1. Break is reproducible.
+
+BREAK 1 — LedgerSeedingSpec, two tests
+- Live failure: `Vector("raw evidence") was not empty` (line 42) and
+  `expected GREEN_LIGHT, got Blocked(... raw evidence ...)` (line 50).
+- Live cause: ten `REJECTED malformed structured result on stdout` lines from
+  ResultNormalizer.scala:18. LedgerSeedingSpec.scala:31 embeds
+  `+ index.toString` inside the quoted JSON literal, so no evidence row is
+  saved. `git diff a0441b2..HEAD` shows this test file unchanged — a latent
+  fixture defect surfaced by the full-suite gate, not feat-19 coder drift.
+- CU mapping: T13 is claimed in cu-003/ACCEPTANCE.itr but the file is not in
+  any CU's COORDINATES. Classification: implementation defect in a stale test
+  fixture; fixed by fix-batch cu-001.
+
+BREAK 2 — LedgerStageReportSpec, one test
+- Live failure: `Vector("RED", "RED", "RED") was not equal to
+  Vector("RED", "RED", "GREEN")` at line 47.
+- CU mapping: T7 is claimed in cu-003/ACCEPTANCE.itr; coordinates examined were
+  Main.scala:52-68 (evidence wiring) and Examination.scala:31-54 (evaluator).
+- Classification: DESIGN defect. Spec criterion 7 and T7 promise unchanged
+  decisions, but coverage scoring cannot reach gate 0.85 from probes that map
+  to only one or two declared coordinates: with one pass per coordinate the
+  score is 0.725, and five probes with empty dtrCoordinates leave indices 2-4
+  unmapped under positional fallback (Main.scala:60). The old Bayesian score
+  reached 0.857 from five probes, which is exactly the behaviour the feature
+  exists to remove. The lead's wave-2 claim that "prior=0.85 carries forward"
+  is contradicted by the live fixture (prior=0.5 at LedgerStageReportSpec:20).
+- Fix: give the fixture probes explicit mappings to both declared coordinates
+  so the original RED/RED/GREEN progression is still meaningful under the new
+  model (five passes per coordinate score 0.9359). Fix-batch cu-001.
+
+BREAK 3 — cu-003 no-touch self-contradiction (convergence root cause)
+- Evidence: cu-003/IMPLEMENTATION_STEPS.itr lines 69, 92, 192 and 197 name
+  ExperimentMappingSpec.scala and CliSpec.scala as "Do NOT touch" while steps
+  2 and 3 of the same CU require creating those exact files. The validator's
+  F7 only checks each step's own declared writes, so it passed at prep.
+- cu-003.feedback.txt: STATUS=ESCALATION_RESOLVED,
+  ESCALATION_REASON=BOUNDARY_VIOLATION, and the coder explicitly left both
+  specs "untouched (RULE=no-touch for cu-003)". Only NewEvaluatorSpec.scala
+  exists on disk; T2 and T9-T12 were never verified.
+- Classification: DESIGN defect in CU content, and the direct source of
+  wave 3's escalations=1 / coder_status=1. Fix-batch cu-002 owns exactly the
+  two missing files with no-touch lists that exclude them.
+
+ROOT-CAUSE HYPOTHESIS
+Still broken because the feat-19 design promised backward-compatible decision
+outcomes that its own new scoring model necessarily changes, and cu-003's
+no-touch lists forbade the very files the CU was told to create; a latent
+malformed-JSON fixture then failed the full-suite gate. Production code mostly
+matches cu-001/cu-002 (the only coder additions were an exponent cap and a
+lambda shorthand), so the fault is in spec/CU design rather than coder drift.
+
+FIX DRAFT
+.LLMDD/ITRS/feat-19-weight-evidence-by-coverage.fix.batch.json
+- cu-001: repair the two stale test fixtures (LedgerSeedingSpec,
+  LedgerStageReportSpec) without weakening their assertions.
+- cu-002: create ExperimentMappingSpec.scala and CliSpec.scala that the
+  original cu-003 never produced, with corrected no-touch lists.
+- Both CUs write disjoint files, are independent, and can share one wave.
+- validate-steps.py: PASS cu-001, PASS cu-002.
+
+Designer action required: review and approve the draft, then compile it via
+itr-compiler, re-plan waves and hand a new wave cycle to the Coder. The spec's
+T7/T13 wording should be revised at the same time to state that decision
+outcomes are re-derived under coverage scoring rather than unchanged.
