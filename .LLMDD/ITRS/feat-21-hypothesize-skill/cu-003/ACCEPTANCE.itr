@@ -1,0 +1,4 @@
+# ACCEPTANCE: cu-003
+
+- T1-T8: `python3 .LLMDD/tests/feat-21-hypothesize-skill/test_skill_contract.py` -> all tests pass, exit 0.
+- `uvx mypy --strict .LLMDD/tests/feat-21-hypothesize-skill/test_skill_contract.py` -> 0 errors; if mypy is unavailable, record the observation rather than a silent pass.

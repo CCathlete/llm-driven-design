@@ -1,0 +1,4 @@
+[
+  {"wave": 1, "description": "Create the hypothesize skill and reduce prepare-implementation step 3 to a delegation (different files, parallel)", "cus": ["cu-001", "cu-002"]},
+  {"wave": 2, "description": "Contract test reads both skill files from wave 1 — genuine forward dependency", "cus": ["cu-003"]}
+]

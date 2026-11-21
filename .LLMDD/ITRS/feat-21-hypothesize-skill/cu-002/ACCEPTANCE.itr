@@ -1,0 +1,4 @@
+# ACCEPTANCE: cu-002
+
+- T6: `python3 .LLMDD/tests/feat-21-hypothesize-skill/test_skill_contract.py` passes the delegation and no-duplication checks.
+- `python3 .LLMDD/tools/skill-check.py prepare-implementation --print-prompt` exits 0 and still lists commit-specs, build-DTR, validate-steps and compile requirements.

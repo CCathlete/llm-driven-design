@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-001
+
+feat-21 criteria 1-5, 7, 8: create the standalone `@hypothesize` skill with both modes over one loop, the DTR input policy including staleness, the canonical engine procedure, the stop boundary, and the unchanged artifact paths. This is a creation coordinate; no other file is in scope.

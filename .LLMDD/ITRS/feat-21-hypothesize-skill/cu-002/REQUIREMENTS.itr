@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-002
+
+feat-21 criterion 6: reduce `@prepare-implementation` step 3 to a delegation to `@hypothesize`, keeping the hard gate and the strict step order. The full engine-procedure body must appear in the new skill only, not here.
