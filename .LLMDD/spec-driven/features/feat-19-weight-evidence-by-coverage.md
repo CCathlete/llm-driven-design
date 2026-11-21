@@ -1,6 +1,6 @@
 # feat-19: Replace probe-count probability with coverage-and-falsification scoring
 
-- Status: Proposed
+- Status: Implemented
 - Created: 2026-11-21
 - Feature ID: feat-19-weight-evidence-by-coverage
 
@@ -105,8 +105,27 @@ operations are explicit and call-driven, not an automatic side effect of
 
 ## Implementation status
 
-Proposed. No CUs drafted; this spec is open for Designer review of the criteria
-and tests below.
+Implemented (2026-11-21). The coverage-and-falsification evaluator, the
+experiment-to-coordinate mapping with positional fallback, the Ledger lifecycle
+port and SQLite implementation, and the `init` / `cleanup` CLI subcommands were
+delivered in the original three-wave run (`d15ad7a`). A fix cycle
+(`252be24`) repaired two stale test fixtures and created the two verification
+specs (`ExperimentMappingSpec`, `CliSpec`) that cu-003's contradictory no-touch
+list had suppressed; the code lead also corrected the `resetStageData` no-op in
+`SqliteLedger.scala` so stage data is cleared between executions. Verified by
+`review-implementation`: full ScalaTest suite 35/35 green, focused T2-T13 16/16,
+`validate-steps.py` PASS for both fix CUs, clean tree after read-only probes.
+Decisions are re-derived under coverage scoring (criterion 7 / T7 / T13): the
+old probe-count GREEN outcomes are intentionally not preserved.
+
+Caveat: the fix cycle's `repo.convergence.json` reads `NEEDS_ATTENTION` with
+`coder_status=1`. This is a runner-labeling artifact, not a failure: the flag
+was set by the lead boundary check when the code lead repaired
+`SqliteLedger.scala` (a CU no-touch path), while escalations=0, lead_status=0,
+both CU feedback files report PASSED, and the lead's own wave report records
+35/35 tests green and "Convergence: ACHIEVED". Live re-verification in this
+review confirmed 35/35. A separate runner improvement would stop counting
+authorized lead repairs as coder_status failures.
 
 ## Acceptance criteria
 
