@@ -1,0 +1,20 @@
+# CU-ID: arch
+# CU-TYPE: ArchCU
+# TIMESTAMP: 2026-11-21T18:37:47.044109547Z
+# DTR-COORDINATES: 
+
+# CU-ID: arch
+# CU-TYPE: ArchCU
+# DTR-COORDINATES:
+
+Skills are self-contained instruction files under `.LLMDD/skills/<name>/SKILL.md`, exposed to the harness through the `.opencode/skills` symlink. A skill owns one procedure; cross-skill reuse is by delegation, never by duplicating the procedure body. The Hypothesis Engine at `hypothesis-engine/` owns execution, evidence and the green-light decision; the `hypothesize` skill owns only the reasoning and validation segment, and `prepare-implementation` delegates its step 3 to it. Severity: CRITICAL. Python discipline applies to the contract test: explicit annotations at first binding, no Any or bare generics, slotted frozen dataclasses for value records.
+
+IMPLEMENTATION_STEPS:
+1. Apply these rules to every file authored by this batch.
+
+Prove: `grep -c 'name: hypothesize' .LLMDD/skills/hypothesize/SKILL.md` prints 1.
+
+Do NOT touch: hypothesis-engine/**, .LLMDD/spec-driven/**
+
+Stop when: the new skill owns the engine procedure and prepare-implementation only delegates to it.
+
