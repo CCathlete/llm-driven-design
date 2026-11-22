@@ -63,9 +63,10 @@ creation coordinate.
 - Step 3: Run `sbt -batch cleanLedger` once before the first stage. On a re-run after
    a `RED_LIGHT` or `ADVISOR_ACTION_REQUIRED` stage, do NOT clean again: the
    engine clears that stage's evidence and preserves decision history so each
-   report shows the full progression. If the sbt driver cannot see the sqlite
-   JDBC driver, launch the same entrypoint with
-   `java -cp "$(sbt -batch 'export Compile / fullClasspath')" runMain hypothesisengine.control.Main <hypotheses.json> <experiments.jsonl>` from `hypothesis-engine/`.
+   report shows the full progression. Run the engine from `hypothesis-engine/`
+   with `sbt -batch "runMain hypothesisengine.control.Main <hypotheses.json> <experiments.jsonl>"`.
+   If sbt cannot see the sqlite JDBC driver, launch the same entrypoint directly
+   with `java -cp "$(sbt -batch 'export Compile / fullClasspath')" hypothesisengine.control.Main <hypotheses.json> <experiments.jsonl>`.
 - Step 4: Echo the ledger report block verbatim, both into the conversation and by
    appending the byte-identical block to
    `.LLMDD/ITRS/<subject>/<subject>.hypothesis-conversation.md`. Do not revise
@@ -87,6 +88,3 @@ Keep these paths unchanged so the engine and `check-hypothesis-report.py` need
 no edits: `.LLMDD/ITRS/<subject>/<subject>.hypotheses.json`,
 `.experiments.jsonl`, `.ledger-report.jsonl`, `.hypothesis-conversation.md`
 and `hypothesis-verification.txt`.
-
-Do NOT touch: .LLMDD/skills/prepare-implementation/SKILL.md, .LLMDD/tests/**, .LLMDD/tools/**, hypothesis-engine/**
-Stop when: the file exists with valid frontmatter, two modes, DTR policy, engine procedure, stop boundary and unchanged artifact paths.

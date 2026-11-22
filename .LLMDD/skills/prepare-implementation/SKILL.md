@@ -69,40 +69,19 @@ Verify with `git status --short -- <those paths>` (must be empty).
 
 ### 3. Validate the feature hypotheses (hard gate)
 
-Before any batch CU is written, run the feature's own hypotheses through the
-Hypothesis Engine. The engine — not the agent — owns execution, evidence and
-the green-light decision; the agent only supplies hypotheses, DTR coordinates,
-predictions and experiment definitions. This is a hard gate: no batch CU is
-drafted until the engine returns `GREEN_LIGHT`.
+Before any batch CU is written, run the feature's hypotheses through the
+Hypothesis Engine by invoking `@hypothesize <feature-name>`. That skill now
+owns the complete reasoning and validation procedure: hypothesis and
+experiment authoring, DTR coordinate mapping, engine invocation, verbatim
+ledger echo, the deterministic checker gate, verdict interpretation and its
+fix loop. This step remains a hard gate: no batch CU is drafted until
+`hypothesize` returns `GREEN_LIGHT`, recorded in
+`.LLMDD/ITRS/<feature-name>/hypothesis-verification.txt`. Keep the hypothesis
+inputs, ledger report, conversation record and verdict line under
+`.LLMDD/ITRS/<feature-name>/` where `hypothesize` writes them; they are
+committed in step 10. Acceptance tests that need the new code belong in the
+verify phase, not here. Do not duplicate the engine procedure in this file.
 
-At prep time the implementation does not exist yet, so the experiments are
-prep-runnable probes against the current baseline (DTR/spec checks, static
-boundary checks, small scripts). Acceptance tests that need the new code
-belong in the verify phase, not here.
-
-1. Write `.LLMDD/ITRS/<feature-name>/<feature-name>.hypotheses.json`:
-
-   ```json
-   {"id": "H-<feature-name>-DESIGN", "statement": "the baseline claim under examination", "dtr_coordinates": ["FILE.a/b.py", "TYPE.x.Y"], "gate_probability_for_correctness": 0.85, "prior": 0.5, "justification": "Advisor-authored reason this claim is worth examining at these coordinates"}
-   ```
-
-- `dtr_coordinates` must be exact keys from the step 2 DTR (absent key =
-      creation); the gate probability is the sole green-light threshold and the
-      engine rejects any value below 0.85. `justification` is required and must
-      be non-empty; a blank value fails closed before any evaluation.
-2. Write `.LLMDD/ITRS/<feature-name>/<feature-name>.probe-results`, one
-   JSON object per line:
-
-   ```json
-   {"experiment_id": "EXP-001", "hypothesis_id": "H-<feature-name>-DESIGN", "runtime": "python", "command": ["python3", ".LLMDD/tests/<feature-name>/probe.py"], "working_directory": "..", "timeout_seconds": 60, "test_artifact_version": "v1"}
-   ```
-
-   - `runtime` is `python` or `scala`; `command` is an argv list. Each probe
-     must print `{"passed": true, "detail": "..."}` on stdout (or exit 0) and
-     must not write to the ledger — the engine is the only writer.
-   - `working_directory` is relative to the engine's own cwd, which is
-     `hypothesis-engine/` (step 3 `cd`s there). Use `".."` for the repo root
-     so `command` paths like `.LLMDD/tests/<feature-name>/probe.py` resolve.
 ### 4. Draft the batch CU (dummy-proof)
 
    3. Reset the engine ledger for the first stage, then examine (run from the repo

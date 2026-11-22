@@ -1,6 +1,6 @@
 # feat-21: Standalone hypothesize skill (hypothesis reasoning + validation)
 
-- Status: Proposed
+- Status: Implemented
 - Created: 2026-11-21
 - Feature ID: feat-21-hypothesize-skill
 
@@ -39,10 +39,18 @@ and the interpretation of a green result differ.
 
 ## Implementation status
 
-Proposed. Not implemented. No CUs assigned, no waves, no implementation
-commit. Move to In Progress when CUs are assigned, to Implemented when both
-wave(s) converge, the contract tests below pass and E2E verify is green.
-Target ITR directory: `.LLMDD/ITRS/feat-21-hypothesize-skill/`.
+Implemented. CUs cu-001..cu-003 were assigned and compiled to
+`.LLMDD/ITRS/feat-21-hypothesize-skill/`; the wave run landed in commit
+`022a251`. Review of that run found two content defects the contract test's
+substring assertions missed: a broken `runMain` injection in the `java -cp`
+command in `hypothesize/SKILL.md`, leaked `Do NOT touch:`/`Stop when:` lines
+in that skill, and an unapplied delegation in `prepare-implementation/SKILL.md`
+step 3. Those were repaired in the two skill files (canonical `sbt -batch
+"runMain ..."` form restored, engine command corrected, CU directives removed,
+step 3 replaced with the real `@hypothesize` delegation). All 7
+`test_skill_contract.py` tests pass; `validate-steps.py` PASS for cu-001..cu-003;
+both `skill-check.py --print-prompt` commands exit 0; checker smoke `CHECK_OK`.
+No Scala source in scope, so no `sbt test` gate.
 
 ## Acceptance criteria
 
