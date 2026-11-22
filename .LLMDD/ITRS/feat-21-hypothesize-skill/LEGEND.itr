@@ -1,0 +1,20 @@
+# CU-ID: legend
+# CU-TYPE: LegendCU
+# TIMESTAMP: 2026-11-21T18:37:47.057582607Z
+# DTR-COORDINATES: 
+
+# CU-ID: legend
+# CU-TYPE: LegendCU
+# DTR-COORDINATES:
+
+LEGEND for feat-21. CU means Computational Unit. hypothesize is the standalone skill for hypothesis reasoning + validation. Diagnosis asks why something is not working; validation asks whether a suggested solution is correct. Both modes share one loop. Baseline DTR is the `.dtr` from dtr-builder used to validate `dtr_coordinates`; stale means missing generator/section entries or a timestamp older than the newest source. GREEN_LIGHT is the engine's pass verdict; RED_LIGHT and ADVISOR_ACTION_REQUIRED are failures with a fix loop. Stop boundary is the point where the skill ends, before any batch CU, compile, waves or wave command. Delegation means prepare-implementation step 3 calls @hypothesize instead of restating the engine procedure. Contract test is test_skill_contract.py, which asserts all of this statically.
+
+IMPLEMENTATION_STEPS:
+1. Apply this legend when reading any CU frame in this batch.
+
+Prove: `grep -c 'Stop boundary' .LLMDD/ITRS/feat-21-hypothesize-skill/LEGEND.itr` prints at least 1.
+
+Do NOT touch: .LLMDD/spec-driven/**, hypothesis-engine/**
+
+Stop when: all terms used in CU frames are defined here.
+

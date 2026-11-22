@@ -1,0 +1,3 @@
+# REQUIREMENTS: cu-003
+
+feat-21 criteria 1-8: add a focused contract test that statically asserts the new skill's frontmatter, modes, engine procedure, DTR policy, stop boundary and artifact paths; asserts prepare-implementation delegates and does not duplicate the procedure; and asserts the surrounding prep steps are kept. Python discipline: every variable annotated at first binding, no Any or bare generics.
